@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['userid'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
 }
@@ -18,16 +18,16 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 
 // Count total jobs assigned to the logged-in user (for non-admin users)
-$query = "SELECT COUNT(*) as totalJobs FROM jobs WHERE id = '$userid'";
+$query = "SELECT COUNT(*) as totalJobs FROM jobs WHERE user_id = '$user_id'";
 $result = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($result);
 $totalJobs = $row['totalJobs'];
 
 // Count total assignments that are either complete or late for the logged-in user (for non-admin users)
-$query = "SELECT COUNT(*) as totalAssignments FROM assignments WHERE user_id = '$userid' AND status IN ('complete', 'late')";
+$query = "SELECT COUNT(*) as totalAssignments FROM assignments WHERE user_id = '$user_id' AND status IN ('complete', 'late')";
 $result = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($result);
 $totalAssignments = $row['totalAssignments'];
@@ -35,14 +35,14 @@ $totalAssignments = $row['totalAssignments'];
 
 
 $query = $conn->prepare("SELECT COUNT(*) AS pendingAssignments FROM assignments WHERE user_id = ? AND status = 'pending'");
-$query->bind_param("i", $userid);
+$query->bind_param("i", $user_id);
 $query->execute();
 $result = $query->get_result();
 $row = $result->fetch_assoc();
 $pendingAssignments = $row['pendingAssignments'];
 
 // Get user information
-$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$userid'";
+$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 
 if (!$result) {
@@ -50,7 +50,7 @@ if (!$result) {
 }
 
 $user = mysqli_fetch_assoc($result);
-$uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : 'imgs/default.jpg';
+$uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 ?>
 
 <!DOCTYPE html>
@@ -116,7 +116,6 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
             </div>
                 <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="view_jobs.php"><i class="fa-solid fa-briefcase"></i> ดูงานที่สร้าง</a>
                 <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
                 <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
                 <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>

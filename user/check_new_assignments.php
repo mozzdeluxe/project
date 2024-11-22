@@ -3,18 +3,18 @@ include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบ
 session_start();
-if (!isset($_SESSION['userid']) || $_SESSION['userlevel'] != 'a') {
+if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
     echo json_encode(['error' => 'Unauthorized']);
     exit();
 }
 
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 
 // ดึงจำนวนงานเดี่ยวที่ต้องตรวจสอบ
 $query = "
     SELECT COUNT(*) as newAssignments 
     FROM assignments 
-    WHERE admin_id = '$userid' 
+    WHERE supervisor_id = '$user_id' 
     AND status IN ('pending review', 'pending review late')
 ";
 $result = mysqli_query($conn, $query);
@@ -25,7 +25,7 @@ $groupQuery = "
     SELECT COUNT(*) as newGroupAssignments 
     FROM group_assignments ga
     JOIN group_users gu ON ga.group_id = gu.group_id
-    WHERE gu.user_id = '$userid'
+    WHERE gu.user_id = '$user_id'
     AND gu.status IN ('review', 'completed')
 ";
 $groupResult = mysqli_query($conn, $groupQuery);
@@ -37,3 +37,4 @@ $totalNewAssignments = $row['newAssignments'] + $groupRow['newGroupAssignments']
 // ส่งจำนวนงานใหม่กลับไปในรูปแบบ JSON
 echo json_encode(['newAssignments' => $totalNewAssignments]);
 ?>
+

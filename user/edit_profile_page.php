@@ -2,10 +2,10 @@
 session_start();
 
 include('../connection.php');
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
 
-$query = "SELECT * FROM mable WHERE id = '$userid'";
+$query = "SELECT * FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 $user = mysqli_fetch_assoc($result);
 
@@ -138,7 +138,6 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
             </div>
                 <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="view_jobs.php"><i class="fa-solid fa-briefcase"></i> ดูงานที่สร้าง</a>
                 <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
                 <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
                 <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>
@@ -180,18 +179,6 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
                         <div class="col-md-6 mb-4">
                             <label for="email">อีเมล</label>
                             <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-4">
-                            <label for="position">ตำแหน่ง</label>
-                            <select class="form-control" id="position" name="position" required>
-                                <option value="" disabled hidden>เลือกตำแหน่ง</option>
-                                <option value="พัฒนาซอฟต์แวร์" <?php if ($user['position'] == 'พัฒนาซอฟต์แวร์') echo 'selected'; ?>>พัฒนาซอฟต์แวร์</option>
-                                <option value="ไอทีซัพพอร์ต" <?php if ($user['position'] == 'ไอทีซัพพอร์ต') echo 'selected'; ?>>ไอทีซัพพอร์ต</option>
-                                <option value="เครือข่าย" <?php if ($user['position'] == 'เครือข่าย') echo 'selected'; ?>>เครือข่าย</option>
-                                <option value="คนเท่" <?php if ($user['position'] == 'คนเท่') echo 'selected'; ?>>คนเท่</option>
-                            </select>
                         </div>
                     </div>
                     <div class="form-group d-flex justify-content-center mb-4">

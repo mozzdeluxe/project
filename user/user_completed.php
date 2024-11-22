@@ -3,7 +3,7 @@ session_start();
 include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
 if ($userlevel != 'm') {
     header("Location: ../logout.php");
@@ -11,25 +11,25 @@ if ($userlevel != 'm') {
 }
 $query = "SELECT firstname, lastname, img_path FROM mable WHERE id = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userid);
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
-$uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : 'imgs/default.jpg';
+$uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
 // ดึงงานที่ส่งแล้วและงานที่อยู่ในสถานะกำลังรอตรวจสอบ
 // ดึงงานที่ส่งแล้วและงานที่อยู่ในสถานะกำลังรอตรวจสอบ
 $query = "
     SELECT a.*, m.firstname, m.lastname 
     FROM assignments a 
-    JOIN mable m ON a.admin_id = m.id 
+    JOIN mable m ON a.supervisor_id = m.id 
     WHERE a.user_id = ? 
     AND a.status IN ('completed', 'late', 'Pending Correction late', 'Pending Correction', 'pending review', 'pending review late') 
-    ORDER BY a.completed_at DESC";
+    ORDER BY a.assign_id DESC";;
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userid);
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -125,7 +125,6 @@ $result = $stmt->get_result();
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
             </div>
                 <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="view_jobs.php"><i class="fa-solid fa-briefcase"></i> ดูงานที่สร้าง</a>
                 <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
                 <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
                 <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>

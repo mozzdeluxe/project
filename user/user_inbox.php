@@ -3,14 +3,14 @@ session_start();
 include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
 if ($userlevel != 'm') {
     header("Location: ../logout.php");
     exit();
 }
 
-$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$userid'";
+$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 
 $user = mysqli_fetch_assoc($result);
@@ -18,12 +18,14 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 
 // ดึงงานที่ได้รับ
 $query = "
-    SELECT a.*, m.firstname, m.lastname 
-    FROM assignments a 
-    JOIN mable m ON a.admin_id = m.id 
-    WHERE a.user_id = '$userid' 
-    AND a.status = 'pending' 
-    ORDER BY a.created_at DESC";
+    SELECT a.*, m.firstname ,m.lastname ,
+           j.job_title, j.created_at AS job_created_at
+    FROM assignments a
+    JOIN mable m ON a.supervisor_id = m.user_id
+    JOIN jobs j ON a.job_id = j.job_id
+    WHERE a.user_id = '$user_id'
+    AND a.status = 'pending'
+    ORDER BY j.created_at DESC";
 
 $result = mysqli_query($conn, $query);
 $assignment_count = mysqli_num_rows($result);
@@ -144,7 +146,6 @@ $assignment_count = mysqli_num_rows($result);
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
             </div>
                 <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="view_jobs.php"><i class="fa-solid fa-briefcase"></i> ดูงานที่สร้าง</a>
                 <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
                 <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
                 <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>
@@ -164,8 +165,7 @@ $assignment_count = mysqli_num_rows($result);
             <tr>
                 <th>ชื่องาน</th>
                 <th>รายละเอียดงาน</th>
-                <th>กำหนดส่งวันที่</th>
-                <th>กำหนดส่งเวลา</th>
+                <th>กำหนดส่ง</th>
                 <th>ผู้สั่งงาน</th>
                 <th>ส่งงาน</th>
             </tr>
@@ -177,8 +177,7 @@ $assignment_count = mysqli_num_rows($result);
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_description']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['due_date']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['due_time']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</td>';
                             echo '<td><button class="btn btn-success btn-lg" onclick="openSubmitModal(' . htmlspecialchars($row['job_id']) . ')">ส่งงาน</button></td>';
                             echo '</tr>';
