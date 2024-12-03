@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['userid'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
 }
@@ -36,8 +36,8 @@ while ($row = mysqli_fetch_assoc($result)) {
 $statuses = array_keys($statusCounts);
 $counts = array_values($statusCounts);
 
-$userid = $_SESSION['userid'];
-$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$userid'";
+$user_id = $_SESSION['user_id'];
+$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 
 if (!$result) {

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['userid'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
@@ -18,8 +18,8 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$userid = $_SESSION['userid'];
-$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$userid'";
+$user_id = $_SESSION['user_id'];
+$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 
 if (!$result) {
@@ -27,7 +27,9 @@ if (!$result) {
 }
 $user = mysqli_fetch_assoc($result);
 
+
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
+
 
 $query = "SELECT * FROM mable WHERE userlevel != 'a'";
 $result = mysqli_query($conn, $query);
@@ -159,7 +161,6 @@ $result = mysqli_query($conn, $query);
                         <th>รหัสพนักงาน</th>
                         <th>ชื่อ</th>
                         <th>นามสกุล</th>
-                        <th>ตำแหน่ง</th>
                         <th>เบอร์โทร</th>
                         <th>อีเมลล์</th>
                         <th>รายละเอียดเพิ่มเติม</th>
@@ -167,25 +168,28 @@ $result = mysqli_query($conn, $query);
                 </thead>
                 <tbody id="employeeTableBody">
                     <?php
-                    if (mysqli_num_rows($result) > 0) {
-                        while($row = mysqli_fetch_assoc($result)) {
-                            $imgPath = !empty($row['img_path']) ? '../imgs/' . htmlspecialchars($row['img_path']) : 'imgs/default.jpg';
-                            echo "<tr>";
-                            echo "<td><input type='checkbox' class='employee-checkbox' value='" . htmlspecialchars($row['id']) . "'></td>";
-                            echo "<td><img src='" . $imgPath . "' class='employee-img' alt='Employee Image'></td>";
-                            echo "<td>" . htmlspecialchars($row['username']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['firstname']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['lastname']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['position']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['phone']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                            echo "<td><button class='btn btn-detal btn-sm view-details' data-employee-id='" . htmlspecialchars($row['id']) . "'><i class='fas fa-info-circle'></i> ดูเพิ่มเติม</button></td>";
-                        echo "</tr>";
+                        if (mysqli_num_rows($result) > 0) {
+                            while($row = mysqli_fetch_assoc($result)) {
+                                // ตรวจสอบว่า img_path ของพนักงานมีค่า หรือไม่
+                                $imgPath = !empty($row['img_path']) && file_exists('../imgs/' . $row['img_path']) 
+                                    ? '../imgs/' . htmlspecialchars($row['img_path']) 
+                                    : '../imgs/default.jpg';  // ถ้าไม่พบให้ใช้ default.jpg
+                                echo "<tr>";
+                                echo "<td><input type='checkbox' class='employee-checkbox' value='" . htmlspecialchars($row['id']) . "'></td>";
+                                echo "<td><img src='" . $imgPath . "' class='employee-img' alt='Employee Image'></td>";
+                                echo "<td>" . htmlspecialchars($row['user_id']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['firstname']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['lastname']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['phone']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+                                echo "<td><button class='btn btn-detal btn-sm view-details' data-employee-id='" . htmlspecialchars($row['id']) . "'><i class='fas fa-info-circle'></i> ดูเพิ่มเติม</button></td>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='8'>ไม่พบพนักงาน</td></tr>";
                         }
-                    } else {
-                        echo "<tr><td colspan='8'>ไม่พบพนักงาน</td></tr>";
-                    }
-                    ?>
+                        ?>
+
                 </tbody>
 
             </table>

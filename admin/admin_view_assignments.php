@@ -2,8 +2,8 @@
 session_start();
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-$userid = $_SESSION['userid'];
-if (!isset($_SESSION['userid']) || $_SESSION['userlevel'] != 'a') {
+$user_id = $_SESSION['user_id'];
+if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
     header("Location: ../logout.php");
     exit();
 }
@@ -11,7 +11,7 @@ if (!isset($_SESSION['userid']) || $_SESSION['userlevel'] != 'a') {
 include('../connection.php');
 
 
-$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$userid'";
+$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 
 $user = mysqli_fetch_assoc($result);
@@ -19,18 +19,18 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 
 
 // ดึงข้อมูลงานที่สั่งโดยผู้ดูแลระบบที่เข้าสู่ระบบอยู่
-$admin_id = $_SESSION['userid'];
+$supervisor_id = $_SESSION['user_id'];
 $stmt = $conn->prepare("
-    SELECT a.job_id, m.username, m.firstname, m.lastname, m.img_path, 
-           a.job_title, a.job_description, a.due_date, a.due_time, a.status, a.created_at
-    FROM assignments a
-    JOIN mable m ON a.user_id = m.id
-    WHERE a.admin_id = ? 
+    SELECT j.job_id, m.id, m.firstname, m.lastname, m.img_path, 
+           j.job_title, j.job_description, j.due_datetime, a.status, j.created_at
+    FROM assignments a, jobs j
+    JOIN mable m ON j.user_id = m.id
+    WHERE j.supervisor_id = ? 
     AND a.status IN ('pending', 'pending review', 'pending review late', 
                      'completed', 'late', 'Pending Correction late', 'Pending Correction')
-    ORDER BY a.created_at DESC
+    ORDER BY j.created_at DESC
 ");
-$stmt->bind_param("i", $admin_id);
+$stmt->bind_param("i", $supervisor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -188,7 +188,7 @@ $result = $stmt->get_result();
                         }
 
                         echo '<tr>';
-                        echo '<td>' . htmlspecialchars($row['username']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['user_id']) . '</td>';
                         echo '<td><img src="' . $imgPath . '" class="employee-img" alt="Employee Image"></td>';
                         echo '<td>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';

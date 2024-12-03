@@ -1,13 +1,13 @@
 <?php 
 session_start();
 // ตรวจสอบการเข้าสู่ระบบ
-if (!isset($_SESSION['userid'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
 }
 
 // ตรวจสอบระดับผู้ใช้
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
 if ($userlevel != 'a') {
     header("Location: ../logout.php");
@@ -19,16 +19,16 @@ include('../connection.php');
 // ใช้ prepared statement เพื่อป้องกัน SQL Injection
 $query = "SELECT firstname, lastname, img_path FROM mable WHERE id = ?";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userid);
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
 // ดึงข้อมูลงานทั้งหมดจากฐานข้อมูล
-$query = "SELECT j.job_id, m.username, j.job_title, j.job_type, j.job_subtype, j.job_description, j.start_date, j.end_date, j.start_time, j.end_time, j.created_at, j.jobs_file, m.firstname, m.lastname
+$query = "SELECT j.job_id, m.user_id, j.job_title, j.job_description, j.created_at, j.jobs_file, m.firstname, m.lastname
           FROM jobs j
-          JOIN mable m ON j.id = m.id
+          JOIN mable m ON j.user_id = m.user_id
           ORDER BY j.created_at DESC";
 $stmt = $conn->prepare($query);
 $stmt->execute();
@@ -70,7 +70,7 @@ function exportJobs($result) {
     // Fetch and output job data
     while ($row = $result->fetch_assoc()) {
         fputcsv($output, [
-            htmlspecialchars($row['username']),
+            htmlspecialchars($row['user_id']),
             htmlspecialchars($row['firstname']) . " " . htmlspecialchars($row['lastname']),
             htmlspecialchars($row['job_title']),
             htmlspecialchars($row['job_type']),
@@ -231,7 +231,7 @@ function exportJobs($result) {
                         if (mysqli_num_rows($result) > 0) {
                             while ($row = mysqli_fetch_assoc($result)) {
                                 echo '<tr>';
-                                echo '<td>' . htmlspecialchars($row['username']) . '</td>';
+                                echo '<td>' . htmlspecialchars($row['user_id']) . '</td>';
                                 echo '<td>' . htmlspecialchars($row['firstname']) ." ". htmlspecialchars($row['lastname']) . '</td>';
                                 echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                                 echo '<td>' . htmlspecialchars($row['job_type']) . '</td>';

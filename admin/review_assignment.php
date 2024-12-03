@@ -3,14 +3,14 @@ session_start();
 include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
 if ($userlevel != 'a') {
     header("Location: ../logout.php");
     exit();
 }
 
-$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$userid'";
+$query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 
 $user = mysqli_fetch_assoc($result);
@@ -19,20 +19,20 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 // ดึงงานที่ได้รับ
 $query = "
     SELECT 
-        a.*, 
+        j.*, 
         m.firstname, 
         m.lastname 
     FROM 
-        assignments a 
+        assignments a, jobs j
     JOIN 
         mable m 
     ON 
-        a.admin_id = m.id 
+        j.supervisor_id = m.id 
     WHERE 
-        a.admin_id = '$userid' 
+        j.supervisor_id = '$user_id' 
         AND a.status IN ('pending review', 'pending review late') 
     ORDER BY 
-        a.created_at DESC
+        j.created_at DESC
 ";
 
 $result = mysqli_query($conn, $query);

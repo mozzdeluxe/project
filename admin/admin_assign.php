@@ -3,16 +3,16 @@ session_start();
 include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-if (!isset($_SESSION['userid']) || $_SESSION['userlevel'] != 'a') {
+if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
     header("Location: logout.php");
     exit();
 }
 
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 
 // ใช้ prepared statements เพื่อป้องกัน SQL Injection
 $stmt = $conn->prepare("SELECT firstname, lastname, img_path FROM mable WHERE id = ?");
-$stmt->bind_param("s", $userid);
+$stmt->bind_param("s", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -25,11 +25,10 @@ $user_result = mysqli_query($conn, $user_query);
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user_ids = $_POST['user_ids']; // รับเป็น array
+    $user_ids = json_decode($_POST['user_ids']); // รับเป็น array จาก hidden input
     $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
     $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
-    $due_date = mysqli_real_escape_string($conn, $_POST['due_date']);
-    $due_time = mysqli_real_escape_string($conn, $_POST['due_time']);
+    $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
 
     // ตรวจสอบการอัปโหลดไฟล์
     $file_name = '';
@@ -38,6 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $upload_directory = '../upload/';
         $file_name = basename($file['name']);
 
+        // ตรวจสอบนามสกุลไฟล์
+        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        if ($file_extension != 'pdf') {
+            die('โปรดอัปโหลดไฟล์ในรูปแบบ PDF เท่านั้น');
+        }
 
         // สร้างโฟลเดอร์ถ้าไม่อยู่
         if (!is_dir($upload_directory)) {
@@ -45,17 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
-            die('Failed to move uploaded file.');
+            die('ไม่สามารถอัปโหลดไฟล์ได้');
         }
     }
-
 
     // แทรกข้อมูลลงในฐานข้อมูล
     foreach ($user_ids as $user_id) {
         $user_id = mysqli_real_escape_string($conn, $user_id);
-        $insert_query = "INSERT INTO assignments (admin_id, user_id, job_title, job_description, due_date, due_time, file_path) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $insert_query = "INSERT INTO assignments (supervisor_id, user_id, job_title, job_description, due_datetime, file_path) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($insert_query);
-        $stmt->bind_param("iisssss", $userid, $user_id, $job_title, $job_description, $due_date, $due_time, $file_name);
+        $stmt->bind_param("iisssss", $user_id, $user_id, $job_title, $job_description, $due_date, $file_name);
         if (!$stmt->execute()) {
             die('Error: ' . $stmt->error);
         }
@@ -66,12 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // ดึงข้อมูลงานที่เคยสั่งทั้งหมด
-$assignments_query = "SELECT * FROM assignments WHERE admin_id = ?";
+$assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
 $stmt = $conn->prepare($assignments_query);
-$stmt->bind_param("i", $userid);
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $assignments_result = $stmt->get_result();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -251,11 +255,11 @@ $assignments_result = $stmt->get_result();
         <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
         <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
     </div>
+
     <div id="main">
         <div class="form-container">
             <div class="form-box">
                 <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
-                    <!-- เลือกผู้ใช้งาน -->
                     <div class="mb-3">
                         <label for="user_ids" class="form-label">เลือกผู้ใช้งาน</label>
                         <button type="button" class="btn btn-worker small" data-bs-toggle="modal" data-bs-target="#userModal">
@@ -264,104 +268,85 @@ $assignments_result = $stmt->get_result();
                         <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกผู้ใช้งาน</div>
                     </div>
 
-                    <!-- Modal สำหรับเลือกผู้ใช้งาน -->
                     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="userModalLabel">เลือกผู้ใช้งาน</h5>
+                                    <h5 class="modal-title" id="userModalLabel">เลือกพนักงาน</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="form-check">
-                                        <?php while ($user = mysqli_fetch_assoc($user_result)) { ?>
-                                            <div>
-                                                <input type="checkbox" class="form-check-input user-checkbox"
-                                                    id="user_<?php echo $user['id']; ?>"
-                                                    value="<?php echo $user['id']; ?>">
-                                                <label class="form-check-label" for="user_<?php echo $user['id']; ?>">
-                                                    <?php echo htmlspecialchars($user['firstname']) . ' ' . htmlspecialchars($user['lastname']); ?>
-                                                </label>
-                                            </div>
-                                        <?php } ?>
+                                    <div class="list-group">
+                                        <?php while ($user_row = mysqli_fetch_assoc($user_result)) : ?>
+                                            <button type="button" class="list-group-item list-group-item-action" data-id="<?php echo $user_row['id']; ?>" data-name="<?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>">
+                                                <?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>
+                                            </button>
+                                        <?php endwhile; ?>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                                    <button type="button" class="btn btn-primary" id="save-users-btn">บันทึก</button>
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="save-users-btn">บันทึกผู้ใช้งาน</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Hidden Input สำหรับเก็บค่าผู้ใช้งานที่เลือก -->
-                    <input type="hidden" id="user_ids" name="user_ids">
-
-                    <!-- ฟิลด์อื่น ๆ -->
+                    <!-- เพิ่มฟอร์มข้อมูลงาน -->
                     <div class="mb-3">
-                        <label for="job_title" class="form-label">ชื่องาน</label>
-                        <input type="text" class="form-control" id="job_title" name="job_title" required>
+                        <label for="job_title" class="form-label">หัวข้อ</label>
+                        <input type="text" name="job_title" class="form-control" id="job_title" required>
                     </div>
+
                     <div class="mb-3">
                         <label for="job_description" class="form-label">รายละเอียดงาน</label>
-                        <textarea class="form-control" id="job_description" name="job_description" rows="3" required></textarea>
+                        <textarea name="job_description" class="form-control" id="job_description" rows="4" required></textarea>
                     </div>
+
                     <div class="mb-3">
-                        <label for="due_date" class="form-label">กำหนดส่งวันที่</label>
-                        <input type="date" class="form-control" id="due_date" name="due_date" required>
+                        <label for="due_datetime" class="form-label">กำหนดเวลา</label>
+                        <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
                     </div>
+
                     <div class="mb-3">
-                        <label for="due_time" class="form-label">กำหนดส่งเวลา</label>
-                        <input type="time" class="form-control" id="due_time" name="due_time" required>
+                        <label for="file" class="form-label">อัปโหลดไฟล์ (ไฟล์ PDF เท่านั้น)</label>
+                        <input type="file" name="file" class="form-control" id="file" accept=".pdf">
                     </div>
-                    <div class="mb-3">
-                        <label for="file" class="form-label">ไฟล์แนบ (เฉพาะ PDF)</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".pdf">
-                    </div>
-                    <button type="submit" class="btn btn-primary">สั่งงาน</button>
-                    <a href="group_assign.php" class="btn btn-secondary">สั่งงานกลุ่ม</a>
+
+                    <input type="hidden" name="user_ids" id="user_ids" value="">
+
+                    <button type="submit" class="btn btn-primary">บันทึก</button>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- JavaScript -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const saveUsersBtn = document.getElementById('save-users-btn');
-            const selectedUsersContainer = document.getElementById('selected-users');
-            const userCheckboxes = document.querySelectorAll('.user-checkbox');
-            const hiddenInput = document.getElementById('user_ids');
+        let selectedUsers = [];
 
-            saveUsersBtn.addEventListener('click', function() {
-                const selectedUsers = [];
-                const selectedUserNames = [];
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.addEventListener('click', (event) => {
+                const userId = event.target.dataset.id;
+                const userName = event.target.dataset.name;
+                
+                if (selectedUsers.includes(userId)) {
+                    selectedUsers = selectedUsers.filter(id => id !== userId);
+                } else {
+                    selectedUsers.push(userId);
+                }
 
-                // เก็บค่าจาก checkbox ที่ถูกเลือก
-                userCheckboxes.forEach(checkbox => {
-                    if (checkbox.checked) {
-                        selectedUsers.push(checkbox.value);
-                        selectedUserNames.push(checkbox.nextElementSibling.textContent);
-                    }
-                });
+                document.getElementById('selected-users').innerHTML = selectedUsers.length
+                    ? selectedUsers.map(id => userName).join(', ')
+                    : 'ยังไม่ได้เลือกผู้ใช้งาน';
 
-                // แสดงรายชื่อที่เลือก
-                selectedUsersContainer.innerHTML = selectedUserNames.length ?
-                    `<strong>เลือก:</strong> ${selectedUserNames.join(', ')}` :
-                    '<strong>ยังไม่ได้เลือกผู้ใช้งาน</strong>';
-
-
-                // บันทึกค่าใน hidden input
-                hiddenInput.value = JSON.stringify(selectedUsers);
-
-                // ปิด Modal
-                const userModal = bootstrap.Modal.getInstance(document.getElementById('userModal'));
-                userModal.hide();
+                document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
             });
         });
-    </script>
 
-    <script src="../js/sidebar.js"></script>
+        document.getElementById('save-users-btn').addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('userModal'));
+            modal.hide();
+        });
+    </script>
 </body>
 
 </html>

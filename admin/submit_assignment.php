@@ -3,7 +3,7 @@ session_start();
 include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-$userid = $_SESSION['userid'];
+$user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
 if ($userlevel != 'a') {
     header("Location: ../logout.php");
@@ -14,10 +14,10 @@ if ($userlevel != 'a') {
 $assignment_id = intval($_GET['id']);
 $query = "SELECT a.*, m.firstname, m.lastname 
           FROM assignments a 
-          INNER JOIN mable m ON a.admin_id = m.id 
+          INNER JOIN mable m ON a.supervisor_id = m.id 
           WHERE a.job_id = ? AND a.user_id = ? AND a.status IN ('pending review', 'pending review late')";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("ii", $assignment_id, $userid);
+$stmt->bind_param("ii", $assignment_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $assignment = $result->fetch_assoc();

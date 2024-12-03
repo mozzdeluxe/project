@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['userid'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
@@ -22,9 +22,12 @@ if (!$employee) {
     exit();
 }
 
-$imgPath = !empty($employee['img_path']) ? '../imgs/' . htmlspecialchars($employee['img_path']) : 'imgs/default.jpg';
-?>
+$imgPath = !empty($employee['img_path']) && file_exists('../imgs/' . $employee['img_path']) 
+            ? '../imgs/' . htmlspecialchars($employee['img_path']) 
+            : '../imgs/default.jpg';
 
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -150,12 +153,9 @@ $imgPath = !empty($employee['img_path']) ? '../imgs/' . htmlspecialchars($employ
         </div>
         <div class="popup-details">
             <h2><?php echo htmlspecialchars($employee['firstname']) . " " . htmlspecialchars($employee['lastname']); ?></h2>
-            <p><strong>รหัสพนักงาน:</strong> <?php echo htmlspecialchars($employee['username']); ?></p>
-            <p><strong>ตำแหน่ง:</strong> <?php echo htmlspecialchars($employee['position']); ?></p>
+            <p><strong>รหัสพนักงาน:</strong> <?php echo htmlspecialchars($employee['user_id']); ?></p>
             <p><strong>เบอร์โทร:</strong> <?php echo htmlspecialchars($employee['phone']); ?></p>
             <p><strong>อีเมลล์:</strong> <?php echo htmlspecialchars($employee['email']); ?></p>
-            <p><strong>ที่อยู่:</strong> <?php echo htmlspecialchars($employee['address']); ?></p>
-            <p><strong>วันเกิด:</strong> <?php echo htmlspecialchars($employee['birthdate']); ?></p>
         </div>
     </div>
     <script src="../path/to/auto_logout.js"></script>
