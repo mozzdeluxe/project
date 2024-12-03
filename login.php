@@ -1,12 +1,12 @@
 <?php 
 session_start();
-        if(isset($_POST['username'])){
+        if(isset($_POST['user_id'])){
                   include("connection.php");
-                  $username = mysqli_real_escape_string($conn,$_POST['username']);
+                  $user_id = mysqli_real_escape_string($conn,$_POST['user_id']);
                   $password = mysqli_real_escape_string($conn,md5($_POST['password']));
 
                   $sql="SELECT * FROM mable
-                  WHERE  username ='".$username."'  AND  password ='".$password."' ";
+                  WHERE  user_id ='".$user_id."'  AND  password ='".$password."' ";
 
                   $result = mysqli_query($conn,$sql);
 				
@@ -14,7 +14,7 @@ session_start();
 
                       $row = mysqli_fetch_array($result);
 
-                      $_SESSION["userid"] = $row["id"];
+                      $_SESSION["user_id"] = $row["id"];
                       $_SESSION['firstname'] = $row['firstname'];
                       $_SESSION["userlevel"] = $row["userlevel"];
 
