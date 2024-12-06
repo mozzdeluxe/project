@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ</title>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -22,6 +21,7 @@
             background: linear-gradient(135deg, #32a852, #7ddf75);
 
         }
+        
         .success, .error {
             width: 50%;
             margin: 20px auto;
@@ -97,11 +97,11 @@
         <div class="form-container">
             <div class="form-box">
             <div style="text-align: center;">
-        <img src="https://www.ppkhosp.go.th/images/logoppk.png" alt="logo" style="width:40%;">
+        <h1>Login</h1>
         </div>
                 <form action="login.php" method="post">
                     <div class="form-group">
-                        <input type="text"  id="username" name="username" placeholder="รหัสผู้ใช้งาน" autocomplete="username" maxlength="4" required oninput="validateNumber(this)">
+                        <input type="text"  id="user_id" name="user_id" placeholder="รหัสพนักงาน" autocomplete="user_id" maxlength="4" required oninput="validateNumber(this)">
                     </div>
                     <div class="form-group">
                         <input type="password"  id="password" name="password" placeholder="รหัสผ่าน" autocomplete="current-password" maxlength="4" required oninput="validateNumber(this)">
