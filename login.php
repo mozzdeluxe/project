@@ -7,7 +7,6 @@ session_start();
 
                   $sql="SELECT * FROM mable
                   WHERE  user_id ='".$user_id."'  AND  password ='".$password."' ";
-
                   $result = mysqli_query($conn,$sql);
 				
                   if(mysqli_num_rows($result)==1){
