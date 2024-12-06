@@ -279,7 +279,6 @@ $assignments_result = $stmt->get_result();
                         </button>
                         <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกผู้ใช้งาน</div>
                     </div>
-
                     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
@@ -303,7 +302,6 @@ $assignments_result = $stmt->get_result();
                             </div>
                         </div>
                     </div>
-
                     <!-- เพิ่มฟอร์มข้อมูลงาน -->
                     <div class="mb-3">
                         <label for="job_title" class="form-label">หัวข้อ</label>
@@ -335,7 +333,6 @@ $assignments_result = $stmt->get_result();
     </div>
     <script>
             let selectedUsers = [];
-
             // เมื่อคลิกที่ผู้ใช้งานใน modal
             document.querySelectorAll('.list-group-item').forEach(item => {
                 item.addEventListener('click', (event) => {
@@ -369,8 +366,6 @@ $assignments_result = $stmt->get_result();
                 const modal = new bootstrap.Modal(document.getElementById('userModal'));
                 modal.hide();
             });
-
     </script>
 </body>
-
 </html>
