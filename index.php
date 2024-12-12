@@ -20,7 +20,6 @@
             margin: 0;
             font-family: 'Inter';
             background: linear-gradient(135deg, #32a852, #7ddf75);
-
         }
         .success, .error {
             width: 50%;
@@ -47,7 +46,7 @@
             border-radius: 30px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .form-box input{
+        .form-box input {
             width: 100%;
             padding: 10px;
             color: #000;
@@ -75,7 +74,7 @@
             border: 1px solid;
             color: #000;
         }
-        .btn-ligt:hover {
+        .btn-light:hover {
             background: #1b509a;
         }
     </style>
@@ -96,15 +95,15 @@
 
         <div class="form-container">
             <div class="form-box">
-            <div style="text-align: center;">
-        <img src="https://www.ppkhosp.go.th/images/logoppk.png" alt="logo" style="width:40%;">
-        </div>
+                <div style="text-align: center;">
+                    <img src="https://www.ppkhosp.go.th/images/logoppk.png" alt="logo" style="width:40%;">
+                </div>
                 <form action="login.php" method="post">
                     <div class="form-group">
-                        <input type="text"  id="username" name="username" placeholder="รหัสผู้ใช้งาน" autocomplete="username" maxlength="4" required oninput="validateNumber(this)">
+                        <input type="text" id="user_id" name="user_id" placeholder="รหัสผู้ใช้งาน" autocomplete="user_id" maxlength="4" required oninput="validateNumber(this)">
                     </div>
                     <div class="form-group">
-                        <input type="password"  id="password" name="password" placeholder="รหัสผ่าน" autocomplete="current-password" maxlength="4" required oninput="validateNumber(this)">
+                        <input type="password" id="password" name="password" placeholder="รหัสผ่าน" autocomplete="current-password" maxlength="4" required oninput="validateNumber(this)">
                     </div>
                     <div class="form-group d-flex justify-content-center">
                         <button class="btn btn-success w-45 me-3" type="submit" name="submit">เข้าสู่ระบบ</button>
@@ -118,7 +117,7 @@
 </html>
 
 <?php 
-    if(isset($_SESSION['success']) || isset($_SESSION['error'])) {
+    if (isset($_SESSION['success']) || isset($_SESSION['error'])) {
         session_destroy();
     }
 ?>

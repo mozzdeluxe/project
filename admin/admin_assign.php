@@ -79,7 +79,6 @@ $assignments_result = $stmt->get_result();
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -267,7 +266,6 @@ $assignments_result = $stmt->get_result();
                         </button>
                         <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกผู้ใช้งาน</div>
                     </div>
-
                     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
@@ -327,7 +325,7 @@ $assignments_result = $stmt->get_result();
             item.addEventListener('click', (event) => {
                 const userId = event.target.dataset.id;
                 const userName = event.target.dataset.name;
-                
+
                 if (selectedUsers.includes(userId)) {
                     selectedUsers = selectedUsers.filter(id => id !== userId);
                 } else {
@@ -348,5 +346,6 @@ $assignments_result = $stmt->get_result();
         });
     </script>
 </body>
+
 
 </html>
