@@ -10,20 +10,20 @@ if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
 
 include('../connection.php');
 
-
+// ดึงข้อมูลผู้ใช้งาน
 $query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
-
 $user = mysqli_fetch_assoc($result);
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
-
 
 // ดึงข้อมูลงานที่สั่งโดยผู้ดูแลระบบที่เข้าสู่ระบบอยู่
 $supervisor_id = $_SESSION['user_id'];
 $stmt = $conn->prepare("
-    SELECT j.job_id, m.id, m.firstname, m.lastname, m.img_path, 
-           j.job_title, j.job_description, j.due_datetime, a.status, j.created_at
-    FROM assignments a, jobs j
+    SELECT 
+        j.job_id, m.id AS user_id, m.firstname, m.lastname, m.img_path, 
+        j.job_title, j.job_description, j.due_datetime, a.status, j.created_at
+    FROM assignments a
+    JOIN jobs j ON a.job_id = j.job_id
     JOIN mable m ON j.user_id = m.id
     WHERE j.supervisor_id = ? 
     AND a.status IN ('pending', 'pending review', 'pending review late', 
@@ -33,9 +33,8 @@ $stmt = $conn->prepare("
 $stmt->bind_param("i", $supervisor_id);
 $stmt->execute();
 $result = $stmt->get_result();
-
-
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

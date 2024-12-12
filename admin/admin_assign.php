@@ -21,21 +21,28 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 
 // ดึงข้อมูลผู้ใช้งาน
 $user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'm'";
-$user_result = mysqli_query($conn, $user_query);
+$stmt = $conn->prepare($user_query);
+$stmt->execute();
+$user_result = $stmt->get_result();
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // ตรวจสอบ CSRF token
+    if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Invalid CSRF token');
+    }
+
     $user_ids = json_decode($_POST['user_ids']); // รับเป็น array จาก hidden input
-    $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
-    $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
-    $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
+    $job_title = !empty($_POST['job_title']) ? mysqli_real_escape_string($conn, $_POST['job_title']) : NULL;
+    $job_description = !empty($_POST['job_description']) ? mysqli_real_escape_string($conn, $_POST['job_description']) : NULL;
+    $due_date = !empty($_POST['due_datetime']) ? mysqli_real_escape_string($conn, $_POST['due_datetime']) : NULL;
 
     // ตรวจสอบการอัปโหลดไฟล์
     $file_name = '';
-    if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
+    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['file'];
         $upload_directory = '../upload/';
-        $file_name = basename($file['name']);
+        $file_name = uniqid() . '_' . basename($file['name']);  // สร้างชื่อไฟล์ใหม่เพื่อป้องกันการซ้ำ
 
         // ตรวจสอบนามสกุลไฟล์
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
@@ -48,22 +55,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             mkdir($upload_directory, 0777, true);
         }
 
+        // ย้ายไฟล์ที่อัปโหลด
         if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
             die('ไม่สามารถอัปโหลดไฟล์ได้');
         }
     }
 
     // แทรกข้อมูลลงในฐานข้อมูล
-    foreach ($user_ids as $user_id) {
-        $user_id = mysqli_real_escape_string($conn, $user_id);
-        $insert_query = "INSERT INTO assignments (supervisor_id, user_id, job_title, job_description, due_datetime, file_path) VALUES (?, ?, ?, ?, ?, ?)";
+    foreach ($user_ids as $assigned_user_id) {
+        $assigned_user_id = mysqli_real_escape_string($conn, $assigned_user_id);
+        $status = 'pending'; // กำหนด status เป็น 'pending' สำหรับแต่ละแถว
+
+        // คำสั่ง SQL สำหรับแทรกข้อมูล
+        $insert_query = "INSERT INTO assignments (supervisor_id, user_id, status, file_path, job_title, job_description, due_datetime) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        // เตรียมคำสั่ง SQL
         $stmt = $conn->prepare($insert_query);
-        $stmt->bind_param("iisssss", $user_id, $user_id, $job_title, $job_description, $due_date, $file_name);
+        
+        // ผูกพารามิเตอร์
+        $supervisor_id = $_SESSION['user_id']; // กำหนด supervisor_id จากการเข้าสู่ระบบ
+        $stmt->bind_param("iiissss", $supervisor_id, $assigned_user_id, $status, $file_name, $job_title, $job_description, $due_date);
+        
+        // ตรวจสอบและ execute
         if (!$stmt->execute()) {
             die('Error: ' . $stmt->error);
         }
     }
 
+    // Redirect หลังจากการโพสต์เสร็จสิ้น
     header("Location: ./admin_view_assignments.php");
     exit();
 }
@@ -75,6 +94,7 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $assignments_result = $stmt->get_result();
 ?>
+
 
 
 <!DOCTYPE html>
