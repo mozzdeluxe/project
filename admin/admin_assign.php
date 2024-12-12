@@ -79,6 +79,7 @@ $assignments_result = $stmt->get_result();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -221,10 +222,23 @@ $assignments_result = $stmt->get_result();
 
         /* ปรับข้อความให้ดูมีระยะห่าง */
         #selected-users {
-            margin-top: 10px;
-            /* เพิ่มระยะห่างระหว่างข้อความ */
-            font-size: 14px;
+            font-size: 1.2rem; /* ขนาดตัวอักษรใหญ่ขึ้น */
+            font-weight: bold; /* เพิ่มความหนาของตัวอักษร */
+            margin-top: 10px;/* เพิ่มระยะห่างระหว่างข้อความ */
         }
+        .list-group-item.selected {
+            font-size: 1.1rem; /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
+            background-color: #4CAF50; /* สีพื้นหลังเมื่อเลือก */
+            color: white; /* สีข้อความเมื่อเลือก */
+            border: 1px solid #4CAF50;
+        }
+
+        .list-group-item.selected::before {
+            content: "✔ "; /* เครื่องหมายถูก */
+            font-size: 1.1rem; /* ขนาดตัวอักษรของปุ่มที่ถูกเลือก */
+            margin-right: 8px;
+        }
+
     </style>
 </head>
 
@@ -265,6 +279,7 @@ $assignments_result = $stmt->get_result();
                         </button>
                         <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกผู้ใช้งาน</div>
                     </div>
+
                     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
@@ -306,8 +321,9 @@ $assignments_result = $stmt->get_result();
                     </div>
 
                     <div class="mb-3">
-                        <label for="file" class="form-label">อัปโหลดไฟล์ (ไฟล์ PDF เท่านั้น)</label>
+                        <label for="file" class="form-label">อัปโหลดไฟล์</label>
                         <input type="file" name="file" class="form-control" id="file" accept=".pdf">
+                        <p class="small mb-0 mt-2"><b>Note:</b><font color="red">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น </font></p>
                     </div>
 
                     <input type="hidden" name="user_ids" id="user_ids" value="">
@@ -318,33 +334,42 @@ $assignments_result = $stmt->get_result();
         </div>
     </div>
     <script>
-        let selectedUsers = [];
+            let selectedUsers = [];
 
-        document.querySelectorAll('.list-group-item').forEach(item => {
-            item.addEventListener('click', (event) => {
-                const userId = event.target.dataset.id;
-                const userName = event.target.dataset.name;
+            // เมื่อคลิกที่ผู้ใช้งานใน modal
+            document.querySelectorAll('.list-group-item').forEach(item => {
+                item.addEventListener('click', (event) => {
+                    const userId = event.target.dataset.id;
+                    const userName = event.target.dataset.name;
 
-                if (selectedUsers.includes(userId)) {
-                    selectedUsers = selectedUsers.filter(id => id !== userId);
-                } else {
-                    selectedUsers.push(userId);
-                }
+                    // ถ้าเลือกผู้ใช้งานอยู่แล้ว ให้ลบออก
+                    if (selectedUsers.includes(userId)) {
+                        selectedUsers = selectedUsers.filter(id => id !== userId);
+                        event.target.classList.remove('selected');  // ลบคลาส selected
+                    } else {
+                        selectedUsers.push(userId); // เพิ่มผู้ใช้งานใหม่
+                        event.target.classList.add('selected'); // เพิ่มคลาส selected
+                    }
 
-                document.getElementById('selected-users').innerHTML = selectedUsers.length
-                    ? selectedUsers.map(id => userName).join(', ')
-                    : 'ยังไม่ได้เลือกผู้ใช้งาน';
+                    // อัปเดตข้อความใน #selected-users
+                    const selectedNames = selectedUsers.map(id => {
+                        const user = document.querySelector(`button[data-id="${id}"]`);
+                        return user ? user.dataset.name : '';
+                    }).join(', ') || 'ยังไม่ได้เลือกผู้ใช้งาน';
 
-                document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
+                    document.getElementById('selected-users').textContent = selectedNames;
+
+                    // ส่งข้อมูล ID ของผู้ใช้งานที่เลือกไปยัง hidden input
+                    document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
+                });
             });
-        });
 
-        document.getElementById('save-users-btn').addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('userModal'));
-            modal.hide();
-        });
+            // เมื่อกดปุ่มบันทึกใน modal
+            document.getElementById('save-users-btn').addEventListener('click', () => {
+                const modal = new bootstrap.Modal(document.getElementById('userModal'));
+                modal.hide();
+            });
+
     </script>
 </body>
-
-
 </html>

@@ -33,6 +33,7 @@ $assignment_count = mysqli_num_rows($result);
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,32 +49,40 @@ $assignment_count = mysqli_num_rows($result);
             margin-top: 20px;
             overflow-x: auto;
         }
-        .table th, .table td {
+
+        .table th,
+        .table td {
             text-align: center;
             vertical-align: middle;
             font-size: 20px;
         }
+
         .table th {
             background-color: #21a42e;
             color: white;
         }
+
         .table-responsive {
             -webkit-overflow-scrolling: touch;
         }
+
         .btn {
             font-size: 20px;
             background-color: #1dc02b;
             color: #fff;
         }
+
         .btn:hover {
             background: #0a840a;
             color: #fff;
         }
+
         .search-container {
             margin-bottom: 20px;
             display: flex;
             justify-content: flex-end;
         }
+
         .search-container input {
             width: 300px;
             font-size: 18px;
@@ -81,11 +90,13 @@ $assignment_count = mysqli_num_rows($result);
             border: 1px solid #ccc;
             border-radius: 10px;
         }
+
         /* เพิ่มการสนับสนุนสำหรับ text-size-adjust */
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
         }
+
         #main {
             transition: margin-left .5s;
             padding: 16px;
@@ -130,6 +141,7 @@ $assignment_count = mysqli_num_rows($result);
         }
     </script>
 </head>
+
 <body>
     <div class="navbar navbar-expand-lg navbar-dark">
         <button class="openbtn" id="menuButton" onclick="toggleNav()">☰</button>
@@ -144,23 +156,23 @@ $assignment_count = mysqli_num_rows($result);
                 <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
             </div>
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
-            </div>
-                <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
-                <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
-                <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>
-                <a href="edit_profile_page.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-                <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
-            </div>
+        </div>
+        <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
+        <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
+        <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
+        <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>
+        <a href="edit_profile_page.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
+        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
+    </div>
 
 
     <div id="main">
-    <div class="container table-container">
-    <div class="search-container">
-        <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="ค้นหางาน...">
-    </div>
-    <h1 class="mt-5"></h1>
-    <table class="table table-striped mt-3 id="jobTable" ">
+        <div class="container table-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="ค้นหางาน...">
+            </div>
+            <h1 class="mt-5"></h1>
+            <table class="table table-striped mt-3 id=" jobTable" ">
         <thead>
             <tr>
                 <th>ชื่องาน</th>
@@ -170,22 +182,23 @@ $assignment_count = mysqli_num_rows($result);
                 <th>ส่งงาน</th>
             </tr>
         </thead>
-            <tbody id="jobTable">
-                    <?php
-                    if ($assignment_count > 0) {
-                        while ($row = mysqli_fetch_assoc($result)) {
-                            echo '<tr>';
-                            echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['job_description']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</td>';
-                            echo '<td><button class="btn btn-success btn-lg" onclick="openSubmitModal(' . htmlspecialchars($row['job_id']) . ')">ส่งงาน</button></td>';
-                            echo '</tr>';
-                        }
-                    } else {
-                        echo '<tr><td colspan="6" class="text-center">ไม่มีงานที่ได้รับ</td></tr>';
+            <tbody id=" jobTable">
+                <?php
+                if ($assignment_count > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo '<tr>';
+                        echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['job_description']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</td>';
+                        echo '<td><button class="btn btn-success btn-lg" onclick="openSubmitModal(' . htmlspecialchars($row['job_id']) . ')">ส่งงาน</button></td>';
+                        echo '</tr>';
                     }
-                    ?>
+                } else {
+                    echo '<tr><td colspan="5" class="text-center">ไม่มีงานที่ได้รับ</td></tr>';
+                }
+
+                ?>
                 </tbody>
             </table>
         </div>
@@ -209,4 +222,5 @@ $assignment_count = mysqli_num_rows($result);
     <script src="../js/search_nameJobs.js"></script>
     <script src="../js/sidebar.js"></script>
 </body>
+
 </html>
