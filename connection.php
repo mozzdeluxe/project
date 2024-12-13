@@ -1,9 +1,5 @@
 <?php
-$conn = mysqli_connect("localhost", "root", "", "work");
-
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-}
-echo "Connected successfully";
-
+$conn= mysqli_connect("localhost","root","","work") or die("Error: " . mysqli_error($conn));
+mysqli_query($conn, "SET NAMES 'utf8' ");
+date_default_timezone_set('Asia/Bangkok');
 ?>
