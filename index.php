@@ -95,7 +95,7 @@
         <div class="form-container">
             <div class="form-box">
                 <div style="text-align: center;">
-                    <img src="https://www.ppkhosp.go.th/images/logoppk.png" alt="logo" style="width:40%;">
+                   <h1>Login</h1>
                 </div>
                 <form action="login.php" method="post">
                     <div class="form-group">

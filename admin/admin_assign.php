@@ -21,28 +21,21 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 
 // ดึงข้อมูลผู้ใช้งาน
 $user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'm'";
-$stmt = $conn->prepare($user_query);
-$stmt->execute();
-$user_result = $stmt->get_result();
+$user_result = mysqli_query($conn, $user_query);
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // ตรวจสอบ CSRF token
-    if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('Invalid CSRF token');
-    }
-
     $user_ids = json_decode($_POST['user_ids']); // รับเป็น array จาก hidden input
-    $job_title = !empty($_POST['job_title']) ? mysqli_real_escape_string($conn, $_POST['job_title']) : NULL;
-    $job_description = !empty($_POST['job_description']) ? mysqli_real_escape_string($conn, $_POST['job_description']) : NULL;
-    $due_date = !empty($_POST['due_datetime']) ? mysqli_real_escape_string($conn, $_POST['due_datetime']) : NULL;
+    $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
+    $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
+    $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
 
     // ตรวจสอบการอัปโหลดไฟล์
     $file_name = '';
-    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
         $file = $_FILES['file'];
         $upload_directory = '../upload/';
-        $file_name = uniqid() . '_' . basename($file['name']);  // สร้างชื่อไฟล์ใหม่เพื่อป้องกันการซ้ำ
+        $file_name = basename($file['name']);
 
         // ตรวจสอบนามสกุลไฟล์
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
@@ -55,46 +48,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             mkdir($upload_directory, 0777, true);
         }
 
-        // ย้ายไฟล์ที่อัปโหลด
         if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
             die('ไม่สามารถอัปโหลดไฟล์ได้');
         }
     }
 
-    // แทรกข้อมูลลงในฐานข้อมูล
-    foreach ($user_ids as $assigned_user_id) {
-        $assigned_user_id = mysqli_real_escape_string($conn, $assigned_user_id);
-        $status = 'pending'; // กำหนด status เป็น 'pending' สำหรับแต่ละแถว
-
-        // คำสั่ง SQL สำหรับแทรกข้อมูล
-        $insert_query = "INSERT INTO assignments (supervisor_id, user_id, status, file_path, job_title, job_description, due_datetime) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        
-        // เตรียมคำสั่ง SQL
-        $stmt = $conn->prepare($insert_query);
-        
-        // ผูกพารามิเตอร์
-        $supervisor_id = $_SESSION['user_id']; // กำหนด supervisor_id จากการเข้าสู่ระบบ
-        $stmt->bind_param("iiissss", $supervisor_id, $assigned_user_id, $status, $file_name, $job_title, $job_description, $due_date);
-        
-        // ตรวจสอบและ execute
-        if (!$stmt->execute()) {
-            die('Error: ' . $stmt->error);
+        // แทรกข้อมูลลงในตาราง jobs
+        foreach ($user_ids as $assigned_user_id) {
+            $assigned_user_id = mysqli_real_escape_string($conn, $assigned_user_id);
+            
+            // สร้างคำสั่ง SQL สำหรับการแทรกข้อมูลลงในตาราง jobs
+            $insert_query = "INSERT INTO jobs (supervisor_id, user_id, job_title, job_description, due_datetime, jobs_file) 
+                            VALUES (?, ?, ?, ?, ?, ?)";
+            
+            // เตรียมคำสั่งและ bind ค่า
+            $stmt = $conn->prepare($insert_query);
+            $stmt->bind_param("iissss", $user_id, $assigned_user_id, $job_title, $job_description, $due_date, $file_name);
+            
+            // ตรวจสอบการ execute
+            if (!$stmt->execute()) {
+                die('Error: ' . $stmt->error);  // ถ้ามีข้อผิดพลาดในการแทรก
+            }
         }
-    }
 
-    // Redirect หลังจากการโพสต์เสร็จสิ้น
-    header("Location: ./admin_view_assignments.php");
-    exit();
-}
 
-// ดึงข้อมูลงานที่เคยสั่งทั้งหมด
-$assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
-$stmt = $conn->prepare($assignments_query);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$assignments_result = $stmt->get_result();
+            header("Location: ./admin_view_assignments.php");
+            exit();
+        }
+
+        // ดึงข้อมูลงานที่เคยสั่งทั้งหมด
+        $assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
+        $stmt = $conn->prepare($assignments_query);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $assignments_result = $stmt->get_result();
 ?>
-
 
 
 <!DOCTYPE html>
@@ -276,17 +264,16 @@ $assignments_result = $stmt->get_result();
                 <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
             </div>
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
-        </div>
-        <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-        <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
-        <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
-        <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
-        <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
-        <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-        <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
-        <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
-    </div>
+            </div>
+                <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
+                <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
+                <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
+                <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
+                <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
+                <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
+                <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
+                <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a> 
+            </div>
 
     <div id="main">
         <div class="form-container">
