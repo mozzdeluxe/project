@@ -10,22 +10,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
 
 $user_id = $_SESSION['user_id'];
 
-// ใช้ prepared statements เพื่อป้องกัน SQL Injection
+// ใช้ prepared statements เพื่อดึงข้อมูลผู้ดูแลระบบ
 $stmt = $conn->prepare("SELECT firstname, lastname, img_path FROM mable WHERE id = ?");
 $stmt->bind_param("s", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
-
 $user = $result->fetch_assoc();
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
-// ดึงข้อมูลผู้ใช้งาน
+// ดึงข้อมูลพนักงานที่มี userlevel = 'm'
 $user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'm'";
 $user_result = mysqli_query($conn, $user_query);
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user_ids = json_decode($_POST['user_ids']); // รับเป็น array จาก hidden input
+    $user_ids = json_decode($_POST['user_ids'], true); // รับ user_ids เป็น array
+    if (!is_array($user_ids)) {
+        die('Error: Invalid user_ids format.');
+    }
+
+    // รวม user_id หลายตัวเป็น string เช่น "1,4"
+    $user_ids_str = implode(',', $user_ids);
+
+    // รับค่าจากฟอร์ม
     $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
     $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
     $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
@@ -36,14 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $file = $_FILES['file'];
         $upload_directory = '../upload/';
         $file_name = basename($file['name']);
-
-        // ตรวจสอบนามสกุลไฟล์
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
         if ($file_extension != 'pdf') {
             die('โปรดอัปโหลดไฟล์ในรูปแบบ PDF เท่านั้น');
         }
 
-        // สร้างโฟลเดอร์ถ้าไม่อยู่
         if (!is_dir($upload_directory)) {
             mkdir($upload_directory, 0777, true);
         }
@@ -53,28 +58,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-        // แทรกข้อมูลลงในตาราง jobs
-        foreach ($user_ids as $assigned_user_id) {
-            $assigned_user_id = mysqli_real_escape_string($conn, $assigned_user_id);
-            
-            // สร้างคำสั่ง SQL สำหรับการแทรกข้อมูลลงในตาราง jobs
-            $insert_query = "INSERT INTO jobs (supervisor_id, user_id, job_title, job_description, due_datetime, jobs_file) 
-                            VALUES (?, ?, ?, ?, ?, ?)";
-            
-            // เตรียมคำสั่งและ bind ค่า
-            $stmt = $conn->prepare($insert_query);
-            $stmt->bind_param("iissss", $user_id, $assigned_user_id, $job_title, $job_description, $due_date, $file_name);
-            
-            // ตรวจสอบการ execute
-            if (!$stmt->execute()) {
-                die('Error: ' . $stmt->error);  // ถ้ามีข้อผิดพลาดในการแทรก
-            }
-        }
+    // แทรกข้อมูลลงในตาราง jobs เป็นแถวเดียว
+    $insert_query = "INSERT INTO jobs (supervisor_id, user_id, job_title, job_description, due_datetime, jobs_file) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
 
+    $stmt = $conn->prepare($insert_query);
+    if (!$stmt) {
+        die('Error preparing statement: ' . $conn->error);
+    }
 
-            header("Location: ./admin_view_assignments.php");
-            exit();
-        }
+    $stmt->bind_param("isssss", $user_id, $user_ids_str, $job_title, $job_description, $due_date, $file_name);
+
+    if (!$stmt->execute()) {
+        die('Error executing query: ' . $stmt->error);
+    }
+
+    header("Location: ./admin_view_assignments.php");
+    exit();
+}
 
         // ดึงข้อมูลงานที่เคยสั่งทั้งหมด
         $assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
