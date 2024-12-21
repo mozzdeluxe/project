@@ -10,29 +10,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
 
 $user_id = $_SESSION['user_id'];
 
-// ใช้ prepared statements เพื่อดึงข้อมูลผู้ดูแลระบบ
+// ใช้ prepared statements เพื่อป้องกัน SQL Injection
 $stmt = $conn->prepare("SELECT firstname, lastname, img_path FROM mable WHERE id = ?");
 $stmt->bind_param("s", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
 $user = $result->fetch_assoc();
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
-// ดึงข้อมูลพนักงานที่มี userlevel = 'm'
+// ดึงข้อมูลผู้ใช้งาน
 $user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'm'";
 $user_result = mysqli_query($conn, $user_query);
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user_ids = json_decode($_POST['user_ids'], true); // รับ user_ids เป็น array
-    if (!is_array($user_ids)) {
-        die('Error: Invalid user_ids format.');
-    }
-
-    // รวม user_id หลายตัวเป็น string เช่น "1,4"
-    $user_ids_str = implode(',', $user_ids);
-
-    // รับค่าจากฟอร์ม
+    $user_ids = json_decode($_POST['user_ids']); // รับ ID ผู้ใช้งานเป็น array
     $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
     $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
     $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
@@ -42,11 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
         $file = $_FILES['file'];
         $upload_directory = '../upload/';
-        $file_name = basename($file['name']);
+        $file_name = uniqid() . '_' . basename($file['name']); // ป้องกันชื่อซ้ำ
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
         if ($file_extension != 'pdf') {
-            die('โปรดอัปโหลดไฟล์ในรูปแบบ PDF เท่านั้น');
+            die('โปรดอัปโหลดไฟล์ PDF เท่านั้น');
         }
 
         if (!is_dir($upload_directory)) {
@@ -58,31 +51,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // แทรกข้อมูลลงในตาราง jobs เป็นแถวเดียว
-    $insert_query = "INSERT INTO jobs (supervisor_id, user_id, job_title, job_description, due_datetime, jobs_file) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
+    // เพิ่มข้อมูลลงตาราง jobs (ครั้งเดียว)
+    $insert_job_query = "INSERT INTO jobs (supervisor_id, job_title, job_description, due_datetime, jobs_file) 
+                            VALUES (?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($insert_job_query);
+    $stmt->bind_param("issss", $user_id, $job_title, $job_description, $due_date, $file_name);
+    $stmt->execute();
 
-    $stmt = $conn->prepare($insert_query);
-    if (!$stmt) {
-        die('Error preparing statement: ' . $conn->error);
+    if ($stmt->error) {
+        die('Error inserting job: ' . $stmt->error);
     }
 
-    $stmt->bind_param("isssss", $user_id, $user_ids_str, $job_title, $job_description, $due_date, $file_name);
+    // รับ job_id ที่ถูกสร้างขึ้นล่าสุด
+    $job_id = $conn->insert_id;
 
-    if (!$stmt->execute()) {
-        die('Error executing query: ' . $stmt->error);
+    // เพิ่มข้อมูลลงตาราง assignments สำหรับพนักงานแต่ละคน
+    foreach ($user_ids as $assigned_user_id) {
+        $insert_assignment_query = "INSERT INTO assignments (job_id, supervisor_id, user_id, status, file_path) 
+                                        VALUES (?, ?, ?, 'pending', ?)";
+        $stmt = $conn->prepare($insert_assignment_query);
+        $stmt->bind_param("iiis", $job_id, $user_id, $assigned_user_id, $file_name);
+        $stmt->execute();
+
+        if ($stmt->error) {
+            die('Error inserting assignment: ' . $stmt->error);
+        }
     }
 
     header("Location: ./admin_view_assignments.php");
     exit();
 }
-
-        // ดึงข้อมูลงานที่เคยสั่งทั้งหมด
-        $assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
-        $stmt = $conn->prepare($assignments_query);
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-        $assignments_result = $stmt->get_result();
+// ดึงข้อมูลงานที่เคยสั่งทั้งหมด
+$assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
+$stmt = $conn->prepare($assignments_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$assignments_result = $stmt->get_result();
 ?>
 
 
@@ -102,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(234, 234, 234);
         }
 
         .container {
@@ -128,8 +133,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             width: 100%;
             max-width: 500px;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 35px;
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
+            background-color: rgb(255, 255, 255);
         }
 
         .form-control {
@@ -211,10 +217,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         /* ปุ่มขนาดเล็ก */
-        .btn-worker.small {
-            font-size: 14px;
-            padding: 5px 10px;
+        button.btn-worker.small {
+            font-size: 12px !important;
+            /* ลดขนาดตัวอักษร */
+            padding: 5px 5px !important;
+            /* ลดพื้นที่รอบตัวอักษร */
+            border-radius: 10px !important;
+            /* ลดความโค้งมนของมุม */
+            width: auto !important;
+            /* ให้ปุ่มปรับขนาดอัตโนมัติ */
+            height: auto !important;
+            /* ลดความสูง */
+            background-color:rgb(68, 68, 68);
+            border-color:rgb(0, 0, 0);
         }
+
+
+
 
         /* ปุ่มขนาดใหญ่ */
         .btn-worker.large {
@@ -226,28 +245,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .mb-3 .form-label,
         .mb-3 .btn-worker {
             display: block;
-            width: 25%;
+            width: 50%;
+            font-weight: bold;
+            font-size: 18px;
         }
 
-        /* ปรับข้อความให้ดูมีระยะห่าง */
-        #selected-users {
-            font-size: 1.2rem; /* ขนาดตัวอักษรใหญ่ขึ้น */
-            font-weight: bold; /* เพิ่มความหนาของตัวอักษร */
-            margin-top: 10px;/* เพิ่มระยะห่างระหว่างข้อความ */
+        .mb-3 .main-label {
+            display: flex;
+            justify-content: center;
+            /* จัดให้อยู่ตรงกลางแนวนอน */
+            align-items: center;
+            /* จัดให้อยู่ตรงกลางแนวตั้ง */
+            font-weight: bold;
+            font-size: 30px;
+            width: 100%;
+            /* ทำให้ label ขยายเต็มพื้นที่ container */
+            text-align: center;
+            /* จัดข้อความใน label ให้อยู่ตรงกลาง */
         }
+
+
+        .selected-user {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 5px 10px;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .remove-user-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            margin-left: 10px;
+            color: #ff0000;
+            cursor: pointer;
+        }
+
+        .remove-user-btn:hover {
+            color: #d00000;
+        }
+
+
         .list-group-item.selected {
-            font-size: 1.1rem; /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
-            background-color: #4CAF50; /* สีพื้นหลังเมื่อเลือก */
-            color: white; /* สีข้อความเมื่อเลือก */
+            font-size: 1.1rem;
+            /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
+            background-color: #4CAF50;
+            /* สีพื้นหลังเมื่อเลือก */
+            color: white;
+            /* สีข้อความเมื่อเลือก */
             border: 1px solid #4CAF50;
         }
 
         .list-group-item.selected::before {
-            content: "✔ "; /* เครื่องหมายถูก */
-            font-size: 1.1rem; /* ขนาดตัวอักษรของปุ่มที่ถูกเลือก */
+            content: "✔ ";
+            /* เครื่องหมายถูก */
+            font-size: 1.1rem;
+            /* ขนาดตัวอักษรของปุ่มที่ถูกเลือก */
             margin-right: 8px;
         }
-
     </style>
 </head>
 
@@ -265,28 +325,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
             </div>
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
-            </div>
-                <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
-                <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
-                <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
-                <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
-                <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-                <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-                <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a> 
-            </div>
+        </div>
+        <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
+        <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
+        <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
+        <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
+        <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
+        <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
+        <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
+        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
+    </div>
 
     <div id="main">
         <div class="form-container">
             <div class="form-box">
                 <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="user_ids" class="form-label">เลือกผู้ใช้งาน</label>
-                        <button type="button" class="btn btn-worker small" data-bs-toggle="modal" data-bs-target="#userModal">
-                            เลือกพนักงาน
-                        </button>
-                        <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกผู้ใช้งาน</div>
-                    </div>
 
                     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
@@ -305,14 +358,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="save-users-btn">บันทึกผู้ใช้งาน</button>
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="save-users-btn">เสร็จสิ้น</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- เพิ่มฟอร์มข้อมูลงาน -->
+                    <div class="mb-3">
+                        <label for="main_label" class="main-label">สั่งงาน</label>
+                    </div>
+
                     <div class="mb-3">
                         <label for="job_title" class="form-label">หัวข้อ</label>
                         <input type="text" name="job_title" class="form-control" id="job_title" required>
@@ -324,60 +380,97 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
 
                     <div class="mb-3">
+                        <label for="file" class="form-label">อัปโหลดไฟล์</label>
+                        <input type="file" name="file" class="form-control" id="file" accept=".pdf">
+                        <p class="small mb-0 mt-2"><b>Note:</b>
+                            <font color="red">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น </font>
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="due_datetime" class="form-label">กำหนดเวลา</label>
                         <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="file" class="form-label">อัปโหลดไฟล์</label>
-                        <input type="file" name="file" class="form-control" id="file" accept=".pdf">
-                        <p class="small mb-0 mt-2"><b>Note:</b><font color="red">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น </font></p>
-                    </div>
-
                     <input type="hidden" name="user_ids" id="user_ids" value="">
 
-                    <button type="submit" class="btn btn-primary">บันทึก</button>
+                    <div class="mb-3">
+                        <label for="user_ids" class="form-label">เลือกพนักงาน</label>
+                        <button type="button" class="btn btn-worker small" data-bs-toggle="modal" data-bs-target="#userModal">
+                            เลือกพนักงาน
+                        </button>
+                        <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกพนักงาน</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
     <script>
-            let selectedUsers = [];
+        let selectedUsers = []; // เก็บ ID ผู้ใช้งานที่เลือก
 
-            // เมื่อคลิกที่ผู้ใช้งานใน modal
-            document.querySelectorAll('.list-group-item').forEach(item => {
-                item.addEventListener('click', (event) => {
-                    const userId = event.target.dataset.id;
-                    const userName = event.target.dataset.name;
+        // เมื่อคลิกที่ผู้ใช้งานใน modal
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.addEventListener('click', (event) => {
+                const userId = event.target.dataset.id; // รับ ID ของผู้ใช้งาน
+                const userName = event.target.dataset.name; // รับชื่อของผู้ใช้งาน
 
-                    // ถ้าเลือกผู้ใช้งานอยู่แล้ว ให้ลบออก
-                    if (selectedUsers.includes(userId)) {
-                        selectedUsers = selectedUsers.filter(id => id !== userId);
-                        event.target.classList.remove('selected');  // ลบคลาส selected
-                    } else {
-                        selectedUsers.push(userId); // เพิ่มผู้ใช้งานใหม่
-                        event.target.classList.add('selected'); // เพิ่มคลาส selected
-                    }
+                // ถ้าเลือกผู้ใช้งานอยู่แล้ว ให้ลบออก
+                if (selectedUsers.includes(userId)) {
+                    selectedUsers = selectedUsers.filter(id => id !== userId); // ลบออกจากอาร์เรย์
+                    event.target.classList.remove('selected'); // ลบคลาส selected
+                } else {
+                    // เพิ่มผู้ใช้งานใหม่ใน selectedUsers
+                    selectedUsers.push(userId);
+                    event.target.classList.add('selected'); // เพิ่มคลาส selected
+                }
 
-                    // อัปเดตข้อความใน #selected-users
-                    const selectedNames = selectedUsers.map(id => {
-                        const user = document.querySelector(`button[data-id="${id}"]`);
-                        return user ? user.dataset.name : '';
-                    }).join(', ') || 'ยังไม่ได้เลือกผู้ใช้งาน';
+                // อัปเดตรายชื่อใน UI
+                updateSelectedUsersUI();
+            });
+        });
 
-                    document.getElementById('selected-users').textContent = selectedNames;
+        // ฟังก์ชันสำหรับแสดงรายชื่อผู้ใช้งานที่เลือก
+        function updateSelectedUsersUI() {
+            const selectedUsersDiv = document.getElementById('selected-users');
+            selectedUsersDiv.innerHTML = ''; // ล้างเนื้อหาเดิม
 
-                    // ส่งข้อมูล ID ของผู้ใช้งานที่เลือกไปยัง hidden input
-                    document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
+            selectedUsers.forEach(userId => {
+                const user = document.querySelector(`button[data-id="${userId}"]`);
+                const userName = user ? user.dataset.name : '';
+
+                // สร้าง div สำหรับชื่อผู้ใช้งาน
+                const userItem = document.createElement('div');
+                userItem.className = 'selected-user';
+                userItem.textContent = userName;
+
+                // สร้างปุ่มกากะบาด
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-user-btn';
+                removeBtn.textContent = '×'; // ข้อความในปุ่มกากะบาด
+                removeBtn.addEventListener('click', () => {
+                    selectedUsers = selectedUsers.filter(id => id !== userId); // ลบผู้ใช้งานออกจากอาร์เรย์
+                    user.classList.remove('selected'); // ลบคลาส selected
+                    updateSelectedUsersUI(); // อัปเดต UI ใหม่
                 });
+
+                userItem.appendChild(removeBtn);
+                selectedUsersDiv.appendChild(userItem);
             });
 
-            // เมื่อกดปุ่มบันทึกใน modal
-            document.getElementById('save-users-btn').addEventListener('click', () => {
-                const modal = new bootstrap.Modal(document.getElementById('userModal'));
-                modal.hide();
-            });
+            // อัปเดต hidden input สำหรับส่งข้อมูล
+            document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
+        }
 
+        // เมื่อกดปุ่มบันทึกใน modal
+        document.getElementById('save-users-btn').addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('userModal'));
+            modal.hide();
+        });
     </script>
 </body>
+
 </html>

@@ -17,22 +17,39 @@ $user = mysqli_fetch_assoc($result);
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
 // ดึงข้อมูลงานที่สั่งโดยผู้ดูแลระบบที่เข้าสู่ระบบอยู่
-$supervisor_id = $_SESSION['user_id'];
+// ดึงข้อมูลงานที่ถูกสั่ง
 $stmt = $conn->prepare("
     SELECT 
-        j.job_id, m.id AS user_id, m.firstname, m.lastname, m.img_path, 
-        j.job_title, j.job_description, j.due_datetime, a.status, j.created_at
-    FROM assignments a
-    JOIN jobs j ON a.job_id = j.job_id
-    JOIN mable m ON j.user_id = m.id
-    WHERE j.supervisor_id = ? 
-    AND a.status IN ('pending', 'pending review', 'pending review late', 
-                     'completed', 'late', 'Pending Correction late', 'Pending Correction')
-    ORDER BY j.created_at DESC
+        j.job_id, 
+        j.supervisor_id, 
+        j.job_title, 
+        j.job_description, 
+        j.due_datetime, 
+        j.jobs_file, 
+        j.created_at, 
+        a.user_id,
+        a.status, 
+        m.firstname, 
+        m.lastname, 
+        m.img_path
+    FROM 
+        jobs j
+    LEFT JOIN 
+        assignments a ON j.job_id = a.job_id
+    LEFT JOIN 
+        mable m ON a.user_id = m.id
+    WHERE 
+        j.supervisor_id = ?
+    ORDER BY 
+        j.created_at DESC
 ");
-$stmt->bind_param("i", $supervisor_id);
+
+// ผูกค่า `supervisor_id`
+$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
+
 ?>
 
 
@@ -45,7 +62,6 @@ $result = $stmt->get_result();
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
-    <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -137,7 +153,6 @@ $result = $stmt->get_result();
                 <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
                 <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
                 <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-                <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
                 <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
                 <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a> 
             </div>
@@ -171,29 +186,26 @@ $result = $stmt->get_result();
                         // กำหนดคลาสสีตามสถานะ
                         $status_class = '';
                         switch ($row['status']) {
-                            case 'late':
-                            case 'Pending Correction late':
+                            case 'ช้า':
                                 $status_class = 'text-danger';
                                 break;
-                            case 'completed':
+                            case 'เสร็จสิ้น':
                                 $status_class = 'text-success';
                                 break;
-                            case 'pending':
-                            case 'pending review':
-                            case 'pending review late':
-                            case 'Pending Correction':
+                            case 'กำลังรอ':
                                 $status_class = 'text-warning';
                                 break;
                         }
 
                         echo '<tr>';
-                        echo '<td>' . htmlspecialchars($row['user_id']) . '</td>';
+                        $imgPath = !empty($row['img_path']) && file_exists('../imgs/' . $row['img_path']) 
+                                    ? '../imgs/' . htmlspecialchars($row['img_path']) 
+                                    : '../imgs/default.jpg';
                         echo '<td><img src="' . $imgPath . '" class="employee-img" alt="Employee Image"></td>';
                         echo '<td>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                         echo '<td><button class="btn btn-detal btn-lg view-details" data-job-id="' . htmlspecialchars($row['job_id']) . '">รายละเอียดเพิ่มเติม</button></td>';
-                        echo '<td>' . htmlspecialchars($row['due_date']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['due_time']) . '</td>';
+                        echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
                         echo '<td class="' . $status_class . '">' . htmlspecialchars($row['status']) . '</td>';
                         echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
                         echo '<td><button class="btn btn-danger btn-lg delete-job" data-job-id="' . htmlspecialchars($row['job_id']) . '">ยกเลิก</button></td>';
