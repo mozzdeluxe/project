@@ -25,10 +25,17 @@ $user_result = mysqli_query($conn, $user_query);
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // รับข้อมูลจากฟอร์ม
     $user_ids = json_decode($_POST['user_ids']); // รับ ID ผู้ใช้งานเป็น array
     $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
     $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
     $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
+    $job_level = mysqli_real_escape_string($conn, $_POST['job_level']); // รับค่าระดับงาน
+
+    // ตรวจสอบว่ามีข้อมูลในฟอร์มครบถ้วนหรือไม่
+    if (empty($job_title) || empty($job_description) || empty($due_date) || empty($job_level)) {
+        die('กรุณากรอกข้อมูลทั้งหมด');
+    }
 
     // ตรวจสอบการอัปโหลดไฟล์
     $file_name = '';
@@ -38,27 +45,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $file_name = uniqid() . '_' . basename($file['name']); // ป้องกันชื่อซ้ำ
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        if ($file_extension != 'pdf') {
-            die('โปรดอัปโหลดไฟล์ PDF เท่านั้น');
+        // ตรวจสอบประเภทไฟล์
+        if (!in_array($file_extension, ['pdf', 'doc', 'docx', 'xlsx'])) {
+            die('โปรดอัปโหลดไฟล์ PDF, DOC, หรือ XLSX เท่านั้น');
         }
 
+        // ตรวจสอบว่ามีการสร้างโฟลเดอร์อัปโหลดหรือไม่
         if (!is_dir($upload_directory)) {
             mkdir($upload_directory, 0777, true);
         }
 
+        // อัปโหลดไฟล์
         if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
             die('ไม่สามารถอัปโหลดไฟล์ได้');
         }
     }
 
-    // เพิ่มข้อมูลลงตาราง jobs (ครั้งเดียว)
-    $insert_job_query = "INSERT INTO jobs (supervisor_id, job_title, job_description, due_datetime, jobs_file) 
-                            VALUES (?, ?, ?, ?, ?)";
+    // เพิ่มข้อมูลลงตาราง jobs
+    $insert_job_query = "INSERT INTO jobs (supervisor_id, job_title, job_description, due_datetime, jobs_file, job_level) 
+    VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($insert_job_query);
-    $stmt->bind_param("issss", $user_id, $job_title, $job_description, $due_date, $file_name);
-    $stmt->execute();
 
-    if ($stmt->error) {
+    if (!$stmt) {
+        die('Prepare failed for jobs: ' . $conn->error);
+    }
+
+    // Bind parameters สำหรับ jobs
+    $stmt->bind_param("isssss", $user_id, $job_title, $job_description, $due_date, $file_name, $job_level);
+
+    // Execute การเพิ่มข้อมูล jobs
+    if (!$stmt->execute()) {
         die('Error inserting job: ' . $stmt->error);
     }
 
@@ -67,26 +83,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // เพิ่มข้อมูลลงตาราง assignments สำหรับพนักงานแต่ละคน
     foreach ($user_ids as $assigned_user_id) {
-        $insert_assignment_query = "INSERT INTO assignments (job_id, supervisor_id, user_id, status, file_path) 
-                                        VALUES (?, ?, ?, 'pending', ?)";
+        $insert_assignment_query = "INSERT INTO assignments (job_id, user_id, status, file_path) 
+                    VALUES (?, ?, 'กำลังรอ', ?)";
         $stmt = $conn->prepare($insert_assignment_query);
-        $stmt->bind_param("iiis", $job_id, $user_id, $assigned_user_id, $file_name);
-        $stmt->execute();
 
-        if ($stmt->error) {
+        if (!$stmt) {
+            die('Prepare failed for assignments: ' . $conn->error);
+        }
+
+        // Bind parameters สำหรับ assignments
+        $stmt->bind_param("iis", $job_id, $assigned_user_id, $file_name);
+
+        // Execute การเพิ่มข้อมูล assignments
+        if (!$stmt->execute()) {
             die('Error inserting assignment: ' . $stmt->error);
         }
     }
 
+    // หลังจากบันทึกข้อมูลเสร็จสิ้น
     header("Location: ./admin_view_assignments.php");
     exit();
 }
+
 // ดึงข้อมูลงานที่เคยสั่งทั้งหมด
-$assignments_query = "SELECT * FROM assignments WHERE supervisor_id = ?";
+$assignments_query = "
+SELECT a.assign_id, a.job_id, a.user_id, a.status, a.file_path, 
+       j.job_title, j.job_description, j.due_datetime, j.job_level
+FROM assignments a
+JOIN jobs j ON a.job_id = j.job_id
+WHERE j.supervisor_id = ?
+";
 $stmt = $conn->prepare($assignments_query);
+
+if (!$stmt) {
+    die('Prepare failed for assignments: ' . $conn->error);
+}
+
+// Bind parameter สำหรับ user_id (supervisor_id)
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $assignments_result = $stmt->get_result();
+
 ?>
 
 
@@ -228,8 +265,8 @@ $assignments_result = $stmt->get_result();
             /* ให้ปุ่มปรับขนาดอัตโนมัติ */
             height: auto !important;
             /* ลดความสูง */
-            background-color:rgb(68, 68, 68);
-            border-color:rgb(0, 0, 0);
+            background-color: rgb(68, 68, 68);
+            border-color: rgb(0, 0, 0);
         }
 
 
@@ -336,6 +373,7 @@ $assignments_result = $stmt->get_result();
         <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
     </div>
 
+
     <div id="main">
         <div class="form-container">
             <div class="form-box">
@@ -392,6 +430,15 @@ $assignments_result = $stmt->get_result();
                         <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
                     </div>
 
+                    <!-- เพิ่มฟิลด์ระดับงาน -->
+                    <div class="mb-3">
+                        <label for="job_level" class="form-label">ระดับงาน</label>
+                        <select name="job_level" class="form-control" id="job_level" required>
+                            <option value="ต่ำ">ปกติ</option>
+                            <option value="กลาง">ด่วน</option>
+                        </select>
+                    </div>
+
                     <input type="hidden" name="user_ids" id="user_ids" value="">
 
                     <div class="mb-3">
@@ -409,6 +456,7 @@ $assignments_result = $stmt->get_result();
             </div>
         </div>
     </div>
+
     <script>
         let selectedUsers = []; // เก็บ ID ผู้ใช้งานที่เลือก
 
@@ -435,40 +483,35 @@ $assignments_result = $stmt->get_result();
 
         // ฟังก์ชันสำหรับแสดงรายชื่อผู้ใช้งานที่เลือก
         function updateSelectedUsersUI() {
-            const selectedUsersDiv = document.getElementById('selected-users');
-            selectedUsersDiv.innerHTML = ''; // ล้างเนื้อหาเดิม
+            const selectedUsersContainer = document.getElementById('selected-users');
+            selectedUsersContainer.innerHTML = ''; // Clear current list
 
-            selectedUsers.forEach(userId => {
-                const user = document.querySelector(`button[data-id="${userId}"]`);
-                const userName = user ? user.dataset.name : '';
+            if (selectedUsers.length > 0) {
+                selectedUsers.forEach(userId => {
+                    const userName = document.querySelector(`[data-id="${userId}"]`).dataset.name;
+                    const userElement = document.createElement('div');
+                    userElement.classList.add('selected-user');
+                    userElement.innerHTML = `${userName} <button class="remove-user-btn" data-id="${userId}">×</button>`;
+                    selectedUsersContainer.appendChild(userElement);
 
-                // สร้าง div สำหรับชื่อผู้ใช้งาน
-                const userItem = document.createElement('div');
-                userItem.className = 'selected-user';
-                userItem.textContent = userName;
-
-                // สร้างปุ่มกากะบาด
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-user-btn';
-                removeBtn.textContent = '×'; // ข้อความในปุ่มกากะบาด
-                removeBtn.addEventListener('click', () => {
-                    selectedUsers = selectedUsers.filter(id => id !== userId); // ลบผู้ใช้งานออกจากอาร์เรย์
-                    user.classList.remove('selected'); // ลบคลาส selected
-                    updateSelectedUsersUI(); // อัปเดต UI ใหม่
+                    // Remove user when the "×" button is clicked
+                    userElement.querySelector('.remove-user-btn').addEventListener('click', (event) => {
+                        const userIdToRemove = event.target.dataset.id;
+                        selectedUsers = selectedUsers.filter(id => id !== userIdToRemove);
+                        updateSelectedUsersUI(); // Update UI after removal
+                    });
                 });
+            } else {
+                selectedUsersContainer.innerHTML = 'ยังไม่ได้เลือกพนักงาน'; // No users selected
+            }
 
-                userItem.appendChild(removeBtn);
-                selectedUsersDiv.appendChild(userItem);
-            });
-
-            // อัปเดต hidden input สำหรับส่งข้อมูล
+            // Update hidden field with selected user IDs
             document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
         }
 
-        // เมื่อกดปุ่มบันทึกใน modal
+        // Trigger modal save button to close modal and update selected users
         document.getElementById('save-users-btn').addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('userModal'));
-            modal.hide();
+            updateSelectedUsersUI(); // Update selected users when saving
         });
     </script>
 </body>

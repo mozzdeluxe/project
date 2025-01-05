@@ -1,76 +1,65 @@
 <?php
-session_start();
 include('../connection.php');
 
-// ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-$userid = $_SESSION['userid'];
-$userlevel = $_SESSION['userlevel'];
-if ($userlevel != 'm') {
-    header("Location: ../logout.php");
+
+if (!isset($_GET['id']) || empty($_GET['id'])) {
     exit();
 }
-
-// ดึงข้อมูลงานที่ต้องส่ง
 $assignment_id = intval($_GET['id']);
+
+
 $query = "SELECT a.*, m.firstname, m.lastname 
           FROM assignments a 
-          INNER JOIN mable m ON a.admin_id = m.id 
-          WHERE a.job_id = ? AND a.user_id = ? AND a.status = 'pending'";
+          INNER JOIN mable m ON a.user_id = m.id 
+          WHERE a.job_id = ? AND a.user_id = ? AND a.status = 'กำลังรอ'";
+
 $stmt = $conn->prepare($query);
+if (!$stmt) {
+    die('Error preparing query: ' . $conn->error);
+}
+
 $stmt->bind_param("ii", $assignment_id, $userid);
 $stmt->execute();
 $result = $stmt->get_result();
 $assignment = $result->fetch_assoc();
 
-
+if (!$assignment) {
+    die('เกิดข้อผิดพลาดการแสดงรายละเอียดงานที่รับ');
+}
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $completed_at = date('Y-m-d H:i:s');
+    $status = strtotime($completed_at) > strtotime($assignment['due_datetime']) ? 'pending review late' : 'pending review';
 
-    // ตรวจสอบว่าการส่งงานนี้เป็นการส่งงานครั้งแรกหรืองานที่ถูกส่งกลับมาแก้ไข
-    if (strtotime($completed_at) > strtotime($assignment['due_date'] . ' ' . $assignment['due_time'])) {
-        $status = 'pending review late';  // ส่งงานเกินเวลาที่กำหนด
-    } else {
-        $status = 'pending review';  // ส่งงานภายในเวลาที่กำหนด
-    }
-
-    // ตรวจสอบการอัปโหลดไฟล์
     $file_reply = '';
     if (isset($_FILES['jobFile']) && $_FILES['jobFile']['error'] == 0) {
         $file = $_FILES['jobFile'];
-        $upload_directory = 'uploads/';
-        $file_reply = basename($file['name']);
+        $upload_directory = '../uploads/';
+        $file_reply = uniqid() . '_' . basename($file['name']);
 
-        // สร้างโฟลเดอร์ถ้าไม่อยู่
         if (!is_dir($upload_directory)) {
             mkdir($upload_directory, 0777, true);
         }
 
-        // ย้ายไฟล์ไปยังโฟลเดอร์ upload
-        if (move_uploaded_file($file['tmp_name'], $upload_directory . $file_reply)) {
-            // File upload successful
-        } else {
-            die('Failed to move uploaded file.');
+        if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_reply)) {
+            die('เกิดข้อผิดพลาดในการอัปโหลดไฟล์');
         }
     }
 
-    // อัปเดตสถานะงานในฐานข้อมูล
-    $update_query = "UPDATE assignments SET status = ?, completed_at = ?, file_reply = ? WHERE job_id = ?";
+    $update_query = "UPDATE assignments SET status = ?, completed_at = ?, file_reply = ? WHERE assign_id = ?";
     $stmt = $conn->prepare($update_query);
-    $stmt->bind_param("sssi", $status, $completed_at, $file_reply, $assignment_id);
-    $stmt->execute();
+    if (!$stmt) {
+        die('Error preparing update query: ' . $conn->error);
+    }
+
+    $stmt->bind_param("sssi", $status, $completed_at, $file_reply, $assignment['assign_id']);
+    if (!$stmt->execute()) {
+        die('เกิดข้อผิดพลาดในการส่งงาน' . $stmt->error);
+    }
+
     header("Location: user_inbox.php?status=success");
     exit();
-
-    // ตรวจสอบว่าเป็นงานกลุ่มหรือไม่
-    if ($isGroupAssignment) {
-        // อัปเดตสถานะของผู้ใช้ทุกคนในกลุ่มให้เป็น 'review'
-        $update_query = "UPDATE `group_users` SET `status` = 'review' WHERE `group_id` = ?";
-        $stmt = $conn->prepare($update_query);
-        $stmt->bind_param("i", $group_id);
-        $stmt->execute();
-    }
 }
 ?>
 
@@ -83,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="../css/navbar.css" rel="stylesheet">
     <link href="../css/link.css" rel="stylesheet">
-    <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -21,7 +21,7 @@ if (!$conn) {
 $user_id = $_SESSION['user_id'];
 
 // Count total jobs assigned to the logged-in user (for non-admin users)
-$query = "SELECT COUNT(*) as totalJobs FROM jobs WHERE user_id = '$user_id'";
+$query = "SELECT COUNT(*) as totalJobs FROM assignments WHERE user_id = '$user_id'";
 $result = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($result);
 $totalJobs = $row['totalJobs'];

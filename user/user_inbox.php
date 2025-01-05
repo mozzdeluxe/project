@@ -16,19 +16,19 @@ $result = mysqli_query($conn, $query);
 $user = mysqli_fetch_assoc($result);
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
-// ดึงงานที่ได้รับ
-$query = "
-    SELECT a.*, m.firstname ,m.lastname ,
-           j.job_title, j.created_at AS job_created_at
+$query_assignments = "
+    SELECT a.assign_id, a.job_id, a.status, a.file_path,
+           j.job_title, j.job_description, j.due_datetime,
+           m.firstname AS supervisor_firstname, m.lastname AS supervisor_lastname
     FROM assignments a
-    JOIN mable m ON a.supervisor_id = m.user_id
     JOIN jobs j ON a.job_id = j.job_id
+    JOIN mable m ON j.supervisor_id = m.id
     WHERE a.user_id = '$user_id'
-    AND a.status = 'pending'
+    AND a.status = 'กำลังรอ'
     ORDER BY j.created_at DESC";
 
-$result = mysqli_query($conn, $query);
-$assignment_count = mysqli_num_rows($result);
+$result_assignments = mysqli_query($conn, $query_assignments);
+$assignment_count = mysqli_num_rows($result_assignments);
 ?>
 
 <!DOCTYPE html>
@@ -40,7 +40,6 @@ $assignment_count = mysqli_num_rows($result);
     <title>งานที่ได้รับ</title>
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
-    <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -168,42 +167,37 @@ $assignment_count = mysqli_num_rows($result);
 
     <div id="main">
         <div class="container table-container">
-            <div class="search-container">
-                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="ค้นหางาน...">
-            </div>
-            <h1 class="mt-5"></h1>
-            <table class="table table-striped mt-3 id=" jobTable" ">
-        <thead>
-            <tr>
-                <th>ชื่องาน</th>
-                <th>รายละเอียดงาน</th>
-                <th>กำหนดส่ง</th>
-                <th>ผู้สั่งงาน</th>
-                <th>ส่งงาน</th>
-            </tr>
-        </thead>
-            <tbody id=" jobTable">
-                <?php
-                if ($assignment_count > 0) {
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        echo '<tr>';
-                        echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['job_description']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
-                        echo '<td>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</td>';
-                        echo '<td><button class="btn btn-success btn-lg" onclick="openSubmitModal(' . htmlspecialchars($row['job_id']) . ')">ส่งงาน</button></td>';
-                        echo '</tr>';
-                    }
-                } else {
-                    echo '<tr><td colspan="5" class="text-center">ไม่มีงานที่ได้รับ</td></tr>';
-                }
-
-                ?>
+            <h1 class="mt-5">งานที่ได้รับ</h1>
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>ชื่องาน</th>
+                        <th>รายละเอียดงาน</th>
+                        <th>กำหนดส่ง</th>
+                        <th>ผู้สั่งงาน</th>
+                        <th> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($assignment_count > 0) : ?>
+                        <?php while ($row = mysqli_fetch_assoc($result_assignments)) : ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['job_title']); ?></td>
+                                <td><?php echo htmlspecialchars($row['job_description']); ?></td>
+                                <td><?php echo htmlspecialchars($row['due_datetime']); ?></td>
+                                <td><?php echo htmlspecialchars($row['supervisor_firstname']) . " " . htmlspecialchars($row['supervisor_lastname']); ?></td>
+                                <td><button class="btn btn-primary" onclick="openSubmitModal(<?= $row['assign_id']; ?>)">ส่งงาน</button></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else : ?>
+                        <tr>
+                            <td colspan="4" class="text-center">ไม่มีงานที่ได้รับ</td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
-
     <!-- Modal for submitting assignment -->
     <div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -219,7 +213,7 @@ $assignment_count = mysqli_num_rows($result);
         </div>
     </div>
 
-    <script src="../js/search_nameJobs.js"></script>
+    <script src="../js/searchjobs.js"></script>
     <script src="../js/sidebar.js"></script>
 </body>
 
