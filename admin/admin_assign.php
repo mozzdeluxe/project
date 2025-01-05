@@ -25,52 +25,27 @@ $user_result = mysqli_query($conn, $user_query);
 
 // ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // รับข้อมูลจากฟอร์ม
-    $user_ids = json_decode($_POST['user_ids']); // รับ ID ผู้ใช้งานเป็น array
-    $job_title = mysqli_real_escape_string($conn, $_POST['job_title']);
-    $job_description = mysqli_real_escape_string($conn, $_POST['job_description']);
-    $due_date = mysqli_real_escape_string($conn, $_POST['due_datetime']);
+    // ตรวจสอบข้อมูลจากฟอร์ม
+    $job_title = isset($_POST['job_title']) ? mysqli_real_escape_string($conn, $_POST['job_title']) : null;
+    $job_description = isset($_POST['job_description']) ? mysqli_real_escape_string($conn, $_POST['job_description']) : null;
+    $due_date = isset($_POST['due_datetime']) ? mysqli_real_escape_string($conn, $_POST['due_datetime']) : null;
     $job_level = mysqli_real_escape_string($conn, $_POST['job_level']); // รับค่าระดับงาน
 
-    // ตรวจสอบว่ามีข้อมูลในฟอร์มครบถ้วนหรือไม่
-    if (empty($job_title) || empty($job_description) || empty($due_date) || empty($job_level)) {
-        die('กรุณากรอกข้อมูลทั้งหมด');
-    }
-
-    // ตรวจสอบการอัปโหลดไฟล์
-    $file_name = '';
-    if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
-        $file = $_FILES['file'];
-        $upload_directory = '../upload/';
-        $file_name = uniqid() . '_' . basename($file['name']); // ป้องกันชื่อซ้ำ
-        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-        // ตรวจสอบประเภทไฟล์
-        if (!in_array($file_extension, ['pdf', 'doc', 'docx', 'xlsx'])) {
-            die('โปรดอัปโหลดไฟล์ PDF, DOC, หรือ XLSX เท่านั้น');
-        }
-
-        // ตรวจสอบว่ามีการสร้างโฟลเดอร์อัปโหลดหรือไม่
-        if (!is_dir($upload_directory)) {
-            mkdir($upload_directory, 0777, true);
-        }
-
-        // อัปโหลดไฟล์
-        if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
-            die('ไม่สามารถอัปโหลดไฟล์ได้');
-        }
+    // ตรวจสอบว่าข้อมูลสำคัญครบถ้วน
+    if (!$job_title || !$job_description || !$due_date) {
+        die('กรุณากรอกข้อมูลให้ครบถ้วน');
     }
 
     // เพิ่มข้อมูลลงตาราง jobs
     $insert_job_query = "INSERT INTO jobs (supervisor_id, job_title, job_description, due_datetime, jobs_file, job_level) 
-    VALUES (?, ?, ?, ?, ?, ?)";
+                         VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($insert_job_query);
 
     if (!$stmt) {
         die('Prepare failed for jobs: ' . $conn->error);
     }
 
-    // Bind parameters สำหรับ jobs
+    $file_name = ''; // ไฟล์จะอัปโหลดในขั้นตอนถัดไป
     $stmt->bind_param("isssss", $user_id, $job_title, $job_description, $due_date, $file_name, $job_level);
 
     // Execute การเพิ่มข้อมูล jobs
@@ -81,20 +56,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // รับ job_id ที่ถูกสร้างขึ้นล่าสุด
     $job_id = $conn->insert_id;
 
-    // เพิ่มข้อมูลลงตาราง assignments สำหรับพนักงานแต่ละคน
+    // (ส่วนของการอัปโหลดไฟล์และการเพิ่ม assignments อยู่ด้านล่าง)
+
+    // ตรวจสอบการอัปโหลดไฟล์
+    if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
+        $file = $_FILES['file'];
+        $upload_directory = '../upload/';
+        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if (!in_array($file_extension, ['pdf', 'doc', 'xlsx'])) {
+            die('โปรดอัปโหลดไฟล์ PDF, DOC, หรือ XLSX เท่านั้น');
+        }
+
+        if (!is_dir($upload_directory)) {
+            mkdir($upload_directory, 0777, true);
+        }
+
+        // ใช้ job_id และ user_id ในชื่อไฟล์
+        $file_name = "job{$job_id}_user{$user_id}.{$file_extension}";
+
+        if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
+            die('ไม่สามารถอัปโหลดไฟล์ได้');
+        }
+
+        // อัปเดตไฟล์ในตาราง jobs
+        $update_job_query = "UPDATE jobs SET jobs_file = ? WHERE job_id = ?";
+        $stmt = $conn->prepare($update_job_query);
+
+        if (!$stmt) {
+            die('Prepare failed for updating jobs: ' . $conn->error);
+        }
+
+        $stmt->bind_param("si", $file_name, $job_id);
+
+        if (!$stmt->execute()) {
+            die('Error updating job: ' . $stmt->error);
+        }
+    }
+
+    // เพิ่ม assignments สำหรับพนักงาน
+    $user_ids = json_decode($_POST['user_ids']);
     foreach ($user_ids as $assigned_user_id) {
         $insert_assignment_query = "INSERT INTO assignments (job_id, user_id, status, file_path) 
-                    VALUES (?, ?, 'กำลังรอ', ?)";
+                                    VALUES (?, ?, 'กำลังรอ', ?)";
         $stmt = $conn->prepare($insert_assignment_query);
 
         if (!$stmt) {
             die('Prepare failed for assignments: ' . $conn->error);
         }
 
-        // Bind parameters สำหรับ assignments
         $stmt->bind_param("iis", $job_id, $assigned_user_id, $file_name);
 
-        // Execute การเพิ่มข้อมูล assignments
         if (!$stmt->execute()) {
             die('Error inserting assignment: ' . $stmt->error);
         }
@@ -103,27 +115,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // หลังจากบันทึกข้อมูลเสร็จสิ้น
     header("Location: ./admin_view_assignments.php");
     exit();
+
+
+    // ดึงข้อมูลงานที่เคยสั่งทั้งหมด
+    $assignments_query = "
+        SELECT a.assign_id, a.job_id, a.user_id, a.status, a.file_path, 
+            j.job_title, j.job_description, j.due_datetime
+        FROM assignments a
+        JOIN jobs j ON a.job_id = j.job_id
+        WHERE j.supervisor_id = ?";
+    $stmt = $conn->prepare($assignments_query);
+
+    if (!$stmt) {
+        die('Prepare failed for assignments: ' . $conn->error);
+    }
+
+    // Bind parameter สำหรับ user_id (supervisor_id)
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $assignments_result = $stmt->get_result();
 }
-
-// ดึงข้อมูลงานที่เคยสั่งทั้งหมด
-$assignments_query = "
-SELECT a.assign_id, a.job_id, a.user_id, a.status, a.file_path, 
-       j.job_title, j.job_description, j.due_datetime, j.job_level
-FROM assignments a
-JOIN jobs j ON a.job_id = j.job_id
-WHERE j.supervisor_id = ?
-";
-$stmt = $conn->prepare($assignments_query);
-
-if (!$stmt) {
-    die('Prepare failed for assignments: ' . $conn->error);
-}
-
-// Bind parameter สำหรับ user_id (supervisor_id)
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$assignments_result = $stmt->get_result();
-
 ?>
 
 
@@ -434,10 +445,12 @@ $assignments_result = $stmt->get_result();
                     <div class="mb-3">
                         <label for="job_level" class="form-label">ระดับงาน</label>
                         <select name="job_level" class="form-control" id="job_level" required>
-                            <option value="ต่ำ">ปกติ</option>
-                            <option value="กลาง">ด่วน</option>
+                            <option value="ปกติ">ปกติ</option>
+                            <option value="ด่วน">ด่วน</option>
+                            <option value="ด่วนมาก">ด่วนมาก</option>
                         </select>
                     </div>
+
 
                     <input type="hidden" name="user_ids" id="user_ids" value="">
 

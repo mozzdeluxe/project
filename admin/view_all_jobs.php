@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 // ตรวจสอบการเข้าสู่ระบบ
 if (!isset($_SESSION['user_id'])) {
@@ -26,20 +26,24 @@ $user = $result->fetch_assoc();
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
 // ดึงข้อมูลงานทั้งหมดจากฐานข้อมูล
-$query = "SELECT j.job_id, m.user_id, j.job_title, j.job_description, j.created_at, j.jobs_file, m.firstname, m.lastname
+// ดึงข้อมูลงานทั้งหมดจากฐานข้อมูล
+$query = "SELECT j.job_id, j.supervisor_id, j.job_title, j.job_level, j.job_description, j.due_datetime, j.created_at, j.jobs_file, m.firstname, m.lastname
           FROM jobs j
-          JOIN mable m ON j.user_id = m.user_id
+          JOIN mable m ON j.supervisor_id = m.user_id
           ORDER BY j.created_at DESC";
+
 $stmt = $conn->prepare($query);
 $stmt->execute();
-$result = $stmt->get_result();
+$result = $stmt->get_result();  // ดึงผลลัพธ์จาก prepared statement
 
 // ฟังก์ชันสำหรับการส่งออกข้อมูลงานเป็น CSV
 if (isset($_POST['export_jobs'])) {
     exportJobs($result);
 }
 
-function formatThaiDate($date) {
+
+function formatThaiDate($date)
+{
     $thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     $day = date('d', strtotime($date));
     $month = $thaiMonths[date('n', strtotime($date)) - 1];
@@ -47,47 +51,56 @@ function formatThaiDate($date) {
     return "$day $month $year";
 }
 
-function exportJobs($result) {
-    // Generate CSV file
+function exportJobs($result)
+{
+    // ตรวจสอบว่า result มีข้อมูลหรือไม่
+    if ($result->num_rows == 0) {
+        echo "ไม่พบข้อมูลงานที่จะส่งออก";
+        exit();
+    }
+
+    // สร้างชื่อไฟล์ CSV
     $filename = "ข้อมูลงานพนักงาน_" . formatThaiDate(date("Y-m-d H:i:s")) . ".csv";
 
-    // Set headers for CSV file download
+    // กำหนด header สำหรับการดาวน์โหลดไฟล์ CSV
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
 
     $output = fopen('php://output', 'w');
-    // Add BOM to fix UTF-8 in Excel
+    // เพิ่ม BOM เพื่อแก้ปัญหาการแสดงผลใน Excel
     fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-    // Headers for additional information in Thai
+    // เพิ่ม header สำหรับไฟล์ CSV
     fputcsv($output, ["รายการงานพนักงาน"]);
     fputcsv($output, ["วันที่ส่งออกข้อมูล", formatThaiDate(date("Y-m-d H:i:s"))]);
     fputcsv($output, []);
 
-    // Headers for job data in Thai
-    fputcsv($output, ['รหัสพนักงาน', 'ชื่อ-นามสกุล', 'ชื่องาน', 'ตำแหน่งงาน', 'ประเภทงาน', 'รายละเอียดเพิ่มเติม', 'เวลาที่ส่งงาน']);
+    // เพิ่มหัวข้อของข้อมูลที่เราต้องการส่งออก
+    fputcsv($output, ['รหัสงาน', 'ชื่อผู้สั่งงาน', 'ชื่องาน', 'ระดับงาน', 'รายละเอียดงาน', 'วันครบกำหนด', 'เวลาที่สร้างงาน']);
 
-    // Fetch and output job data
+    // Fetch และเขียนข้อมูลจาก result
     while ($row = $result->fetch_assoc()) {
         fputcsv($output, [
-            htmlspecialchars($row['user_id']),
+            htmlspecialchars($row['job_id']),
             htmlspecialchars($row['firstname']) . " " . htmlspecialchars($row['lastname']),
             htmlspecialchars($row['job_title']),
-            htmlspecialchars($row['job_type']),
-            htmlspecialchars($row['job_subtype']),
+            htmlspecialchars($row['job_level']),
             htmlspecialchars($row['job_description']),
-            htmlspecialchars($row['created_at'])
+            formatThaiDate($row['due_datetime']),
+            formatThaiDate($row['created_at'])
         ]);
     }
 
-    // Close output stream
+    // ปิดการเชื่อมต่อ output
     fclose($output);
     exit();
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,35 +119,48 @@ function exportJobs($result) {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
         }
-       .table-container {
+
+        .table-container {
             overflow-x: auto;
             margin-top: 20px;
         }
-        .table th, .table td {
+
+        .table th,
+        .table td {
             padding: 15px;
             text-align: center;
             vertical-align: middle;
-            font-size: 18px; /* เพิ่มขนาดฟอนต์ */
+            font-size: 18px;
+            /* เพิ่มขนาดฟอนต์ */
         }
+
         .table th {
-            background-color: #21a42e; /* Header background color */
+            background-color: #21a42e;
+            /* Header background color */
             color: white;
         }
+
         .table td {
-            background-color: #f8f9fa; /* Row background color */
+            background-color: #f8f9fa;
+            /* Row background color */
         }
+
         .table td a {
-            color: #FFFFFF; /* Link color */
+            color: #FFFFFF;
+            /* Link color */
             text-decoration: none;
         }
+
         .table-responsive {
             -webkit-overflow-scrolling: touch;
         }
+
         .search-container {
             margin-bottom: 20px;
             display: flex;
             justify-content: flex-end;
         }
+
         .search-container input {
             width: 300px;
             font-size: 18px;
@@ -142,22 +168,29 @@ function exportJobs($result) {
             border: 1px solid #ccc;
             border-radius: 10px;
         }
+
         .btn {
-            font-size: 20px; /* เพิ่มขนาดฟอนต์ของปุ่ม */
+            font-size: 20px;
+            /* เพิ่มขนาดฟอนต์ของปุ่ม */
         }
+
         .btn-detal {
             font-size: 20px;
             background-color: #1dc02b;
             color: #fff;
         }
+
         .btn-detal:hover {
             background: #0a840a;
             color: #fff;
         }
+
         .btn-detal:active {
-            background: #229224 !important; /* สีปุ่มเมื่อกด */
+            background: #229224 !important;
+            /* สีปุ่มเมื่อกด */
             color: #fff !important;
         }
+
         /* เพิ่มการสนับสนุนสำหรับ text-size-adjust */
         body {
             -webkit-text-size-adjust: 100%;
@@ -172,13 +205,16 @@ function exportJobs($result) {
             text-align: -webkit-match-parent;
             text-align: match-parent;
         }
+
         #main {
-            margin-left: 0; /* Start with main content full width */
+            margin-left: 0;
+            /* Start with main content full width */
             transition: margin-left .5s;
             padding: 16px;
         }
     </style>
 </head>
+
 <body>
     <div class="navbar navbar-expand-lg navbar-dark ">
         <button class="openbtn" id="menuButton" onclick="toggleNav()">☰</button>
@@ -193,17 +229,17 @@ function exportJobs($result) {
                 <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
             </div>
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
-            </div>
-                <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
-                <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
-                <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
-                <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
-                <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-                <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
-                <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-                <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a> 
-            </div>
+        </div>
+        <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
+        <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
+        <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
+        <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
+        <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
+        <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
+        <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
+        <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
+        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
+    </div>
 
     <div id="main">
         <div class="container table-container">
@@ -214,39 +250,40 @@ function exportJobs($result) {
                 <button type="submit" name="export_jobs" class="btn btn-primary">ส่งออกเป็นรายงาน</button>
             </form>
             <table class="table table-striped mt-3" id="jobTable">
-                <thead >
+                <thead>
                     <tr>
-                        <th scope="col">รหัสพนักงาน</th>
-                        <th scope="col">ชื่อ-นามสกุล</th>
+                        <th scope="col">รหัสงาน</th>
+                        <th scope="col">ชื่อผู้สั่งงาน</th>
                         <th scope="col">ชื่องาน</th>
-                        <th scope="col">ตำแหน่งงาน</th>
-                        <th scope="col">ประเภทงาน</th>
-                        <th scope="col">รายละเอียดเพิ่มเติม</th>
-                        <th scope="col">เวลาที่ส่งงาน</th>
+                        <th scope="col">ระดับงาน</th>
+                        <th scope="col">รายละเอียดงาน</th>
+                        <th scope="col">วันครบกำหนด</th>
+                        <th scope="col">เวลาที่สร้างงาน</th>
                         <th scope="col"></th>
                     </tr>
                 </thead>
                 <tbody id="jobTable">
                     <?php
-                        if (mysqli_num_rows($result) > 0) {
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                echo '<tr>';
-                                echo '<td>' . htmlspecialchars($row['user_id']) . '</td>';
-                                echo '<td>' . htmlspecialchars($row['firstname']) ." ". htmlspecialchars($row['lastname']) . '</td>';
-                                echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
-                                echo '<td>' . htmlspecialchars($row['job_type']) . '</td>';
-                                echo '<td>' . htmlspecialchars($row['job_subtype']) . '</td>';
-                                echo '<td><button class="btn btn-detal btn-lg view-details" data-job-id="' . htmlspecialchars($row['job_id']) . '" class="btn btn-info btn-lg">รายละเอียดเพิ่มเติม</a></td>';
-                                echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
-                                echo '<td><button class="btn btn-danger btn-lg delete-job" data-job-id="' . htmlspecialchars($row['job_id']) . '">ยกเลิก</button></td>';
-                                echo '</tr>';
-                            }
-                        } else {
-                            echo '<tr><td colspan="8" class="text-center">ไม่พบงาน</td></tr>';
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {  // ใช้ fetch_assoc เพื่อดึงข้อมูลจาก result
+                            echo '<tr>';
+                            echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['firstname']) . " " . htmlspecialchars($row['lastname']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['job_level']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['job_description']) . '</td>';
+                            echo '<td>' . formatThaiDate($row['due_datetime']) . '</td>';
+                            echo '<td>' . formatThaiDate($row['created_at']) . '</td>';
+                            echo '<td><button class="btn btn-danger btn-lg delete-job" data-job-id="' . htmlspecialchars($row['job_id']) . '">ยกเลิก</button></td>';
+                            echo '</tr>';
                         }
+                    } else {
+                        echo '<tr><td colspan="8" class="text-center">ไม่พบงาน</td></tr>';
+                    }
                     ?>
                 </tbody>
             </table>
+
         </div>
     </div>
 
@@ -274,7 +311,7 @@ function exportJobs($result) {
             document.querySelectorAll('.view-details').forEach(button => {
                 button.addEventListener('click', function() {
                     const jobId = this.getAttribute('data-job-id');
-                    
+
                     fetch(`../assignment_user.php?id=${jobId}`)
                         .then(response => response.text())
                         .then(data => {
@@ -293,6 +330,7 @@ function exportJobs($result) {
     <script src="../js/delete.js"></script>
     <script src="../js/searchjob.js"></script>
 </body>
+
 </html>
 
 <?php
