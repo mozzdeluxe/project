@@ -51,9 +51,9 @@ $stmt = $conn->prepare("
         j.supervisor_id, 
         j.job_title, 
         j.job_description, 
-        j.due_datetime, 
+        DATE_FORMAT(j.due_datetime, '%d-%m-%Y %H:%i') AS due_datetime,  -- แก้ไขรูปแบบวันที่
+        DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at,  -- แก้ไขรูปแบบวันที่
         j.jobs_file, 
-        j.created_at, 
         j.job_level,  -- เพิ่ม job_level
         a.user_id,
         a.status, 
@@ -72,6 +72,7 @@ $stmt = $conn->prepare("
     ORDER BY 
         $orderBy
 ");
+
 
 // ผูกค่า `supervisor_id`
 $stmt->bind_param("i", $user_id);
