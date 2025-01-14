@@ -219,6 +219,45 @@ $result = $stmt->get_result();
             background-color: #f1f1f1;
         }
 
+        .job-detail-container {
+            display: flex;
+            justify-content: space-between;
+            /* แยกฝั่งซ้ายและขวา */
+            gap: 20px;
+            /* ระยะห่างระหว่างสองฝั่ง */
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        .job-detail-left,
+        .job-detail-right {
+            flex: 1;
+            /* ให้ทั้งสองฝั่งมีขนาดเท่ากัน */
+            display: flex;
+            flex-direction: column;
+            /* แสดงข้อมูลในแนวตั้ง */
+            gap: 10px;
+            /* ระยะห่างระหว่างแต่ละบรรทัด */
+        }
+
+        .job-detail-container div strong {
+            display: inline-block;
+            width: 150px;
+            /* กำหนดความกว้างของข้อความหัวข้อ */
+        }
+
+        .job-detail-container a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .job-detail-container a:hover {
+            text-decoration: underline;
+        }
+
+
         .btn-info {
             background-color: rgb(90, 184, 102);
             border-color: rgb(90, 184, 102);
@@ -407,40 +446,28 @@ $result = $stmt->get_result();
 
                             // แถวซ่อนรายละเอียด (จะแสดงเมื่อคลิก "รายละเอียดเพิ่มเติม")
                             echo '<tr class="job-details" style="display:none;">';
-                            echo '<td colspan="6">';  // เพิ่ม colspan เป็น 6 เพราะมีคอลัมน์ใหม่
-                            echo '<div class="job-detail-grid">';
+                            echo '<td colspan="6">'; // เพิ่ม colspan เป็น 6 เพราะมีคอลัมน์ใหม่
+                            echo '<div class="job-detail-container">';
 
-                            // ลำดับ
+                            // ฝั่งซ้าย
+                            echo '<div class="job-detail-left">';
                             echo '<div><strong>ลำดับ: </strong>' . htmlspecialchars($row['job_id']) . '</div>';
-
-                            // เพิ่มชื่อเอกสาร (job_title) ในรายละเอียด
                             echo '<div><strong>ชื่อเอกสาร: </strong>' . htmlspecialchars($row['job_title']) . '</div>';
-
-                            // รหัสพนักงาน
                             echo '<div><strong>รหัสพนักงาน: </strong>' . htmlspecialchars($row['user_id']) . '</div>';
-
-                            // ชื่อ-นามสกุล
                             echo '<div><strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</div>';
-
-                            // ไฟล์
                             echo '<div><strong>ไฟล์: </strong>' . (!empty($row['jobs_file']) ? '<a href="../files/' . htmlspecialchars($row['jobs_file']) . '" target="_blank">ดูไฟล์</a>' : 'ไม่มีไฟล์') . '</div>';
+                            echo '</div>';
 
-                            // วันที่สั่งงาน
+                            // ฝั่งขวา
+                            echo '<div class="job-detail-right">';
                             echo '<div><strong>วันที่สั่งงาน: </strong>' . htmlspecialchars($row['created_at']) . '</div>';
-
-                            // กำหนดส่ง
                             echo '<div><strong>กำหนดส่ง: </strong>' . htmlspecialchars($row['due_datetime']) . '</div>';
-
-                            // ระดับงาน
                             echo '<div><strong>ระดับงาน: </strong>' . htmlspecialchars($row['job_level']) . '</div>';
-
-                            // สถานะ
                             echo '<div><strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($row['status']) . '</span></div>';
-
-                            // รายละเอียดงาน
                             echo '<div><strong>รายละเอียดงาน: </strong>' . htmlspecialchars($row['job_description']) . '</div>';
+                            echo '</div>';
 
-                            echo '</div>'; // ปิด div job-detail-grid
+                            echo '</div>'; // ปิด div job-detail-container
                             echo '</td>';
                             echo '</tr>';
                         }
