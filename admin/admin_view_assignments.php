@@ -408,7 +408,9 @@ $result = $stmt->get_result();
             <table class="table table-striped mt-3" id="jobTable">
                 <thead class="table-dark">
                     <tr>
+                        <th scope="col">ลำดับ</th>
                         <th scope="col">ชื่องาน</th>
+                        <th scope="col">ไฟล์</th>
                         <th scope="col">วันที่สั่งงาน</th> <!-- เพิ่มคอลัมน์ วันที่สั่งงาน -->
                         <th scope="col">กำหนดส่ง</th> <!-- เพิ่มคอลัมน์ กำหนดส่ง -->
                         <th scope="col">ระดับงาน</th> <!-- เพิ่มคอลัมน์ ระดับงาน -->
@@ -436,7 +438,9 @@ $result = $stmt->get_result();
 
                             // แสดงแค่ชื่องาน, วันที่สั่งงาน, กำหนดส่ง, ระดับงาน และปุ่มดูเพิ่มเติม
                             echo '<tr>';
+                            echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['jobs_file']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['created_at']) . '</td>'; // แสดง วันที่สั่งงาน
                             echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>'; // แสดง กำหนดส่ง
                             echo '<td>' . htmlspecialchars($row['job_level']) . '</td>'; // แสดง ระดับงาน
@@ -446,23 +450,17 @@ $result = $stmt->get_result();
 
                             // แถวซ่อนรายละเอียด (จะแสดงเมื่อคลิก "รายละเอียดเพิ่มเติม")
                             echo '<tr class="job-details" style="display:none;">';
-                            echo '<td colspan="6">'; // เพิ่ม colspan เป็น 6 เพราะมีคอลัมน์ใหม่
+                            echo '<td colspan="8">'; // เพิ่ม colspan เป็น 6 เพราะมีคอลัมน์ใหม่
                             echo '<div class="job-detail-container">';
 
                             // ฝั่งซ้าย
                             echo '<div class="job-detail-left">';
-                            echo '<div><strong>ลำดับ: </strong>' . htmlspecialchars($row['job_id']) . '</div>';
-                            echo '<div><strong>ชื่อเอกสาร: </strong>' . htmlspecialchars($row['job_title']) . '</div>';
                             echo '<div><strong>รหัสพนักงาน: </strong>' . htmlspecialchars($row['user_id']) . '</div>';
                             echo '<div><strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</div>';
-                            echo '<div><strong>ไฟล์: </strong>' . (!empty($row['jobs_file']) ? '<a href="../files/' . htmlspecialchars($row['jobs_file']) . '" target="_blank">ดูไฟล์</a>' : 'ไม่มีไฟล์') . '</div>';
                             echo '</div>';
 
                             // ฝั่งขวา
                             echo '<div class="job-detail-right">';
-                            echo '<div><strong>วันที่สั่งงาน: </strong>' . htmlspecialchars($row['created_at']) . '</div>';
-                            echo '<div><strong>กำหนดส่ง: </strong>' . htmlspecialchars($row['due_datetime']) . '</div>';
-                            echo '<div><strong>ระดับงาน: </strong>' . htmlspecialchars($row['job_level']) . '</div>';
                             echo '<div><strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($row['status']) . '</span></div>';
                             echo '<div><strong>รายละเอียดงาน: </strong>' . htmlspecialchars($row['job_description']) . '</div>';
                             echo '</div>';

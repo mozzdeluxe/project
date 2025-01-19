@@ -144,52 +144,52 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             </h1>
         </div>
 
-        <hr style="border: 1px solid #02A664;">
-<div class="container-fluid"> <!-- เปลี่ยนจาก container เป็น container-fluid -->
-    <div class="row justify-content-center gy-4 g-0"> <!-- ลบระยะห่างของ row -->
-        <!-- การ์ด งานที่ส่งแล้ว -->
-        <div class="col-lg-7 col-md-10 col-sm-12 mb-4">
-            <div class="card-container border rounded shadow-sm position-relative" 
-                 style="background-color: #76BC43; height: 100%; margin: auto;"> <!-- ลบ max-width -->
-                <div class="p-4 d-flex flex-column position-static">
-                    <h3 class="mb-3" style="color: #e8f0fe;">
-                        <i class="fa-solid fa-check-circle" style="color: #ffffff;"></i>
-                        งานที่ส่งแล้ว
-                    </h3>
-                    <hr style="border: 1px solid #ffffff;">
-                    <p class="card-text mb-3" style="color:#e8f0fe;">
-                        <b>จำนวนงานทั้งหมด: </b><span><?php echo $totalAssignments; ?></span>
-                    </p>
-                    <a href="user_completed.php" class="icon-link gap-1 icon-link-hover stretched-link mt-auto" style="color:#ffffff;">
-                        ดูเพิ่มเติม
-                        <i class="fa-solid fa-arrow-right" style="color:#ffffff;"></i>
-                    </a>
+        <hr style="border: 1px solidrgb(0, 0, 0);">
+        <div class="container-fluid"> <!-- เปลี่ยนจาก container เป็น container-fluid -->
+            <div class="row justify-content-center gy-4 g-0"> <!-- ลบระยะห่างของ row -->
+                <!-- การ์ด งานที่ส่งแล้ว -->
+                <div class="col-lg-7 col-md-10 col-sm-12 mb-4">
+                    <div class="card-container border rounded shadow-sm position-relative"
+                        style="background-color:rgb(64, 84, 49); height: 100%; margin: auto;"> <!-- ลบ max-width -->
+                        <div class="p-4 d-flex flex-column position-static">
+                            <h3 class="mb-3" style="color: #e8f0fe;">
+                                <i class="fa-solid fa-check-circle" style="color: #ffffff;"></i>
+                                งานที่ส่งแล้ว
+                            </h3>
+                            <hr style="border: 1px solid #ffffff;">
+                            <p class="card-text mb-3" style="color:#e8f0fe;">
+                                <b>จำนวนงานทั้งหมด: </b><span><?php echo $totalAssignments; ?></span>
+                            </p>
+                            <a href="user_completed.php" class="icon-link gap-1 icon-link-hover stretched-link mt-auto" style="color:#ffffff;">
+                                ดูเพิ่มเติม
+                                <i class="fa-solid fa-arrow-right" style="color:#ffffff;"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- การ์ด งานที่ได้รับมอบหมาย -->
-        <div class="col-lg-7 col-md-10 col-sm-12 mb-4">
-            <div class="card-container border rounded shadow-sm position-relative" 
-                 style="background-color: #92CA68; height: 100%; margin: auto;"> <!-- ลบ max-width -->
-                <div class="p-4 d-flex flex-column position-static">
-                    <h3 class="mb-3" style="color: #ffffff;">
-                        <i class="fa-solid fa-tasks" style="color: #ffffff;"></i>
-                        งานที่ได้รับมอบหมาย
-                    </h3>
-                    <hr style="border: 1px solid #ffffff;">
-                    <p class="card-text mb-3" style="color: #ffffff;">
-                        <b>จำนวนงานทั้งหมด: </b><span><?php echo $pendingAssignments; ?></span>
-                    </p>
-                    <a href="user_inbox.php" class="icon-link gap-1 icon-link-hover stretched-link mt-auto" style="color:#ffffff;">
-                        ดูเพิ่มเติม
-                        <i class="fa-solid fa-arrow-right" style="color:#ffffff;"></i>
-                    </a>
+                <!-- การ์ด งานที่ได้รับมอบหมาย -->
+                <div class="col-lg-7 col-md-10 col-sm-12 mb-4">
+                    <div class="card-container border rounded shadow-sm position-relative"
+                        style="background-color:rgb(109, 139, 84); height: 100%; margin: auto;"> <!-- ลบ max-width -->
+                        <div class="p-4 d-flex flex-column position-static">
+                            <h3 class="mb-3" style="color: #ffffff;">
+                                <i class="fa-solid fa-tasks" style="color: #ffffff;"></i>
+                                งานที่ได้รับมอบหมาย
+                            </h3>
+                            <hr style="border: 1px solid #ffffff;">
+                            <p class="card-text mb-3" style="color: #ffffff;">
+                                <b>จำนวนงานทั้งหมด: </b><span><?php echo $pendingAssignments; ?></span>
+                            </p>
+                            <a href="user_inbox.php" class="icon-link gap-1 icon-link-hover stretched-link mt-auto" style="color:#ffffff;">
+                                ดูเพิ่มเติม
+                                <i class="fa-solid fa-arrow-right" style="color:#ffffff;"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
 
 
