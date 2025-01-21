@@ -51,15 +51,11 @@ $stmt = $conn->prepare("
         j.supervisor_id, 
         j.job_title, 
         j.job_description, 
-        DATE_FORMAT(j.due_datetime, '%d-%m-%Y %H:%i') AS due_datetime,  -- แก้ไขรูปแบบวันที่
-        DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at,  -- แก้ไขรูปแบบวันที่
+        DATE_FORMAT(j.due_datetime, '%d-%m-%Y %H:%i') AS due_datetime, 
+        DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at, 
         j.jobs_file, 
-        j.job_level,  -- เพิ่ม job_level
-        a.user_id,
-        a.status, 
-        m.firstname, 
-        m.lastname, 
-        m.img_path
+        j.job_level,
+        GROUP_CONCAT(CONCAT(m.firstname, ' ', m.lastname, ' (สถานะ: ', a.status, ')') SEPARATOR ', ') AS employee_details
     FROM 
         jobs j
     LEFT JOIN 
@@ -69,9 +65,12 @@ $stmt = $conn->prepare("
     WHERE 
         j.supervisor_id = ?
         $yearCondition
+    GROUP BY 
+        j.job_id
     ORDER BY 
         $orderBy
 ");
+
 
 
 // ผูกค่า `supervisor_id`
@@ -91,265 +90,69 @@ $result = $stmt->get_result();
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
+    <link href="../css/viewAssignment.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .container {
-            margin-top: 20px;
-            overflow-x: auto;
-            border-radius: 25px;
-            padding: 20px;
-            background-color: rgb(71, 170, 81);
-            /* สีพื้นหลังเขียว */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-        }
-
-        .table th,
-        .table td {
-            padding: 13px;
-            text-align: center;
-            vertical-align: middle;
-            font-size: 16px;
-        }
-
-        .table th {
-            background-color: rgb(48, 114, 55);
-            color: white;
-        }
-
-        .table td {
-            background-color: #f8f9fa;
-        }
-
-        .back-button,
-        .job-button {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .btn {
-            font-size: 16px;
-            border-radius: 10px;
-            /* ขอบมนๆ สำหรับปุ่ม */
-        }
-
-        .btn-detal {
-            font-size: 16px;
-            background-color: #1dc02b;
-            color: #fff;
-            border-radius: 10px;
-            /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
-        }
-
-        .btn-detal:hover {
-            background: #0a840a;
-            color: #fff;
-        }
-
-        .employee-img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .search-container {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .search-container input {
-            width: 300px;
-            font-size: 18px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            /* ขอบมนๆ สำหรับช่องค้นหา */
-            background-color: #fff;
-            transition: border-color 0.3s ease-in-out;
-        }
-
-        .search-container input:focus {
-            outline: none;
-            border-color: #1dc02b;
-            /* เปลี่ยนสีกรอบเมื่อช่องค้นหามีการคลิก */
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-            /* เพิ่มเงาเขียว */
-        }
-
-        #main {
-            margin-left: 0;
-            transition: margin-left .5s;
-            padding: 16px;
-        }
-
-        .status {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .status.text-danger {
-            color: red;
-        }
-
-        .status.text-warning {
-            color: orange;
-        }
-
-        .status.text-success {
-            color: green;
-        }
-
-        .job-details {
-            display: none;
-        }
-
-        .job-details td {
-            text-align: left;
-            padding-left: 20px;
-            background-color: #f1f1f1;
-        }
-
-        .job-detail-container {
-            display: flex;
-            justify-content: space-between;
-            /* แยกฝั่งซ้ายและขวา */
-            gap: 20px;
-            /* ระยะห่างระหว่างสองฝั่ง */
-            padding: 15px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }
-
-        .job-detail-left,
-        .job-detail-right {
-            flex: 1;
-            /* ให้ทั้งสองฝั่งมีขนาดเท่ากัน */
-            display: flex;
-            flex-direction: column;
-            /* แสดงข้อมูลในแนวตั้ง */
-            gap: 10px;
-            /* ระยะห่างระหว่างแต่ละบรรทัด */
-        }
-
-        .job-detail-container div strong {
-            display: inline-block;
-            width: 150px;
-            /* กำหนดความกว้างของข้อความหัวข้อ */
-        }
-
-        .job-detail-container a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .job-detail-container a:hover {
-            text-decoration: underline;
-        }
-
-
-        .btn-info {
-            background-color: rgb(90, 184, 102);
-            border-color: rgb(90, 184, 102);
-            border-radius: 10px;
-            /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-
-        .btn-info:hover {
-            background-color: rgb(90, 184, 102);
-            border-color: rgb(90, 184, 102);
-        }
-
-        .btn-primary {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-            border-radius: 10px;
-            /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-
-        .btn-primary:hover {
-            background-color: #c82333;
-            border-color: #c82333;
-        }
-
-        .job-detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            padding: 10px;
-        }
-
-        .job-detail-grid div {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            /* ขอบมนๆ สำหรับรายละเอียดใน grid */
-        }
-
-        .job-detail-grid div:first-child {
-            border-top-left-radius: 10px;
-        }
-
-        .job-detail-grid div:last-child {
-            border-top-right-radius: 10px;
-        }
-
-        .job-detail-grid div:nth-child(odd) {
-            border-left: 2px solid #f1f1f1;
-        }
-
-        .job-detail-grid div:nth-child(even) {
-            border-right: 2px solid #f1f1f1;
-            background-color: #f9f9f9;
-        }
-
-        .job-detail-grid div img.employee-img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        /* เพิ่มขอบมนๆ ให้กับ select */
-        select {
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: border-color 0.3s ease-in-out;
-        }
-
-        /* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
-        select:focus {
-            outline: none;
-            border-color: #1dc02b;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-        }
-    </style>
 
 
 </head>
+<style>
+    .table th,
+    .table td {
+        padding: 13px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 16px;
+    }
+
+    .table th {
+        background-color: rgb(48, 114, 55);
+        color: white;
+    }
+
+    .table td {
+        background-color: #f8f9fa;
+    }
+
+    .back-button,
+    .job-button {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .btn {
+        font-size: 16px;
+        border-radius: 10px;
+        /* ขอบมนๆ สำหรับปุ่ม */
+    }
+
+    .btn-details {
+        font-size: 16px;
+        background-color: #1dc02b;
+        color: #fff;
+        border-radius: 10px;
+        /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
+    }
+
+    .btn-details:hover {
+        background: #0a840a;
+        color: #fff;
+    }
+
+
+    .btn-primary {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        border-radius: 10px;
+        /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+</style>
 
 <body>
     <div class="navbar navbar-expand-lg navbar-dark">
@@ -406,7 +209,7 @@ $result = $stmt->get_result();
 
             </div>
             <table class="table table-striped mt-3" id="jobTable">
-                <thead class="table-dark">
+                <thead>
                     <tr>
                         <th scope="col">ลำดับ</th>
                         <th scope="col">ชื่องาน</th>
@@ -422,58 +225,77 @@ $result = $stmt->get_result();
                     <?php
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
-                            $imgPath = !empty($row['img_path']) ? '../imgs/' . htmlspecialchars($row['img_path']) : '../imgs/default.jpg';
-                            $status_class = '';
-                            switch ($row['status']) {
-                                case 'ช้า':
-                                    $status_class = 'text-danger';
-                                    break;
-                                case 'เสร็จสิ้น':
-                                    $status_class = 'text-success';
-                                    break;
-                                case 'กำลังรอ':
-                                    $status_class = 'text-warning';
-                                    break;
-                            }
-
-                            // แสดงแค่ชื่องาน, วันที่สั่งงาน, กำหนดส่ง, ระดับงาน และปุ่มดูเพิ่มเติม
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['jobs_file']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['created_at']) . '</td>'; // แสดง วันที่สั่งงาน
-                            echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>'; // แสดง กำหนดส่ง
-                            echo '<td>' . htmlspecialchars($row['job_level']) . '</td>'; // แสดง ระดับงาน
-                            echo '<td><button class="btn btn-info btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                            echo '<td><a href="edit_job.php?job_id=' . htmlspecialchars($row['job_id']) . '" class="btn btn-primary btn-lg">แก้ไข</a></td>';
+                            echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
+                            echo '<td>' . htmlspecialchars($row['job_level']) . '</td>';
+                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
+                            echo '<td><a href="edit_job.php?job_id=' . htmlspecialchars($row['job_id']) . '" class="btn btn-danger btn-lg">แก้ไข</a></td>';
                             echo '</tr>';
 
-                            // แถวซ่อนรายละเอียด (จะแสดงเมื่อคลิก "รายละเอียดเพิ่มเติม")
+                            // เพิ่มแถวสำหรับแสดงรายละเอียดพนักงานในรูปแบบกริด
                             echo '<tr class="job-details" style="display:none;">';
-                            echo '<td colspan="8">'; // เพิ่ม colspan เป็น 6 เพราะมีคอลัมน์ใหม่
-                            echo '<div class="job-detail-container">';
+                            echo '<td colspan="8">';
+                            echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
-                            // ฝั่งซ้าย
-                            echo '<div class="job-detail-left">';
-                            echo '<div><strong>รหัสพนักงาน: </strong>' . htmlspecialchars($row['user_id']) . '</div>';
-                            echo '<div><strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']) . '</div>';
-                            echo '</div>';
+                            // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
+                            $subQuery = $conn->prepare("
+                SELECT 
+                    m.firstname, 
+                    m.lastname, 
+                    m.user_id, 
+                    a.status
+                FROM 
+                    assignments a 
+                LEFT JOIN 
+                    mable m ON a.user_id = m.id 
+                WHERE 
+                    a.job_id = ?
+            ");
+                            $subQuery->bind_param("i", $row['job_id']);
+                            $subQuery->execute();
+                            $subResult = $subQuery->get_result();
 
-                            // ฝั่งขวา
-                            echo '<div class="job-detail-right">';
-                            echo '<div><strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($row['status']) . '</span></div>';
-                            echo '<div><strong>รายละเอียดงาน: </strong>' . htmlspecialchars($row['job_description']) . '</div>';
-                            echo '</div>';
+                            if ($subResult->num_rows > 0) {
+                                while ($empRow = $subResult->fetch_assoc()) {
+                                    $status_class = '';
+                                    switch ($empRow['status']) {
+                                        case 'ช้า':
+                                            $status_class = 'text-danger';
+                                            break;
+                                        case 'เสร็จสิ้น':
+                                            $status_class = 'text-success';
+                                            break;
+                                        case 'กำลังรอ':
+                                            $status_class = 'text-warning';
+                                            break;
+                                    }
 
-                            echo '</div>'; // ปิด div job-detail-container
+                                    // แต่ละพนักงานแสดงในกล่อง (Grid Item)
+                                    echo '<div class="job-detail-grid">';
+                                    echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
+                                    echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
+                                    echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
+                                    echo '<strong>รายละเอียดงาน: </strong>' . htmlspecialchars($row['job_description']) . '<br>';
+                                    echo '</div>';
+                                }
+                            } else {
+                                echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';
+                            }
+
+                            echo '</div>'; // ปิด div grid-container
                             echo '</td>';
                             echo '</tr>';
                         }
                     } else {
-                        echo '<tr><td colspan="6" class="text-center">ไม่พบงานที่สั่ง</td></tr>'; // เปลี่ยนเป็น colspan="6" เพราะมีคอลัมน์ใหม่
+                        echo '<tr><td colspan="8" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
                     }
                     ?>
                 </tbody>
+
             </table>
         </div>
     </div>
