@@ -101,7 +101,7 @@ $assignment_count = mysqli_num_rows($result_assignments);
         .table th,
         .table td {
             padding: 13px;
-            text-align: center;
+            text-align: left;
             vertical-align: middle;
             font-size: 16px;
         }
@@ -251,6 +251,44 @@ $assignment_count = mysqli_num_rows($result_assignments);
             border-color: #1dc02b;
             box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
+
+        /* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
+        .btn-dl {
+            background-color: #adb5bd;
+            /* สีเทาอ่อนพื้นหลังปุ่ม */
+            color: #ffffff;
+            /* สีตัวอักษร */
+            border: 1px solid #adb5bd;
+            /* สีขอบปุ่ม */
+        }
+
+        /* กำหนดสีเมื่อปุ่มถูก hover */
+        .btn-dl:hover {
+            background-color: #868e96;
+            /* สีเทาอ่อนเข้มเมื่อ hover */
+            border-color: #868e96;
+            /* สีขอบเทาอ่อนเข้มเมื่อ hover */
+        }
+
+        /* กำหนดสีเมื่อปุ่มถูกคลิก */
+        .btn-dl:active {
+            background-color: #6c757d;
+            /* สีเทาเข้มเมื่อคลิก */
+            border-color: #6c757d;
+            /* สีขอบเทาเข้มเมื่อคลิก */
+        }
+
+        /* ปรับขนาดและระยะห่างของปุ่ม */
+        .btn-sm {
+            padding: 5px 10px;
+            /* ปรับขนาด padding */
+        }
+
+        /* ปรับระยะห่างของปุ่มจากข้อความ */
+        .ms-2 {
+            margin-left: 0.5rem;
+            /* ระยะห่างซ้าย */
+        }
     </style>
     <script>
         let lastAssignmentCount = <?php echo $assignment_count; ?>;
@@ -341,6 +379,7 @@ $assignment_count = mysqli_num_rows($result_assignments);
                     <tr>
                         <th scope="col">ลำดับ</th>
                         <th scope="col">ชื่องาน</th>
+                        <th scope="col">ไฟล์</th>
                         <th scope="col">ระดับงาน</th>
                         <th scope="col">กำหนดส่ง</th>
                         <th scope="col">ดูเพิ่มเติม</th>
@@ -368,6 +407,16 @@ $assignment_count = mysqli_num_rows($result_assignments);
                             <tr>
                                 <td><?php echo htmlspecialchars($row['job_id']); ?></td>
                                 <td><?php echo htmlspecialchars($row['job_title']); ?></td>
+                                <td>
+                                    <?php if (!empty($row['jobs_file'])): ?>
+                                        <span><?php echo htmlspecialchars($row['jobs_file']); ?></span>
+                                        <a href="path/to/uploads/<?php echo htmlspecialchars($row['jobs_file']); ?>" class="btn btn-dl btn-sm  ms-2" download>
+                                            ดาวน์โหลด
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">ไม่มีไฟล์</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($row['job_level']); ?></td>
                                 <td><?php echo htmlspecialchars($row['due_datetime']); ?></td>
                                 <td>
@@ -380,12 +429,11 @@ $assignment_count = mysqli_num_rows($result_assignments);
 
                             <!-- แถวซ่อนรายละเอียด -->
                             <tr class="job-details" style="display:none;">
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="job-detail-container">
                                         <div class="job-detail-left">
                                             <div><strong>รายละเอียดงาน:</strong> <?php echo htmlspecialchars($row['job_description']); ?></div>
                                             <div><strong>ผู้สั่งงาน:</strong> <?php echo htmlspecialchars($row['supervisor_firstname']) . ' ' . htmlspecialchars($row['supervisor_lastname']); ?></div>
-                                            <div><strong>ไฟล์:</strong> <?php echo htmlspecialchars($row['jobs_file']); ?></div>
                                         </div>
 
                                         <div class="job-detail-right">

@@ -102,7 +102,7 @@ $result = $stmt->get_result();
     .table th,
     .table td {
         padding: 13px;
-        text-align: center;
+        text-align: left;
         vertical-align: middle;
         font-size: 16px;
     }
@@ -152,6 +152,43 @@ $result = $stmt->get_result();
         padding: 10px 20px;
         font-size: 16px;
     }
+    /* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
+    .btn-dl {
+            background-color: #adb5bd;
+            /* สีเทาอ่อนพื้นหลังปุ่ม */
+            color: #ffffff;
+            /* สีตัวอักษร */
+            border: 1px solid #adb5bd;
+            /* สีขอบปุ่ม */
+        }
+
+        /* กำหนดสีเมื่อปุ่มถูก hover */
+        .btn-dl:hover {
+            background-color: #868e96;
+            /* สีเทาอ่อนเข้มเมื่อ hover */
+            border-color: #868e96;
+            /* สีขอบเทาอ่อนเข้มเมื่อ hover */
+        }
+
+        /* กำหนดสีเมื่อปุ่มถูกคลิก */
+        .btn-dl:active {
+            background-color: #6c757d;
+            /* สีเทาเข้มเมื่อคลิก */
+            border-color: #6c757d;
+            /* สีขอบเทาเข้มเมื่อคลิก */
+        }
+
+        /* ปรับขนาดและระยะห่างของปุ่ม */
+        .btn-sm {
+            padding: 5px 10px;
+            /* ปรับขนาด padding */
+        }
+
+        /* ปรับระยะห่างของปุ่มจากข้อความ */
+        .ms-2 {
+            margin-left: 0.5rem;
+            /* ระยะห่างซ้าย */
+        }
 </style>
 
 <body>
@@ -228,13 +265,22 @@ $result = $stmt->get_result();
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['jobs_file']) . '</td>';
+                            echo '<td>';
+                            if (!empty($row['jobs_file'])) {
+                                $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
+                                echo '<span>' . $filePath . '</span>';
+                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
+                            } else {
+                                echo '<span class="text-muted">ไม่มีไฟล์</span>';
+                            }
+                            echo '</td>';
                             echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_level']) . '</td>';
                             echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
                             echo '<td><a href="edit_job.php?job_id=' . htmlspecialchars($row['job_id']) . '" class="btn btn-danger btn-lg">แก้ไข</a></td>';
                             echo '</tr>';
+
 
                             // เพิ่มแถวสำหรับแสดงรายละเอียดพนักงานในรูปแบบกริด
                             echo '<tr class="job-details" style="display:none;">';
