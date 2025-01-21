@@ -1,0 +1,174 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.container {
+    margin-top: 20px;
+    overflow-x: auto;
+    border-radius: 25px;
+    padding: 20px;
+    background-color: rgb(71, 170, 81);
+    /* สีพื้นหลังเขียว */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+
+.employee-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-container input {
+    width: 300px;
+    font-size: 18px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับช่องค้นหา */
+    background-color: #fff;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: #1dc02b;
+    /* เปลี่ยนสีกรอบเมื่อช่องค้นหามีการคลิก */
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    /* เพิ่มเงาเขียว */
+}
+
+#main {
+    margin-left: 0;
+    transition: margin-left .5s;
+    padding: 16px;
+}
+
+.status {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.status.text-danger {
+    color: red;
+}
+
+.status.text-warning {
+    color: orange;
+}
+
+.status.text-success {
+    color: green;
+}
+
+.job-details {
+    display: none;
+}
+
+.job-details td {
+    text-align: left;
+    padding-left: 20px;
+    background-color: #f1f1f1;
+}
+
+.job-detail-container {
+    display: flex;
+    justify-content: space-between;
+    /* แยกฝั่งซ้ายและขวา */
+    gap: 20px;
+    /* ระยะห่างระหว่างสองฝั่ง */
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.job-detail-left,
+.job-detail-right {
+    flex: 1;
+    /* ให้ทั้งสองฝั่งมีขนาดเท่ากัน */
+    display: flex;
+    flex-direction: column;
+    /* แสดงข้อมูลในแนวตั้ง */
+    gap: 10px;
+    /* ระยะห่างระหว่างแต่ละบรรทัด */
+}
+
+.job-detail-container div strong {
+    display: inline-block;
+    width: 150px;
+    /* กำหนดความกว้างของข้อความหัวข้อ */
+}
+
+.job-detail-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.job-detail-container a:hover {
+    text-decoration: underline;
+}
+
+
+/* กริดคอนเทนเนอร์ */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* ปรับจำนวนคอลัมน์อัตโนมัติ */
+    gap: 15px; /* ระยะห่างระหว่างกล่อง */
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+/* กล่องพนักงาน */
+.job-detail-grid {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+}
+
+/* สีสถานะ */
+.text-danger {
+    color: red;
+    font-weight: bold;
+}
+
+.text-success {
+    color: green;
+    font-weight: bold;
+}
+
+.text-warning {
+    color: orange;
+    font-weight: bold;
+}
+
+/* เพิ่มขอบมนๆ ให้กับ select */
+select {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
+select:focus {
+    outline: none;
+    border-color: #1dc02b;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
