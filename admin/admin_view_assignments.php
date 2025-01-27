@@ -19,6 +19,9 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 // รับค่าการเรียงลำดับจาก URL
 $sortOrder = isset($_GET['sort']) ? $_GET['sort'] : 'DESC'; // ค่าเริ่มต้น DESC (ใหม่สุด)
 $selectedYear = isset($_GET['year']) ? $_GET['year'] : ''; // รับค่าปีที่เลือก
+$page = isset($_GET['page']) ? $_GET['page'] : 1; // รับค่าหน้าปัจจุบัน
+$limit = 10; // จำนวนงานที่จะแสดงต่อหน้า
+$offset = ($page - 1) * $limit; // คำนวณค่า offset
 
 // สร้างเงื่อนไขกรองตามปี
 $yearCondition = "";
@@ -63,21 +66,37 @@ $stmt = $conn->prepare("
     LEFT JOIN 
         mable m ON a.user_id = m.id
     WHERE 
-        j.supervisor_id = ?
+        j.supervisor_id = ? 
         $yearCondition
     GROUP BY 
         j.job_id
     ORDER BY 
         $orderBy
+    LIMIT ?, ?
 ");
 
-
-
-// ผูกค่า `supervisor_id`
-$stmt->bind_param("i", $user_id);
+// ผูกค่า `supervisor_id`, `offset`, และ `limit`
+$stmt->bind_param("iii", $user_id, $offset, $limit);
 $stmt->execute();
 $result = $stmt->get_result();
+
+// คำนวณจำนวนหน้าทั้งหมด
+$countQuery = "
+    SELECT COUNT(*) AS total_jobs
+    FROM jobs j
+    LEFT JOIN assignments a ON j.job_id = a.job_id
+    LEFT JOIN mable m ON a.user_id = m.id
+    WHERE j.supervisor_id = ? $yearCondition
+";
+$countStmt = $conn->prepare($countQuery);
+$countStmt->bind_param("i", $user_id);
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$countRow = $countResult->fetch_assoc();
+$totalJobs = $countRow['total_jobs'];
+$totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน้าทั้งหมด
 ?>
+
 
 
 <!DOCTYPE html>
@@ -152,43 +171,190 @@ $result = $stmt->get_result();
         padding: 10px 20px;
         font-size: 16px;
     }
+
     /* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
     .btn-dl {
-            background-color: #adb5bd;
-            /* สีเทาอ่อนพื้นหลังปุ่ม */
-            color: #ffffff;
-            /* สีตัวอักษร */
-            border: 1px solid #adb5bd;
-            /* สีขอบปุ่ม */
-        }
+        background-color: #adb5bd;
+        /* สีเทาอ่อนพื้นหลังปุ่ม */
+        color: #ffffff;
+        /* สีตัวอักษร */
+        border: 1px solid #adb5bd;
+        /* สีขอบปุ่ม */
+    }
 
-        /* กำหนดสีเมื่อปุ่มถูก hover */
-        .btn-dl:hover {
-            background-color: #868e96;
-            /* สีเทาอ่อนเข้มเมื่อ hover */
-            border-color: #868e96;
-            /* สีขอบเทาอ่อนเข้มเมื่อ hover */
-        }
+    /* กำหนดสีเมื่อปุ่มถูก hover */
+    .btn-dl:hover {
+        background-color: #868e96;
+        /* สีเทาอ่อนเข้มเมื่อ hover */
+        border-color: #868e96;
+        /* สีขอบเทาอ่อนเข้มเมื่อ hover */
+    }
 
-        /* กำหนดสีเมื่อปุ่มถูกคลิก */
-        .btn-dl:active {
-            background-color: #6c757d;
-            /* สีเทาเข้มเมื่อคลิก */
-            border-color: #6c757d;
-            /* สีขอบเทาเข้มเมื่อคลิก */
-        }
+    /* กำหนดสีเมื่อปุ่มถูกคลิก */
+    .btn-dl:active {
+        background-color: #6c757d;
+        /* สีเทาเข้มเมื่อคลิก */
+        border-color: #6c757d;
+        /* สีขอบเทาเข้มเมื่อคลิก */
+    }
 
-        /* ปรับขนาดและระยะห่างของปุ่ม */
-        .btn-sm {
-            padding: 5px 10px;
-            /* ปรับขนาด padding */
-        }
+    /* ปรับขนาดและระยะห่างของปุ่ม */
+    .btn-sm {
+        padding: 5px 10px;
+        /* ปรับขนาด padding */
+    }
 
-        /* ปรับระยะห่างของปุ่มจากข้อความ */
-        .ms-2 {
-            margin-left: 0.5rem;
-            /* ระยะห่างซ้าย */
-        }
+    /* ปรับระยะห่างของปุ่มจากข้อความ */
+    .ms-2 {
+        margin-left: 0.5rem;
+        /* ระยะห่างซ้าย */
+    }
+
+    /* Popup Overlay */
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    /* Popup Content */
+    .popup-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 70%;
+        max-width: 600px;
+        text-align: left;
+        position: absolute;
+        top: 50%;
+        /* อยู่กลางแนวตั้ง */
+        left: 50%;
+        /* อยู่กลางแนวนอน */
+        transform: translate(-50%, -50%);
+        /* เลื่อนให้ตรงกลางทั้งสองด้าน */
+    }
+
+    /* ปุ่มปิด popup */
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    /* สำหรับ popup ข้อความ */
+    #fullDescription {
+        white-space: pre-wrap;
+        /* ให้ข้อความแตกบรรทัดเมื่อเกิน */
+        word-wrap: break-word;
+        /* ข้อความที่ยาวจะหักคำเมื่อถึงขอบ */
+        max-width: 100%;
+    }
+
+    /* สำหรับคำอธิบายย่อ */
+    .job-description-preview {
+        display: inline;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ปรับปุ่มให้แสดงในแถวเดียวกัน */
+    .job-description-preview+.btn {
+        display: inline;
+        vertical-align: middle;
+    }
+
+    /* ให้คำอธิบายและปุ่มอยู่ในบรรทัดเดียวกัน */
+    .job-detail-grid {
+        white-space: normal;
+        /* ให้ข้อความแสดงในบรรทัดเดียวกัน */
+    }
+
+    /* การตั้งค่าสีพื้นฐานของปุ่มหน้า */
+    .pagination .page-item .page-link {
+        color: #28a745;
+        /* กำหนดสีข้อความเป็นสีเขียว */
+        background-color: white;
+        /* กำหนดสีพื้นหลังเป็นสีขาว */
+        border: 1px solid #28a745;
+        /* กำหนดขอบเป็นสีเขียว */
+    }
+
+    /* การตั้งค่าสีเมื่อปุ่มถูกคลิก (Active state) */
+    .pagination .page-item.active .page-link {
+        color: white;
+        /* สีข้อความเป็นสีขาว */
+        background-color:rgb(20, 96, 37);
+        /* กำหนดพื้นหลังเป็นสีเขียว */
+        border-color: rgb(20, 96, 37);
+        /* กำหนดขอบเป็นสีเขียว */
+    }
+
+    /* การตั้งค่าสีเมื่อปุ่มอยู่ในสถานะ hover (ชี้เมาส์ไปที่ปุ่ม) */
+    .pagination .page-item .page-link:hover {
+        color: white;
+        /* สีข้อความเป็นสีขาวเมื่อ hover */
+        background-color: #218838;
+        /* พื้นหลังเป็นสีเขียวเข้มขึ้นเมื่อ hover */
+        border-color: #218838;
+        /* ขอบสีเขียวเข้มขึ้นเมื่อ hover */
+    }
+
+    /* การตั้งค่าสีสำหรับปุ่ม "Previous" และ "Next" */
+    .pagination .page-item .page-link[aria-label="Previous"],
+    .pagination .page-item .page-link[aria-label="Next"] {
+        color: #28a745;
+        /* สีของปุ่ม Previous และ Next */
+    }
+
+    /* การตั้งค่าสีเมื่อปุ่ม "Previous" หรือ "Next" อยู่ในสถานะ hover */
+    .pagination .page-item .page-link[aria-label="Previous"]:hover,
+    .pagination .page-item .page-link[aria-label="Next"]:hover {
+        background-color: #218838;
+        /* พื้นหลังสีเขียวเข้มขึ้นเมื่อ hover */
+        border-color: #218838;
+        /* ขอบสีเขียวเข้มขึ้นเมื่อ hover */
+    }
+
+    .job-level-container {
+        display: inline-block;
+        padding: 5px 10px;
+        background-color: transparent;
+        /* ทำให้พื้นหลังโปร่งใส */
+        border-radius: 12px;
+        font-weight: bold;
+        color: rgb(0, 0, 0);
+        /* สีข้อความเป็นดำ */
+    }
+
+    /* ขอบสีเขียวสำหรับระดับงานปกติ */
+    .job-level-container.normal {
+        border: 3px solid #28a745;
+        /* ขอบเขียว */
+    }
+
+    /* ขอบสีเหลืองสำหรับระดับงานด่วน */
+    .job-level-container.urgent {
+        border: 3px solid #ffcc00;
+        /* ขอบเหลือง */
+    }
+
+
+    /* ขอบสีแดงสำหรับระดับงานด่วนมาก */
+    .job-level-container.very-urgent {
+        border: 3px solid #ff0000;
+        /* ขอบแดง */
+    }
 </style>
 
 <body>
@@ -273,13 +439,32 @@ $result = $stmt->get_result();
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
-                            echo '</td>';
                             echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['job_level']) . '</td>';
+
+                            // ตรวจสอบระดับงานและกำหนดคลาส CSS ตามระดับงาน
+                            $jobLevel = htmlspecialchars($row['job_level']);
+                            $levelClass = '';
+
+                            // กำหนดคลาสตามระดับงาน
+                            switch ($jobLevel) {
+                                case 'ด่วน':
+                                    $levelClass = 'urgent'; // คลาสสำหรับระดับงานด่วน
+                                    break;
+                                case 'ด่วนมาก':
+                                    $levelClass = 'very-urgent'; // คลาสสำหรับระดับงานด่วนมาก
+                                    break;
+                                default:
+                                    $levelClass = 'normal'; // คลาสสำหรับระดับงานปกติ
+                                    break;
+                            }
+
+                            echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
+
                             echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
                             echo '<td><a href="edit_job.php?job_id=' . htmlspecialchars($row['job_id']) . '" class="btn btn-danger btn-lg">แก้ไข</a></td>';
                             echo '</tr>';
+
 
 
                             // เพิ่มแถวสำหรับแสดงรายละเอียดพนักงานในรูปแบบกริด
@@ -325,7 +510,11 @@ $result = $stmt->get_result();
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
-                                    echo '<strong>รายละเอียดงาน: </strong>' . htmlspecialchars($row['job_description']) . '<br>';
+                                    // แสดงคำอธิบายงาน (แค่ 10 ตัวอักษรแรก)
+                                    $job_description_preview = htmlspecialchars($row['job_description']);
+                                    $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
+                                    // เพิ่มการแสดงผลในแบบย่อ
+                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
                                 }
                             } else {
@@ -341,10 +530,71 @@ $result = $stmt->get_result();
                     }
                     ?>
                 </tbody>
-
             </table>
+            <!-- ปุ่มสำหรับเปลี่ยนหน้า -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <?php if ($page > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $page - 1 ?>&sort=<?= $sortOrder ?>&year=<?= $selectedYear ?>" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <li class="page-item <?= $i == $page ? 'active' : '' ?>">
+                            <a class="page-link" href="?page=<?= $i ?>&sort=<?= $sortOrder ?>&year=<?= $selectedYear ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $page + 1 ?>&sort=<?= $sortOrder ?>&year=<?= $selectedYear ?>" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
         </div>
     </div>
+
+
+    <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
+    <div id="descriptionPopup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <h3>รายละเอียดงานทั้งหมด</h3>
+            <p id="fullDescription"></p>
+        </div>
+    </div>
+
+    <script>
+        // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
+        function showFullDescription(fullDescription) {
+            // แบ่งคำในรายละเอียดงาน
+            var words = fullDescription.split(' ');
+            var formattedDescription = '';
+
+            // กำหนดให้แต่ละบรรทัดมี 10 คำ
+            for (var i = 0; i < words.length; i += 10) {
+                formattedDescription += words.slice(i, i + 10).join(' ') + '\n'; // ใช้ \n เพื่อเว้นบรรทัด
+            }
+
+            // แสดงรายละเอียดทั้งหมดใน popup
+            document.getElementById('fullDescription').textContent = fullDescription;
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+        }
+
+        // ฟังก์ชันเพื่อปิด popup
+        function closePopup() {
+            document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
+        }
+    </script>
+
+
+
 
 
     <script>
