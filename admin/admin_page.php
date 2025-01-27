@@ -19,7 +19,7 @@ if (!$conn) {
 }
 
 // สถานะที่คุณต้องการนับ
-$allStatuses = ['pending', 'pending review', 'pending review late', 'completed', 'late', 'Pending Correction late', 'Pending Correction'];
+$allStatuses = ['กำลังรอ', 'pending review', 'pending review late', 'completed', 'late', 'Pending Correction late', 'Pending Correction'];
 
 $statusCounts = array_fill_keys($allStatuses, 0); // เตรียมตัวนับสถานะ
 
@@ -126,17 +126,17 @@ $totalAssignments = $row['totalAssignments'];
                 <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
             </div>
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
-            </div>
-                <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
-                <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
-                <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
-                <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
-                <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-                <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
-                <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-                <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a> 
-            </div>
+        </div>
+        <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
+        <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
+        <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
+        <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
+        <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
+        <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
+        <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
+        <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
+        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
+    </div>
 
     <div id="main">
         <div class="admin">
@@ -157,72 +157,131 @@ $totalAssignments = $row['totalAssignments'];
 
         <div class="row justify-content-center">
             <div class="col-md-12">
-                <div class="row g-0">
-                    <div class="col-md-6 mb-4">
-                        <div class="card-container border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250 position-relative">
-                            <div class="p-4 d-flex flex-column position-static">
-                                <h3 class="mb-0">งานทั้งหมดที่สั่ง</h3>
-                                <hr style="border: 1px solid black;">
-                                <p class="card-text mb-auto" style="color:#02A664;"><b>จำนวนงานทั้งหมด: </b><span style="color:black;"><?php echo $totalAssignments; ?></span></p>
-                                <hr style="border: 1px solid black;">
-                                <a href="admin_view_assignments.php" class="icon-link gap-1 icon-link-hover stretched-link" style="color:#000000;">
-                                    ดูเพิ่มเติม
-                                </a>
+                <div class="row g-4">
+                    <!-- งานทั้งหมดที่สั่ง -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm border-0 rounded h-100">
+                            <div class="card-body d-flex flex-column align-items-center">
+                                <h3 class="card-title text-center mb-3" style="color:#02A664;">งานทั้งหมดที่สั่ง</h3>
+                                <div class="icon-container mb-4">
+                                    <i class="fa-solid fa-tasks fa-3x" style="color:#02A664;"></i>
+                                </div>
+                                <p class="card-text text-center" style="color:#02A664;"><strong>จำนวนงานทั้งหมด:</strong> <?php echo $totalAssignments; ?></p>
+                                <a href="admin_view_assignments.php" class="btn btn-outline-success stretched-link mt-auto text-center">ดูเพิ่มเติม</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-4">
-                        <div class="card-container border rounded overflow-hidden flex-md-row mb-3 shadow-sm h-md-250 position-relative">
-                            <div class="p-4 d-flex flex-column position-static">
-                                <h3 class="mb-0">รายชื่อพนักงาน</h3>
-                                <hr style="border: 1px solid black;">
-                                <p class="card-text mb-auto" style="color:#02A664;"><b>จำนวนพนักงานทั้งหมด: </b><span style="color:black;"><?php echo $totalUsers; ?></span></p>
-                                <hr style="border: 1px solid black;">
-                                <a href="emp.php" class="icon-link gap-1 icon-link-hover stretched-link" style="color:#000000;">
-                                    ดูเพิ่มเติม
-                                </a>
+
+                    <!-- รายชื่อพนักงาน -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm border-0 rounded h-100">
+                            <div class="card-body d-flex flex-column align-items-center">
+                                <h3 class="card-title text-center mb-3" style="color:#02A664;">รายชื่อพนักงาน</h3>
+                                <div class="icon-container mb-4">
+                                    <i class="fa-solid fa-users fa-3x" style="color:#02A664;"></i>
+                                </div>
+                                <p class="card-text text-center" style="color:#02A664;"><strong>จำนวนพนักงานทั้งหมด:</strong> <?php echo $totalUsers; ?></p>
+                                <a href="emp.php" class="btn btn-outline-success stretched-link mt-auto text-center">ดูเพิ่มเติม</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-4">
-                        <div class="card-container border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250 position-relative">
-                            <div class="p-4 d-flex flex-column position-static">
-                                <h3 class="mb-0">ตรวจสอบงานพนักงาน</h3>
-                                <hr style="border: 1px solid black;">
-                                <p class="card-text mb-auto" style="color:#02A664;"><b>จำนวนงานทั้งหมด: </b><span style="color:black;"><?php echo $totalJobs; ?></span></p>
-                                <hr style="border: 1px solid black;">
-                                <a href="view_all_jobs.php" class="icon-link gap-1 icon-link-hover stretched-link" style="color:#000000;">
-                                    ดูเพิ่มเติม
-                                </a>
+
+                    <!-- ตรวจสอบงานพนักงาน -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm border-0 rounded h-100">
+                            <div class="card-body d-flex flex-column align-items-center">
+                                <h3 class="card-title text-center mb-3" style="color:#02A664;">ตรวจสอบงานพนักงาน</h3>
+                                <div class="icon-container mb-4">
+                                    <i class="fa-solid fa-clipboard-check fa-3x" style="color:#02A664;"></i>
+                                </div>
+                                <p class="card-text text-center" style="color:#02A664;"><strong>จำนวนงานทั้งหมด:</strong> <?php echo $totalJobs; ?></p>
+                                <a href="view_all_jobs.php" class="btn btn-outline-success stretched-link mt-auto text-center">ดูเพิ่มเติม</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const data = {
-            labels: <?php echo json_encode($statuses); ?>,
+            labels: <?php echo json_encode($statuses); ?>, // ใช้ค่า $statuses ที่ส่งจาก PHP
             datasets: [{
                 label: 'สถานะของงาน',
-                data: <?php echo json_encode($counts); ?>,
-                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40', '#c9cbcf'],
+                data: <?php echo json_encode($counts); ?>, // ใช้ค่า $counts ที่ส่งจาก PHP
+                backgroundColor: '#02A664', // สีของแท่ง
+                borderColor: '#017B4C', // สีของกรอบแท่ง
+                borderWidth: 1,
+                hoverBackgroundColor: '#026F3B', // สีของแท่งเมื่อ hover
+                hoverBorderColor: '#01582D', // สีของกรอบแท่งเมื่อ hover
+                hoverBorderWidth: 2 // ความหนาของกรอบแท่งเมื่อ hover
             }]
         };
 
         const ctx = document.getElementById('statusChart').getContext('2d');
         const statusChart = new Chart(ctx, {
-            type: 'doughnut',
+            type: 'bar', // กราฟแบบแท่ง
             data: data,
             options: {
                 responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'สถานะของงาน', // แสดงชื่อแกน x
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'จำนวนงาน', // แสดงชื่อแกน y
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                },
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.raw + ' งาน'; // แสดงจำนวนงานใน Tooltip
+                            }
+                        }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#ffffff',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
+                        formatter: function(value) {
+                            return value + ' งาน'; // เพิ่มข้อความ 'งาน' หลังตัวเลขใน label
+                        }
                     }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    intersect: false
                 }
             },
         });
