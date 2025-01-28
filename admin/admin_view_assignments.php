@@ -331,7 +331,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         padding: 5px 10px;
         background-color: transparent;
         /* ทำให้พื้นหลังโปร่งใส */
-        border-radius: 12px;
+        border-radius: 30px;
         font-weight: bold;
         color: rgb(0, 0, 0);
         /* สีข้อความเป็นดำ */
@@ -339,20 +339,23 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
     /* ขอบสีเขียวสำหรับระดับงานปกติ */
     .job-level-container.normal {
-        border: 3px solid #28a745;
+        border: 4px solid #28a745;
+        color: #28a745;
         /* ขอบเขียว */
     }
 
     /* ขอบสีเหลืองสำหรับระดับงานด่วน */
     .job-level-container.urgent {
-        border: 3px solid #ffcc00;
+        border: 4px solid #ffcc00;
+        color: #ffcc00;
         /* ขอบเหลือง */
     }
 
 
     /* ขอบสีแดงสำหรับระดับงานด่วนมาก */
     .job-level-container.very-urgent {
-        border: 3px solid #ff0000;
+        border: 4px solid #ff0000;
+        color: #ff0000;
         /* ขอบแดง */
     }
 </style>
@@ -497,11 +500,17 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'เสร็จสิ้น':
+                                        case 'ส่งแล้ว':
                                             $status_class = 'text-success';
                                             break;
-                                        case 'กำลังรอ':
+                                        case 'กำลังดำเนินการ':
                                             $status_class = 'text-warning';
+                                            break;
+                                        case 'อ่านแล้ว':
+                                            $status_class = 'text-info';
+                                            break;
+                                        case 'ยังไม่อ่าน':
+                                            $status_class = 'text-secondary';
                                             break;
                                     }
 

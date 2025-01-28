@@ -19,7 +19,7 @@ if (!$conn) {
 }
 
 // สถานะที่คุณต้องการนับ
-$allStatuses = ['กำลังรอ', 'pending review', 'pending review late', 'completed', 'late', 'Pending Correction late', 'Pending Correction'];
+$allStatuses = ['ยังไม่อ่าน','อ่านแล้ว','กำลังดำเนินการ','ส่งแล้ว','ช้า'];
 
 $statusCounts = array_fill_keys($allStatuses, 0); // เตรียมตัวนับสถานะ
 

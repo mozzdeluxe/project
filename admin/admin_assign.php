@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user_ids = json_decode($_POST['user_ids']);
     foreach ($user_ids as $assigned_user_id) {
         $insert_assignment_query = "INSERT INTO assignments (job_id, user_id, status, file_path) 
-                                    VALUES (?, ?, 'กำลังรอ', ?)";
+                                    VALUES (?, ?, 'ยังไม่อ่าน', ?)";
         $stmt = $conn->prepare($insert_assignment_query);
 
         if (!$stmt) {
