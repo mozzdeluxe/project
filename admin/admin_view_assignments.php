@@ -294,7 +294,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     .pagination .page-item.active .page-link {
         color: white;
         /* สีข้อความเป็นสีขาว */
-        background-color:rgb(20, 96, 37);
+        background-color: rgb(20, 96, 37);
         /* กำหนดพื้นหลังเป็นสีเขียว */
         border-color: rgb(20, 96, 37);
         /* กำหนดขอบเป็นสีเขียว */
@@ -497,10 +497,16 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'เสร็จสิ้น':
+                                        case 'ส่งแล้ว':
                                             $status_class = 'text-success';
                                             break;
-                                        case 'กำลังรอ':
+                                        case 'กำลังดำเนินการ':
+                                            $status_class = 'text-warning';
+                                            break;
+                                        case 'อ่านแล้ว':
+                                            $status_class = 'text-info';
+                                            break;
+                                        case 'ยังไม่อ่าน':
                                             $status_class = 'text-warning';
                                             break;
                                     }
