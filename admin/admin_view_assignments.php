@@ -294,7 +294,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     .pagination .page-item.active .page-link {
         color: white;
         /* สีข้อความเป็นสีขาว */
-        background-color:rgb(20, 96, 37);
+        background-color: rgb(20, 96, 37);
         /* กำหนดพื้นหลังเป็นสีเขียว */
         border-color: rgb(20, 96, 37);
         /* กำหนดขอบเป็นสีเขียว */
