@@ -124,7 +124,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         overflow-x: auto;
         border-radius: 25px;
         padding: 20px;
-        
+
         /* สีพื้นหลังเขียว */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
@@ -469,8 +469,8 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 </style>
 
 <body>
-     <!-- Navbar -->
-     <div class="navbar">
+    <!-- Navbar -->
+    <div class="navbar">
         <div class="menu-item" onclick="toggleSidebar()">
             <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
         </div>
@@ -696,7 +696,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         </div>
     </div>
 
-
     <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
     <div id="descriptionPopup" class="popup" style="display: none;">
         <div class="popup-content">
@@ -706,7 +705,72 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         </div>
     </div>
 
+    <!-- Modal สำหรับอัปโหลดงาน -->
+    <div id="uploadModal" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ส่งงาน</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- ฟอร์มอัปโหลดงาน -->
+                    <form id="uploadForm" method="post" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="jobFile">อัปโหลดไฟล์งาน</label>
+                            <input type="file" class="form-control" id="jobFile" name="jobFile" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="jobDetails">รายละเอียดเพิ่มเติม</label>
+                            <textarea class="form-control" id="jobDetails" name="jobDetails" rows="4" required></textarea>
+                        </div>
+                        <input type="hidden" id="jobId" name="jobId">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="submitJob()">ส่งงาน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
+        // ฟังก์ชันเพื่อเปิด Modal สำหรับส่งงาน
+        function showUploadModal(jobId) {
+            // ตั้งค่า job_id ให้กับ hidden field
+            document.getElementById('jobId').value = jobId;
+
+            // แสดง modal
+            $('#uploadModal').modal('show');
+        }
+
+        // ฟังก์ชันเพื่อส่งข้อมูลงาน
+        function submitJob() {
+            var formData = new FormData(document.getElementById('uploadForm'));
+
+            // ส่งข้อมูลผ่าน AJAX
+            $.ajax({
+                url: 'submit_job.php', // เปลี่ยนเป็นไฟล์ PHP ที่รับข้อมูล
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // ทำสิ่งที่ต้องการหลังส่งงานสำเร็จ (เช่น แสดงข้อความ หรือปิด modal)
+                    alert('ส่งงานสำเร็จ!');
+                    $('#uploadModal').modal('hide');
+                    location.reload(); // โหลดหน้าใหม่หลังจากส่งงาน
+                },
+                error: function(xhr, status, error) {
+                    alert('เกิดข้อผิดพลาดในการส่งงาน');
+                }
+            });
+        }
+
         // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
         function showFullDescription(fullDescription) {
             // แบ่งคำในรายละเอียดงาน

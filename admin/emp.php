@@ -54,7 +54,6 @@ $result = mysqli_query($conn, $query);
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background-color: rgb(246, 246, 246);
         }
 
         .table th,
@@ -67,7 +66,7 @@ $result = mysqli_query($conn, $query);
         }
 
         .table th {
-            background-color: #21a42e;
+            background-color: rgb(56, 164, 63);
             /* Header background color */
             color: white;
         }
@@ -80,7 +79,14 @@ $result = mysqli_query($conn, $query);
         }
 
         .container {
-            margin-top: 20px;
+            margin-top: 120px;
+            overflow-x: auto;
+            border-radius: 25px;
+            padding: 20px;
+            background-color: rgb(54, 119, 59);
+
+            /* สีพื้นหลังเขียว */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .table-container {
@@ -162,10 +168,10 @@ $result = mysqli_query($conn, $query);
             /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
         }
 
-
+        /* สไตล์สำหรับเมื่อเมนูเปิด */
         .container-box.open {
-            width: 300px;
-            /* ขยายขนาดให้แสดงข้อความเมื่อเปิด */
+            width: auto;
+            /* กำหนดให้กล่องขยายตามจำนวนหัวข้อ */
         }
 
         /* สำหรับลิงก์ในเมนู */
@@ -174,24 +180,14 @@ $result = mysqli_query($conn, $query);
             text-decoration: none;
         }
 
-        .content {
-            margin-left: 340px;
-            padding: 20px;
-            height: 200vh;
-            overflow-y: auto;
-        }
-
         /* เพิ่มสไตล์สำหรับเมนูที่มี class active */
         .container-box .menu-item.active {
             background-color: #02A664;
-            /* ใช้สีพื้นหลังที่เด่น */
             color: white;
-            /* เปลี่ยนสีข้อความให้ขาว */
         }
 
         .container-box .menu-item.active i {
             color: white;
-            /* เปลี่ยนสีไอคอนให้ขาว */
         }
 
         .menu-item {
@@ -218,8 +214,8 @@ $result = mysqli_query($conn, $query);
 
         .container-box.open .menu-item span {
             display: inline-block;
-            /* แสดงข้อความเมื่อเปิด */
         }
+
 
         .navbar {
             display: flex;
@@ -277,9 +273,6 @@ $result = mysqli_query($conn, $query);
             <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>ตรวจสอบงานที่ตอบกลับ</span></a>
         </div>
         <div class="menu-item">
-            <i class="fa-solid fa-user-edit"></i> <span>ตรวจสอบงานกลุ่มที่สั่ง</span>
-        </div>
-        <div class="menu-item">
             <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
         </div>
         <div class="menu-item">
@@ -294,10 +287,9 @@ $result = mysqli_query($conn, $query);
             sidebar.classList.toggle('open'); // เมื่อคลิก จะสลับการเปิด/ปิด
         }
     </script>
-    <div id="main">
-        <div class="container table-container">
+    <div class="container">
+        <div id="main">
             <div class="search-container">
-                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="ค้นหางาน...">
             </div>
             <div class="export-buttons">
                 <button class="btn btn-primary" onclick="exportData('download_all')">ส่งออกข้อมูลทั้งหมด</button>
@@ -341,10 +333,11 @@ $result = mysqli_query($conn, $query);
                     ?>
 
                 </tbody>
-
             </table>
         </div>
+
     </div>
+
 
     <!-- ส่วนของ Modal สำหรับดูรายละเอียดพนักงาน -->
     <div class="modal fade" id="employeeDetailsModal" tabindex="-1" aria-labelledby="employeeDetailsModalLabel" aria-hidden="true">

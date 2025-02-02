@@ -326,9 +326,6 @@ $totalAssignments = $row['totalAssignments'];
             <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>ตรวจสอบงานที่ตอบกลับ</span></a>
         </div>
         <div class="menu-item">
-            <i class="fa-solid fa-user-edit"></i> <span>ตรวจสอบงานกลุ่มที่สั่ง</span>
-        </div>
-        <div class="menu-item">
             <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
         </div>
         <div class="menu-item">
