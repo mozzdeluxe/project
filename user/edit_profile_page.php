@@ -236,7 +236,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
         <div class="menu-item"> <!-- เพิ่ม active class ที่เมนูแดชบอร์ด -->
             <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> <span>แดชบอร์ด</span></a>
         </div>
-        <div class="menu-item active">
+        <div class="menu-item">
             <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> <span>งานที่ได้รับ</span></a>
         </div>
         <div class="menu-item">
@@ -245,7 +245,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
         <div class="menu-item">
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
         </div>
-        <div class="menu-item">
+        <div class="menu-item active">
             <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
         </div>
         <div class="menu-item">
