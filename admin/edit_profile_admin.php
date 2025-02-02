@@ -32,6 +32,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(246, 246, 246);
         }
 
         .container {
@@ -48,11 +49,17 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
         }
 
         .image-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            background-color: rgb(255, 255, 255);
         }
 
         .circle-images {
@@ -75,6 +82,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: rgb(255, 255, 255);
         }
 
         .form-control {
@@ -120,6 +128,103 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             padding: 16px;
             margin-left: 0;
         }
+
+        /* กล่องเมนูหลัก */
+        .container-box {
+            width: auto;
+            /* ปรับความกว้างตามเนื้อหา */
+            background-color: white;
+            padding: 0px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 150px;
+            left: 10px;
+            bottom: 120px;
+            z-index: 1000;
+            height: fit-content;
+            /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+            transition: none;
+            /* ลบการเปลี่ยนแปลงความกว้าง */
+            max-width: 300px;
+            /* กำหนดความกว้างสูงสุด */
+            max-height: 100vh;
+            /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
+        }
+
+        /* สไตล์สำหรับเมื่อเมนูเปิด */
+        .container-box.open {
+            width: auto;
+            /* กำหนดให้กล่องขยายตามจำนวนหัวข้อ */
+        }
+
+        /* สำหรับลิงก์ในเมนู */
+        .container-box a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* เพิ่มสไตล์สำหรับเมนูที่มี class active */
+        .container-box .menu-item.active {
+            background-color: #02A664;
+            color: white;
+        }
+
+        .container-box .menu-item.active i {
+            color: white;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+        }
+
+        .menu-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .menu-item span {
+            display: none;
+        }
+
+        .container-box.open .menu-item span {
+            display: inline-block;
+        }
+
+
+        .navbar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            background-color: rgb(255, 255, 255);
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            color: black;
+            position: fixed;
+            /* ทำให้ navbar อยู่คงที่ */
+            top: 0;
+            /* ติดอยู่ที่ด้านบนสุด */
+            left: 0;
+            /* แนบขอบซ้าย */
+            width: 100%;
+            /* ให้ navbar กว้างเต็มหน้าจอ */
+            z-index: 1000;
+            /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+        }
+
+        .navbar .menu-item i {
+            color: black !important;
+            /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
+        }
     </style>
     <script>
         function validateNumber(input) {
@@ -142,33 +247,55 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 </head>
 
 <body>
-    <div class="navbar navbar-expand-lg navbar-dark">
-        <button class="openbtn" id="menuButton" onclick="toggleNav()">☰</button>
-        <div class="container-fluid">
-            <span class="navbar-brand">แก้ไขข้อมูลส่วนตัว</span>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="menu-item" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
         </div>
     </div>
 
-    <div id="mySidebar" class="sidebar">
-        <div class="user-info">
-            <div class="circle-image">
-                <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
-            </div>
-            <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
-            </div>
-                <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-                <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
-                <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
-                <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
-                <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
-                <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-                <a href="group_review.php"><i class="fa-solid fa-user-edit"></i>ตรวจสอบงานกลุ่มที่สั่ง</a>
-                <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-                <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a> 
-            </div>
+    <!-- Sidebar เมนูหลัก -->
+    <div class="container-box" id="sidebar">
+        <div class="menu-item"> <!-- เพิ่ม active class ที่เมนูแดชบอร์ด -->
+            <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> <span>แดชบอร์ด</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="emp.php"><i class="fa-solid fa-users"></i> <span>รายชื่อพนักงานทั้งหมด</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> <span>งานทั้งหมด</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>ดูงานที่สั่งแล้ว</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>ตรวจสอบงานที่ตอบกลับ</span></a>
+        </div>
+        <div class="menu-item">
+            <i class="fa-solid fa-user-edit"></i> <span>ตรวจสอบงานกลุ่มที่สั่ง</span>
+        </div>
+        <div class="menu-item active">
+            <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>
+        </div>
+    </div>
 
-    <div id="main">
-        <div class="form-container">
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open'); // เมื่อคลิก จะสลับการเปิด/ปิด
+        }
+    </script>
+
+    <div id="main" class="d-flex justify-content-center">
+        <div class="form-container d-flex">
+            <!-- ฝั่งซ้าย: การอัปโหลดรูปภาพ -->
             <div class="image-container">
                 <div class="circle-images">
                     <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
@@ -179,6 +306,8 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
                     <button type="submit" class="btn">อัปโหลดรูปภาพ</button>
                 </form>
             </div>
+
+            <!-- ฝั่งขวา: ฟอร์มข้อมูลผู้ใช้ -->
             <div class="form-box">
                 <form action="../edit_profile.php" method="POST" enctype="multipart/form-data">
                     <div class="row">
@@ -201,8 +330,6 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
                             <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
                         </div>
                     </div>
-                    
-                    </div>
                     <div class="form-group d-flex justify-content-center mb-4">
                         <button type="submit" class="btn">บันทึกการเปลี่ยนแปลง</button>
                     </div>
@@ -210,6 +337,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             </div>
         </div>
     </div>
+
     <script src="../js/sidebar.js"></script>
     <script src="../js/check.js"></script>
     <script src="../path/to/auto_logout.js"></script>

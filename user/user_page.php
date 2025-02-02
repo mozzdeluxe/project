@@ -104,32 +104,149 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
         .card-container {
             margin-top: 40px;
         }
+
+        /* กล่องเมนูหลัก */
+        .container-box {
+            width: auto;
+            /* ปรับความกว้างตามเนื้อหา */
+            background-color: white;
+            padding: 0px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 150px;
+            left: 10px;
+            bottom: 120px;
+            z-index: 1000;
+            height: fit-content;
+            /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+            transition: none;
+            /* ลบการเปลี่ยนแปลงความกว้าง */
+            max-width: 300px;
+            /* กำหนดความกว้างสูงสุด */
+            max-height: 100vh;
+            /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
+        }
+
+        /* สไตล์สำหรับเมื่อเมนูเปิด */
+        .container-box.open {
+            width: auto;
+            /* กำหนดให้กล่องขยายตามจำนวนหัวข้อ */
+        }
+
+        /* สำหรับลิงก์ในเมนู */
+        .container-box a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* เพิ่มสไตล์สำหรับเมนูที่มี class active */
+        .container-box .menu-item.active {
+            background-color: #02A664;
+            color: white;
+        }
+
+        .container-box .menu-item.active i {
+            color: white;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+        }
+
+        .menu-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .menu-item span {
+            display: none;
+        }
+
+        .container-box.open .menu-item span {
+            display: inline-block;
+        }
+
+
+        .navbar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            background-color: rgb(255, 255, 255);
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            color: black;
+            position: fixed;
+            /* ทำให้ navbar อยู่คงที่ */
+            top: 0;
+            /* ติดอยู่ที่ด้านบนสุด */
+            left: 0;
+            /* แนบขอบซ้าย */
+            width: 100%;
+            /* ให้ navbar กว้างเต็มหน้าจอ */
+            z-index: 1000;
+            /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+        }
+
+        .navbar .menu-item i {
+            color: black !important;
+            /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
+        }
     </style>
 </head>
 
 <body>
+    <!-- Navbar -->
     <div class="navbar">
-        <button class="openbtn" id="menuButton" onclick="toggleNav()">☰</button>
-        <div class="container-fluid">
-            <span class="navbar-brand">แดชบอร์ด</span>
+        <div class="menu-item" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
         </div>
     </div>
 
-    <div id="mySidebar" class="sidebar">
-        <div class="user-info">
+    <!-- Sidebar เมนูหลัก -->
+    <div class="container-box" id="sidebar">
+        <!-- <div class="user-info">
             <div class="circle-image">
                 <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
             </div>
             <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
+        </div> -->
+        <div class="menu-item active"> <!-- เพิ่ม active class ที่เมนูแดชบอร์ด -->
+            <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> <span>แดชบอร์ด</span></a>
         </div>
-        <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-        <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
-        <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
-        <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>
-        <a href="edit_profile_page.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
+        <div class="menu-item">
+            <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> <span>งานที่ได้รับ</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ส่งแล้ว</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>
+        </div>
     </div>
 
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open'); // เมื่อคลิก จะสลับการเปิด/ปิด
+        }
+    </script>
 
 
     <div id="main">
@@ -144,7 +261,6 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             </h1>
         </div>
 
-        <hr style="border: 1px solidrgb(0, 0, 0);">
         <div class="container-fluid"> <!-- เปลี่ยนจาก container เป็น container-fluid -->
             <div class="row justify-content-center gy-4 g-0"> <!-- ลบระยะห่างของ row -->
                 <!-- การ์ด งานที่ส่งแล้ว -->

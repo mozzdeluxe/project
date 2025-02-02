@@ -154,7 +154,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background-color: rgb(234, 234, 234);
+            background-color: rgb(246, 246, 246);
+            overflow: hidden;
+            /* ห้ามเลื่อนทั้งแนวตั้งและแนวนอน */
         }
 
         .container {
@@ -163,27 +165,54 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         #main {
-            transition: margin-left .5s;
-            padding: 16px;
-            margin-left: 0;
+            display: flex;
+            justify-content: center;
+            /* จัดเรียงให้ฟอร์มอยู่กลาง */
+            align-items: center;
+            /* จัดให้ฟอร์มอยู่กลางแนวตั้ง */
+            min-height: 100vh;
+            /* ให้สูงเต็มหน้าจอ */
+            flex-direction: row;
+            gap: 10px;
+            /* ระยะห่างระหว่างฟอร์มทั้งสอง */
+            width: 100%;
+            padding: 20px;
+            padding-right: 500px;
+            /* เพิ่มระยะห่างจากขอบขวา */
+            margin-top: 0;
+            /* ปรับ margin-top เป็น 0 */
         }
 
-        .form-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 70vh;
-            flex-direction: column;
-            vertical-align: middle;
-        }
 
         .form-box {
-            width: 100%;
-            max-width: 500px;
             padding: 30px;
             border-radius: 35px;
             box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
             background-color: rgb(255, 255, 255);
+            margin: 0;
+        }
+
+        .left-container {
+            flex: 1;
+            /* ฟอร์มด้านซ้ายจะขยายเต็มพื้นที่ */
+            max-width: 800px;
+            /* ขนาดสูงสุดของฟอร์มด้านซ้าย */
+        }
+
+        .right-container {
+            flex: 1;
+            /* ฟอร์มด้านขวาจะไม่ขยาย */
+            max-width: 500px;
+            /* ขนาดสูงสุดของฟอร์มด้านขวา */
+            margin-left: 50px;
+            /* ระยะห่างจากฟอร์มด้านซ้าย */
+        }
+
+
+
+        .form-box+.form-box {
+            margin-left: 0;
+            /* ปิด margin ระหว่างฟอร์ม */
         }
 
         .form-control {
@@ -210,6 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             background-color: rgba(0, 0, 0, 0.1);
         }
 
+
         .btn {
             font-size: 18px;
             padding: 10px 20px;
@@ -217,7 +247,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 30px;
             background-color: #1dc02b;
             color: #fff;
+            border: none;
+            /* ลบสีขอบออก */
         }
+
 
         .btn:hover {
             background: #0a840a;
@@ -356,64 +389,157 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             /* ขนาดตัวอักษรของปุ่มที่ถูกเลือก */
             margin-right: 8px;
         }
+
+        /* กล่องเมนูหลัก */
+        .container-box {
+            width: auto;
+            /* ปรับความกว้างตามเนื้อหา */
+            background-color: white;
+            padding: 0px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 150px;
+            left: 10px;
+            bottom: 120px;
+            z-index: 1000;
+            height: fit-content;
+            /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+            transition: none;
+            /* ลบการเปลี่ยนแปลงความกว้าง */
+            max-width: 300px;
+            /* กำหนดความกว้างสูงสุด */
+            max-height: 100vh;
+            /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
+        }
+
+        /* สไตล์สำหรับเมื่อเมนูเปิด */
+        .container-box.open {
+            width: auto;
+            /* กำหนดให้กล่องขยายตามจำนวนหัวข้อ */
+        }
+
+        /* สำหรับลิงก์ในเมนู */
+        .container-box a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* เพิ่มสไตล์สำหรับเมนูที่มี class active */
+        .container-box .menu-item.active {
+            background-color: #02A664;
+            color: white;
+        }
+
+        .container-box .menu-item.active i {
+            color: white;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+        }
+
+        .menu-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .menu-item span {
+            display: none;
+        }
+
+        .container-box.open .menu-item span {
+            display: inline-block;
+        }
+
+
+        .navbar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            background-color: rgb(255, 255, 255);
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            color: black;
+            position: fixed;
+            /* ทำให้ navbar อยู่คงที่ */
+            top: 0;
+            /* ติดอยู่ที่ด้านบนสุด */
+            left: 0;
+            /* แนบขอบซ้าย */
+            width: 100%;
+            /* ให้ navbar กว้างเต็มหน้าจอ */
+            z-index: 1000;
+            /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+        }
+
+        .navbar .menu-item i {
+            color: black !important;
+            /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
+        }
     </style>
 </head>
 
 <body>
-    <div class="navbar navbar-expand-lg navbar-dark">
-        <button class="openbtn" id="menuButton" onclick="toggleNav()">☰</button>
-        <div class="container-fluid">
-            <span class="navbar-brand">สั่งงานใหม่</span>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="menu-item" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
         </div>
     </div>
 
-    <div id="mySidebar" class="sidebar">
-        <div class="user-info">
-            <div class="circle-image">
-                <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
-            </div>
-            <h1><?php echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']); ?></h1>
+    <!-- Sidebar เมนูหลัก -->
+    <div class="container-box" id="sidebar">
+        <div class="menu-item"> <!-- เพิ่ม active class ที่เมนูแดชบอร์ด -->
+            <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> <span>แดชบอร์ด</span></a>
         </div>
-        <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
-        <a href="emp.php"><i class="fa-solid fa-users"></i> รายชื่อพนักงานทั้งหมด</a>
-        <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> งานทั้งหมด</a>
-        <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> สั่งงาน</a>
-        <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> ดูงานที่สั่งแล้ว</a>
-        <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> ตรวจสอบงานที่ตอบกลับ</a>
-        <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
-        <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>
+        <div class="menu-item">
+            <a href="emp.php"><i class="fa-solid fa-users"></i> <span>รายชื่อพนักงานทั้งหมด</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> <span>งานทั้งหมด</span></a>
+        </div>
+        <div class="menu-item active">
+            <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>ดูงานที่สั่งแล้ว</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>ตรวจสอบงานที่ตอบกลับ</span></a>
+        </div>
+        <div class="menu-item">
+            <i class="fa-solid fa-user-edit"></i> <span>ตรวจสอบงานกลุ่มที่สั่ง</span>
+        </div>
+        <div class="menu-item">
+            <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
+        </div>
+        <div class="menu-item">
+            <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>
+        </div>
     </div>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open'); // เมื่อคลิก จะสลับการเปิด/ปิด
+        }
+    </script>
 
 
     <div id="main">
-        <div class="form-container">
+        <div class="left-container">
             <div class="form-box">
                 <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
-
-                    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="userModalLabel">เลือกพนักงาน</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="list-group">
-                                        <?php while ($user_row = mysqli_fetch_assoc($user_result)) : ?>
-                                            <button type="button" class="list-group-item list-group-item-action" data-id="<?php echo $user_row['id']; ?>" data-name="<?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>">
-                                                <?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>
-                                            </button>
-                                        <?php endwhile; ?>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="save-users-btn">เสร็จสิ้น</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- เพิ่มฟอร์มข้อมูลงาน -->
+                    <!-- ฟอร์มด้านซ้าย -->
                     <div class="mb-3">
                         <label for="main_label" class="main-label">สั่งงาน</label>
                     </div>
@@ -435,13 +561,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <font color="red">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น </font>
                         </p>
                     </div>
+                </form>
+            </div>
+        </div>
 
+        <div class="right-container">
+            <div class="form-box">
+                <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
+                    <!-- ฟอร์มด้านขวา -->
                     <div class="mb-3">
                         <label for="due_datetime" class="form-label">กำหนดเวลา</label>
                         <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
                     </div>
 
-                    <!-- เพิ่มฟิลด์ระดับงาน -->
                     <div class="mb-3">
                         <label for="job_level" class="form-label">ระดับงาน</label>
                         <select name="job_level" class="form-control" id="job_level" required>
@@ -450,7 +582,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <option value="ด่วนมาก">ด่วนมาก</option>
                         </select>
                     </div>
-
 
                     <input type="hidden" name="user_ids" id="user_ids" value="">
 
@@ -469,6 +600,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+
 
     <script>
         let selectedUsers = []; // เก็บ ID ผู้ใช้งานที่เลือก
