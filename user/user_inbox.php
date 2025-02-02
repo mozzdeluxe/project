@@ -551,6 +551,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         <th scope="col">กำหนดส่ง</th> <!-- เพิ่มคอลัมน์ กำหนดส่ง -->
                         <th scope="col">ระดับงาน</th> <!-- เพิ่มคอลัมน์ ระดับงาน -->
                         <th scope="col">ดูเพิ่มเติม</th> <!-- ปุ่มดูเพิ่มเติม -->
+                        <th scope="col">ส่งงาน</th> <!-- ปุ่มดูส่งงาน -->
                     </tr>
                 </thead>
                 <tbody>
@@ -591,6 +592,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
                             echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
+                            echo '<td><button class="btn btn-success" onclick="submitJob(' . $row['job_id'] . ')">ส่งงาน</button></td>';
                             echo '</tr>';
 
 
@@ -660,7 +662,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '</tr>';
                         }
                     } else {
-                        echo '<tr><td colspan="7" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
+                        echo '<tr><td colspan="8" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
                     }
                     ?>
                 </tbody>

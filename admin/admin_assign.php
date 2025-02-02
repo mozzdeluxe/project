@@ -536,10 +536,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
     <div id="main">
-        <div class="left-container">
+        <div class="form-container">
             <div class="form-box">
                 <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
-                    <!-- ฟอร์มด้านซ้าย -->
+                    <!-- Modal สำหรับเลือกพนักงาน -->
+                    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="userModalLabel">เลือกพนักงาน</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="list-group">
+                                        <?php while ($user_row = mysqli_fetch_assoc($user_result)) : ?>
+                                            <button type="button" class="list-group-item list-group-item-action" data-id="<?php echo $user_row['id']; ?>" data-name="<?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>">
+                                                <?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>
+                                            </button>
+                                        <?php endwhile; ?>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="save-users-btn">เสร็จสิ้น</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ฟอร์มข้อมูลงาน -->
                     <div class="mb-3">
                         <label for="main_label" class="main-label">สั่งงาน</label>
                     </div>
@@ -561,19 +585,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <font color="red">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น </font>
                         </p>
                     </div>
-                </form>
-            </div>
-        </div>
 
-        <div class="right-container">
-            <div class="form-box">
-                <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
-                    <!-- ฟอร์มด้านขวา -->
                     <div class="mb-3">
                         <label for="due_datetime" class="form-label">กำหนดเวลา</label>
                         <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
                     </div>
 
+                    <!-- ฟิลด์ระดับงาน -->
                     <div class="mb-3">
                         <label for="job_level" class="form-label">ระดับงาน</label>
                         <select name="job_level" class="form-control" id="job_level" required>
@@ -583,6 +601,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </select>
                     </div>
 
+                    <!-- ฟิลด์เลือกพนักงาน -->
                     <input type="hidden" name="user_ids" id="user_ids" value="">
 
                     <div class="mb-3">
@@ -600,6 +619,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+
 
 
     <script>
