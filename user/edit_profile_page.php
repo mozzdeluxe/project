@@ -155,6 +155,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             transition: background 0.3s;
             cursor: pointer;
             margin-bottom: 10px;
+            font-size: 20px; /* เพิ่มขนาดข้อความ */
         }
 
         .menu-item i {

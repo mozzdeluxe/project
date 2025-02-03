@@ -189,25 +189,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 35px;
             box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
             background-color: rgb(255, 255, 255);
-            margin: 0;
+            margin: 100px 0 0 0;
+            /* เพิ่ม margin-top 20px */
+            width: 600px;
+            /* ปรับความกว้างเป็น 80% ของหน้าจอ */
+            max-width: 600px;
+            /* จำกัดความกว้างสูงสุด */
         }
-
-        .left-container {
-            flex: 1;
-            /* ฟอร์มด้านซ้ายจะขยายเต็มพื้นที่ */
-            max-width: 800px;
-            /* ขนาดสูงสุดของฟอร์มด้านซ้าย */
-        }
-
-        .right-container {
-            flex: 1;
-            /* ฟอร์มด้านขวาจะไม่ขยาย */
-            max-width: 500px;
-            /* ขนาดสูงสุดของฟอร์มด้านขวา */
-            margin-left: 50px;
-            /* ระยะห่างจากฟอร์มด้านซ้าย */
-        }
-
 
 
         .form-box+.form-box {
@@ -443,6 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             transition: background 0.3s;
             cursor: pointer;
             margin-bottom: 10px;
+            font-size: 20px; /* เพิ่มขนาดข้อความ */
         }
 
         .menu-item i {
