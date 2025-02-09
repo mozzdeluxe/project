@@ -47,7 +47,7 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
-// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "ส่งแล้ว" สำหรับแอดมิน
+// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "กำลังดำเนินการ" สำหรับแอดมิน
 $stmt = $conn->prepare("
     SELECT 
         j.job_id, 
@@ -66,7 +66,7 @@ $stmt = $conn->prepare("
     LEFT JOIN 
         mable m ON a.user_id = m.id
     WHERE 
-        a.status = 'ส่งแล้ว'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'ส่งแล้ว' */
+        a.status = 'กำลังดำเนินการ'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'กำลังดำเนินการ' */
         $yearCondition
     GROUP BY 
         j.job_id

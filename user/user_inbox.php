@@ -423,7 +423,8 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         transition: background 0.3s;
         cursor: pointer;
         margin-bottom: 10px;
-        font-size: 20px; /* เพิ่มขนาดข้อความ */
+        font-size: 20px;
+        /* เพิ่มขนาดข้อความ */
     }
 
     .menu-item i {
@@ -592,8 +593,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
-                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                            echo '<td><button class="btn btn-success" onclick="submitJob(' . $row['job_id'] . ')">ส่งงาน</button></td>';
+                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
+
+                            echo '<td><button class="btn btn-success" onclick="showPopup(' . $row['job_id'] . ')">ส่งงาน</button></td>';
+
                             echo '</tr>';
 
 
@@ -703,75 +706,95 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <span class="close-btn" onclick="closePopup()">&times;</span>
             <h3>รายละเอียดงานทั้งหมด</h3>
             <p id="fullDescription"></p>
+
+            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
+            <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
+                <label for="fileUpload">เลือกไฟล์:</label>
+                <input type="file" name="fileUpload" id="fileUpload" required>
+                <input type="hidden" name="job_id" id="jobId">
+                <button type="submit" class="btn btn-primary">อัปโหลดงาน</button>
+            </form>
         </div>
     </div>
 
-    <!-- Modal สำหรับอัปโหลดงาน -->
-    <div id="uploadModal" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">ส่งงาน</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- ฟอร์มอัปโหลดงาน -->
-                    <form id="uploadForm" method="post" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="jobFile">อัปโหลดไฟล์งาน</label>
-                            <input type="file" class="form-control" id="jobFile" name="jobFile" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jobDetails">รายละเอียดเพิ่มเติม</label>
-                            <textarea class="form-control" id="jobDetails" name="jobDetails" rows="4" required></textarea>
-                        </div>
-                        <input type="hidden" id="jobId" name="jobId">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary" onclick="submitJob()">ส่งงาน</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
+    <style>
+        /* สไตล์ Popup */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 50%;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            font-size: 20px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+    <script>
+        // ฟังก์ชันแสดง Popup
+        function showPopup(jobId) {
+            // ตั้งค่า job_id ให้กับ input hidden
+            document.getElementById('jobId').value = jobId;
+
+            // นำข้อมูลที่ต้องการแสดงใน Popup มาตั้งค่า
+            document.getElementById('fullDescription').innerHTML = 'กำลังส่งงานที่ ID: ' + jobId; // หรือข้อมูลที่ต้องการจากฐานข้อมูล
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด Popup
+        }
+
+        // ฟังก์ชันปิด Popup
+        function closePopup() {
+            document.getElementById('descriptionPopup').style.display = 'none'; // ปิด Popup
+        }
+        // ฟังก์ชันในการอัปโหลดไฟล์โดยไม่รีเฟรชหน้า
+        function uploadFile(event) {
+            event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
+
+            // สร้าง FormData object
+            var formData = new FormData(document.getElementById('uploadForm'));
+
+            // ใช้ XMLHttpRequest (AJAX) ส่งข้อมูล
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'upload.php', true);
+
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    // แสดงผลลัพธ์จาก PHP (ตอบกลับในรูปแบบ JSON)
+                    var response = JSON.parse(xhr.responseText);
+                    alert(response.message); // แสดงข้อความที่ตอบกลับจาก server
+
+                    // ปิด Popup หลังจากการอัปโหลดสำเร็จ
+                    closePopup();
+                } else {
+                    alert('เกิดข้อผิดพลาดในการอัปโหลดไฟล์!');
+                }
+            };
+
+            // ส่งข้อมูลไปยัง server
+            xhr.send(formData);
+        }
+    </script>
+
+
 
 
     <script>
-        // ฟังก์ชันเพื่อเปิด Modal สำหรับส่งงาน
-        function showUploadModal(jobId) {
-            // ตั้งค่า job_id ให้กับ hidden field
-            document.getElementById('jobId').value = jobId;
-
-            // แสดง modal
-            $('#uploadModal').modal('show');
-        }
-
-        // ฟังก์ชันเพื่อส่งข้อมูลงาน
-        function submitJob() {
-            var formData = new FormData(document.getElementById('uploadForm'));
-
-            // ส่งข้อมูลผ่าน AJAX
-            $.ajax({
-                url: 'submit_job.php', // เปลี่ยนเป็นไฟล์ PHP ที่รับข้อมูล
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    // ทำสิ่งที่ต้องการหลังส่งงานสำเร็จ (เช่น แสดงข้อความ หรือปิด modal)
-                    alert('ส่งงานสำเร็จ!');
-                    $('#uploadModal').modal('hide');
-                    location.reload(); // โหลดหน้าใหม่หลังจากส่งงาน
-                },
-                error: function(xhr, status, error) {
-                    alert('เกิดข้อผิดพลาดในการส่งงาน');
-                }
-            });
-        }
-
         // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
         function showFullDescription(fullDescription) {
             // แบ่งคำในรายละเอียดงาน
@@ -794,24 +817,47 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         }
     </script>
     <script>
-        // ฟังก์ชันเปิด/ปิดการแสดงรายละเอียดงาน
-        function toggleDetails(button) {
-            var row = button.closest('tr'); // ค้นหาแถวที่มีปุ่มนั้น
-            var detailsRow = row.nextElementSibling; // แถวถัดไปที่มีข้อมูลรายละเอียด
+        function toggleDetails(button, jobId) {
+            var row = button.closest('tr');
+            var detailsRow = row.nextElementSibling;
 
-            // เช็คว่ามีการแสดงรายละเอียดอยู่หรือไม่
-            if (detailsRow && detailsRow.classList.contains('job-details')) {
-                var isVisible = detailsRow.style.display === 'table-row';
+            if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
+                detailsRow.style.display = "table-row";
 
-                if (isVisible) {
-                    detailsRow.style.display = 'none'; // ซ่อนรายละเอียด
-                    button.textContent = 'รายละเอียดเพิ่มเติม'; // เปลี่ยนปุ่มเป็น "ดูเพิ่มเติม"
-                } else {
-                    detailsRow.style.display = 'table-row'; // แสดงรายละเอียด
-                    button.textContent = 'ซ่อนรายละเอียด'; // เปลี่ยนปุ่มเป็น "ซ่อนรายละเอียด"
-                }
+                // แสดงข้อมูลที่ถูกส่ง
+                console.log("ส่งข้อมูลไปยัง update_status.php:", {
+                    job_id: jobId,
+                    status: 'อ่านแล้ว'
+                });
+
+                // ส่งคำขอ AJAX
+                fetch('update_status.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            status: 'อ่านแล้ว'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Response:", data); // Log ค่าที่ได้รับ
+                        if (data.success) {
+                            console.log("อัปเดตสถานะสำเร็จ");
+                        } else {
+                            console.error("เกิดข้อผิดพลาด:", data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+
+            } else {
+                detailsRow.style.display = "none";
             }
         }
+
+
 
         // ฟังก์ชันสำหรับการเรียงลำดับงาน
         function updateSortOrder() {
