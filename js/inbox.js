@@ -5,33 +5,22 @@ function toggleDetails(button, jobId) {
     if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
         detailsRow.style.display = "table-row";
 
-        // แสดงข้อมูลที่ถูกส่ง
-        console.log("ส่งข้อมูลไปยัง update_status.php:", {
-            job_id: jobId,
-            status: 'อ่านแล้ว'
-        });
+        console.log("ส่งข้อมูลไปยัง update_status.php:", { job_id: jobId, status: 'อ่านแล้ว' });
 
-        // ส่งคำขอ AJAX
         fetch('update_status.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    job_id: jobId,
-                    status: 'อ่านแล้ว'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Response:", data); // Log ค่าที่ได้รับ
-                if (data.success) {
-                    console.log("อัปเดตสถานะสำเร็จ");
-                } else {
-                    console.error("เกิดข้อผิดพลาด:", data.error);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_id: jobId, status: 'อ่านแล้ว' })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) console.log("อัปเดตสถานะสำเร็จ");
+            else console.error("เกิดข้อผิดพลาด:", data.error);
+        })
+        .catch(error => console.error('Error:', error));
 
     } else {
         detailsRow.style.display = "none";
@@ -87,28 +76,11 @@ function checkEnter(event) {
 }
 
 ////
-// ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
-function showFullDescription(fullDescription) {
-    // แบ่งคำในรายละเอียดงาน
-    var words = fullDescription.split(' ');
-    var formattedDescription = '';
-
-    // กำหนดให้แต่ละบรรทัดมี 10 คำ
-    for (var i = 0; i < words.length; i += 10) {
-        formattedDescription += words.slice(i, i + 10).join(' ') + '\n'; // ใช้ \n เพื่อเว้นบรรทัด
-    }
-
-    // แสดงรายละเอียดทั้งหมดใน popup
-    document.getElementById('fullDescription').textContent = fullDescription;
-    document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
-}
-
-// ฟังก์ชันเพื่อปิด popup
+// ฟังก์ชันปิด Popup
 function closePopup() {
-    document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
+    document.getElementById('descriptionPopup').style.display = 'none'; // ปิด Popup
 }
 
-////
 // ฟังก์ชันแสดง Popup
 function showPopup(jobId) {
     // ตั้งค่า job_id ให้กับ input hidden
@@ -119,34 +91,57 @@ function showPopup(jobId) {
     document.getElementById('descriptionPopup').style.display = 'block'; // เปิด Popup
 }
 
-// ฟังก์ชันปิด Popup
-function closePopup() {
-    document.getElementById('descriptionPopup').style.display = 'none'; // ปิด Popup
-}
 // ฟังก์ชันในการอัปโหลดไฟล์โดยไม่รีเฟรชหน้า
 function uploadFile(event) {
-    event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
+    event.preventDefault(); // ป้องกันการรีเฟรชหน้า
 
-    // สร้าง FormData object
-    var formData = new FormData(document.getElementById('uploadForm'));
+    let form = document.getElementById("uploadForm");
+    let formData = new FormData(form);
 
-    // ใช้ XMLHttpRequest (AJAX) ส่งข้อมูล
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'upload.php', true);
+    // ตรวจสอบค่าก่อนส่งไปยังเซิร์ฟเวอร์
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
 
-    xhr.onload = function() {
-        if (xhr.status == 200) {
-            // แสดงผลลัพธ์จาก PHP (ตอบกลับในรูปแบบ JSON)
-            var response = JSON.parse(xhr.responseText);
-            alert(response.message); // แสดงข้อความที่ตอบกลับจาก server
+    // ตรวจสอบว่าไฟล์ถูกเลือกหรือไม่
+    if (!formData.has('fileUpload')) {
+        alert('กรุณาเลือกไฟล์');
+        return;
+    }
 
-            // ปิด Popup หลังจากการอัปโหลดสำเร็จ
-            closePopup();
-        } else {
-            alert('เกิดข้อผิดพลาดในการอัปโหลดไฟล์!');
+    // ตรวจสอบว่าได้กรอกคำอธิบายหรือไม่
+    if (formData.get('reply_description').trim() === '') {
+        alert('กรุณากรอกรายละเอียดงาน');
+        return;
+    }
+
+    // ส่งข้อมูลไปยังเซิร์ฟเวอร์
+    fetch('reply_upload.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Server response:', data);
+        Swal.fire(data.message); // แสดงข้อความจากเซิร์ฟเวอร์
+
+        // หากส่งงานสำเร็จ ให้ปิด Popup
+        if (data.message === 'อัปโหลดไฟล์และบันทึกการตอบกลับเสร็จสมบูรณ์') {
+            closePopup(); // ปิด Popup หลังจากการอัปโหลดสำเร็จ
         }
-    };
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('เกิดข้อผิดพลาดในการอัปโหลดไฟล์');
+    });
+}
 
-    // ส่งข้อมูลไปยัง server
-    xhr.send(formData);
+// ฟังก์ชันในการแสดงรายละเอียดงานทั้งหมดใน popup
+function showFullDescription(fullDescription) {
+    let formattedDescription = fullDescription.split(' ').map((word, index) => {
+        return (index + 1) % 10 === 0 ? word + '<br>' : word;
+    }).join(' ');
+
+    document.getElementById('fullDescription').innerHTML = formattedDescription;
+    document.getElementById('descriptionPopup').style.display = 'block';
 }
