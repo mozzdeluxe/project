@@ -43,6 +43,8 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
+
+
 // คำสั่ง SQL สำหรับดึงข้อมูลงานที่ถูกมอบหมายให้กับพนักงาน
 $stmt = $conn->prepare("
     SELECT 
@@ -447,16 +449,21 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
             <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
                 <label for="fileUpload">เลือกไฟล์:</label>
-                <input type="file" name="fileUpload" id="fileUpload" required>
-                <input type="hidden" name="job_id" id="jobId">
-                <button type="submit" class="btn btn-primary">อัปโหลดงาน</button>
+                <input type="file" name="fileUpload" id="fileUpload" required accept=".pdf, .doc, .docx, .ppt, .pptx">
+
+                <label for="reply_description">รายละเอียดงาน:</label>
+                <textarea name="reply_description" id="reply_description" rows="4" required></textarea>
+
+                <input type="hidden" name="job_id" id="jobId" value="27"> <!-- เปลี่ยนให้ตรงกับ job_id -->
+
+                <button type="submit" class="btn btn-success">ส่งงานตอบกลับ</button>
             </form>
+
         </div>
     </div>
 
     <script src="../js/inbox.js"></script>
     <script src="../js/sidebar.js"></script>
-    <script src="../js/search_assign.js"></script>
 
 </body>
 
