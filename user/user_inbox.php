@@ -43,6 +43,8 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
+
+
 // คำสั่ง SQL สำหรับดึงข้อมูลงานที่ถูกมอบหมายให้กับพนักงาน
 $stmt = $conn->prepare("
     SELECT 
@@ -755,13 +757,8 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <form action="reply_upload.php" method="POST" enctype="multipart/form-data">
                 <label for="fileUpload">เลือกไฟล์:</label>
                 <input type="file" name="fileUpload" id="fileUpload" required>
-
-                <!-- เพิ่ม textarea สำหรับคำอธิบาย -->
-                <label for="reply_description">คำอธิบาย:</label>
-                <textarea name="reply_description" id="reply_description" rows="4" required placeholder="กรุณากรอกคำอธิบาย"></textarea>
-
-                <input type="text" name="job_id" value="<?php echo $job_id; ?>" hidden>
-                <button type="submit" class="btn btn-primary">อัปโหลดไฟล์</button>
+                <input type="hidden" name="job_id" id="jobId">
+                <button type="submit" class="btn btn-primary">อัปโหลดงานนน</button>
             </form>
 
         </div>
@@ -938,7 +935,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         }
     </script>
     <script src="../js/sidebar.js"></script>
-    <script src="../js/search_assign.js"></script>
 
 </body>
 
