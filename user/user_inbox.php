@@ -758,7 +758,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 <label for="fileUpload">เลือกไฟล์:</label>
                 <input type="file" name="fileUpload" id="fileUpload" required>
                 <input type="hidden" name="job_id" id="jobId">
-                <button type="submit" class="btn btn-primary">อัปโหลดงานนน</button>
+                <button type="submit" class="btn btn-primary">อัปโหลดงาน</button>
             </form>
 
         </div>
