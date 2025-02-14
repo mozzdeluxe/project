@@ -9,9 +9,21 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // รับค่าจากฟอร์ม
-$assign_id = $_POST['job_id'];
+$assign_id = isset($_POST['job_id']) ? $_POST['job_id'] : ''; // ตรวจสอบการส่ง job_id
 $user_id = $_SESSION['user_id'];
-$reply_description = $_POST['reply_description'];
+$reply_description = isset($_POST['reply_description']) ? $_POST['reply_description'] : ''; // ตรวจสอบการส่งคำอธิบาย
+
+// ตรวจสอบว่า job_id ไม่ว่าง
+if (empty($assign_id)) {
+    echo json_encode(['message' => 'กรุณาระบุ job_id']);
+    exit;
+}
+
+// หากไม่มีคำอธิบายให้แจ้งเตือน
+if (empty($reply_description)) {
+    echo json_encode(['message' => 'กรุณากรอกคำอธิบาย']);
+    exit;
+}
 
 // ตรวจสอบว่าไฟล์ถูกส่งมาหรือไม่
 if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {

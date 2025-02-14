@@ -43,8 +43,6 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
-
-
 // คำสั่ง SQL สำหรับดึงข้อมูลงานที่ถูกมอบหมายให้กับพนักงาน
 $stmt = $conn->prepare("
     SELECT 
@@ -106,7 +104,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
-    <link href="../css/inbox.css" rel="stylesheet">
     <link href="../css/viewAssignment.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -116,6 +113,22 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
 </head>
 <style>
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: rgb(246, 246, 246);
+    }
+
+    .container {
+        margin-top: 100px;
+        overflow-x: auto;
+        border-radius: 25px;
+        padding: 20px;
+
+        /* สีพื้นหลังเขียว */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
     .table th,
     .table td {
         padding: 13px;
@@ -206,6 +219,286 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     .ms-2 {
         margin-left: 0.5rem;
         /* ระยะห่างซ้าย */
+    }
+
+    /* Popup Overlay */
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    /* Popup Content */
+    .popup-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 70%;
+        max-width: 600px;
+        text-align: left;
+        position: absolute;
+        top: 50%;
+        /* อยู่กลางแนวตั้ง */
+        left: 50%;
+        /* อยู่กลางแนวนอน */
+        transform: translate(-50%, -50%);
+        /* เลื่อนให้ตรงกลางทั้งสองด้าน */
+    }
+
+    /* ปุ่มปิด popup */
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    /* สำหรับ popup ข้อความ */
+    #fullDescription {
+        white-space: pre-wrap;
+        /* ให้ข้อความแตกบรรทัดเมื่อเกิน */
+        word-wrap: break-word;
+        /* ข้อความที่ยาวจะหักคำเมื่อถึงขอบ */
+        max-width: 100%;
+    }
+
+    /* สำหรับคำอธิบายย่อ */
+    .job-description-preview {
+        display: inline;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ปรับปุ่มให้แสดงในแถวเดียวกัน */
+    .job-description-preview+.btn {
+        display: inline;
+        vertical-align: middle;
+    }
+
+    /* ให้คำอธิบายและปุ่มอยู่ในบรรทัดเดียวกัน */
+    .job-detail-grid {
+        white-space: normal;
+        /* ให้ข้อความแสดงในบรรทัดเดียวกัน */
+    }
+
+    /* การตั้งค่าสีพื้นฐานของปุ่มหน้า */
+    .pagination .page-item .page-link {
+        color: #28a745;
+        /* กำหนดสีข้อความเป็นสีเขียว */
+        background-color: white;
+        /* กำหนดสีพื้นหลังเป็นสีขาว */
+        border: 1px solid #28a745;
+        /* กำหนดขอบเป็นสีเขียว */
+    }
+
+    /* การตั้งค่าสีเมื่อปุ่มถูกคลิก (Active state) */
+    .pagination .page-item.active .page-link {
+        color: white;
+        /* สีข้อความเป็นสีขาว */
+        background-color: rgb(20, 96, 37);
+        /* กำหนดพื้นหลังเป็นสีเขียว */
+        border-color: rgb(20, 96, 37);
+        /* กำหนดขอบเป็นสีเขียว */
+    }
+
+    /* การตั้งค่าสีเมื่อปุ่มอยู่ในสถานะ hover (ชี้เมาส์ไปที่ปุ่ม) */
+    .pagination .page-item .page-link:hover {
+        color: white;
+        /* สีข้อความเป็นสีขาวเมื่อ hover */
+        background-color: #218838;
+        /* พื้นหลังเป็นสีเขียวเข้มขึ้นเมื่อ hover */
+        border-color: #218838;
+        /* ขอบสีเขียวเข้มขึ้นเมื่อ hover */
+    }
+
+    /* การตั้งค่าสีสำหรับปุ่ม "Previous" และ "Next" */
+    .pagination .page-item .page-link[aria-label="Previous"],
+    .pagination .page-item .page-link[aria-label="Next"] {
+        color: #28a745;
+        /* สีของปุ่ม Previous และ Next */
+    }
+
+    /* การตั้งค่าสีเมื่อปุ่ม "Previous" หรือ "Next" อยู่ในสถานะ hover */
+    .pagination .page-item .page-link[aria-label="Previous"]:hover,
+    .pagination .page-item .page-link[aria-label="Next"]:hover {
+        background-color: #218838;
+        /* พื้นหลังสีเขียวเข้มขึ้นเมื่อ hover */
+        border-color: #218838;
+        /* ขอบสีเขียวเข้มขึ้นเมื่อ hover */
+    }
+
+    .job-level-container {
+        display: inline-block;
+        padding: 5px 10px;
+        background-color: transparent;
+        /* ทำให้พื้นหลังโปร่งใส */
+        border-radius: 30px;
+        font-weight: bold;
+        color: rgb(0, 0, 0);
+        /* สีข้อความเป็นดำ */
+    }
+
+    /* ขอบสีเขียวสำหรับระดับงานปกติ */
+    .job-level-container.normal {
+        border: 4px solid #28a745;
+        color: #28a745;
+        /* ขอบเขียว */
+    }
+
+    /* ขอบสีเหลืองสำหรับระดับงานด่วน */
+    .job-level-container.urgent {
+        border: 4px solid #ffcc00;
+        color: #ffcc00;
+        /* ขอบเหลือง */
+    }
+
+
+    /* ขอบสีแดงสำหรับระดับงานด่วนมาก */
+    .job-level-container.very-urgent {
+        border: 4px solid #ff0000;
+        color: #ff0000;
+        /* ขอบแดง */
+    }
+
+    /* กล่องเมนูหลัก */
+    .container-box {
+        width: auto;
+        /* ปรับความกว้างตามเนื้อหา */
+        background-color: white;
+        padding: 0px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+        position: fixed;
+        top: 150px;
+        left: 10px;
+        bottom: 120px;
+        z-index: 1000;
+        height: fit-content;
+        /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+        transition: none;
+        /* ลบการเปลี่ยนแปลงความกว้าง */
+        max-width: 300px;
+        /* กำหนดความกว้างสูงสุด */
+        max-height: 100vh;
+        /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
+    }
+
+    /* สไตล์สำหรับเมื่อเมนูเปิด */
+    .container-box.open {
+        width: auto;
+        /* กำหนดให้กล่องขยายตามจำนวนหัวข้อ */
+    }
+
+    /* สำหรับลิงก์ในเมนู */
+    .container-box a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    /* เพิ่มสไตล์สำหรับเมนูที่มี class active */
+    .container-box .menu-item.active {
+        background-color: #02A664;
+        color: white;
+    }
+
+    .container-box .menu-item.active i {
+        color: white;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border-radius: 5px;
+        transition: background 0.3s;
+        cursor: pointer;
+        margin-bottom: 10px;
+        font-size: 20px;
+        /* เพิ่มขนาดข้อความ */
+    }
+
+    .menu-item i {
+        margin-right: 10px;
+    }
+
+    .menu-item:hover {
+        background-color: #e9ecef;
+    }
+
+    .menu-item span {
+        display: none;
+    }
+
+    .container-box.open .menu-item span {
+        display: inline-block;
+    }
+
+
+    .navbar {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        background-color: rgb(255, 255, 255);
+        box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+        padding: 10px;
+        color: black;
+        position: fixed;
+        /* ทำให้ navbar อยู่คงที่ */
+        top: 0;
+        /* ติดอยู่ที่ด้านบนสุด */
+        left: 0;
+        /* แนบขอบซ้าย */
+        width: 100%;
+        /* ให้ navbar กว้างเต็มหน้าจอ */
+        z-index: 1000;
+        /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+    }
+
+    .navbar .menu-item i {
+        color: black !important;
+        /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
+    }
+
+    /* สไตล์ Popup */
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        /* ให้ popup อยู่เหนือเนื้อหาทั้งหมด */
+    }
+
+    .popup-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 50%;
+        /* กำหนดความกว้างของ Popup */
+        position: relative;
+    }
+
+    .close-btn {
+        cursor: pointer;
+        font-size: 20px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
     }
 </style>
 
@@ -334,7 +627,9 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
 
-                            echo '<td><button class="btn btn-success" onclick="showPopup(' . $row['job_id'] . ')">ส่งงาน</button></td>';
+                            echo '<td><button class="btn btn-success" onclick="showPopup2(' . $row['job_id'] . ')">ส่งงาน</button></td>';
+
+
 
                             echo '</tr>';
 
@@ -393,7 +688,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     $job_description_preview = htmlspecialchars($row['job_description']);
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
                                     // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    echo '<strong>รายละเอียดงาน: </strong>
+<span class="job-description-preview">' . $short_description . '... </span>
+<button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+
                                     echo '</div>';
                                 }
                             } else {
@@ -445,25 +743,202 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <span class="close-btn" onclick="closePopup()">&times;</span>
             <h3>รายละเอียดงานทั้งหมด</h3>
             <p id="fullDescription"></p>
-
-            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
-            <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
+        </div>
+    </div>
+    <!-- Popup สำหรับการส่งงาน -->
+    <div id="descriptionPopup2" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <h3>ส่งงาน</h3>
+            <div id="fullDescription2"></div>
+            <!-- ฟอร์มสำหรับการอัปโหลดไฟล์ -->
+            <form action="reply_upload.php" method="POST" enctype="multipart/form-data">
                 <label for="fileUpload">เลือกไฟล์:</label>
-                <input type="file" name="fileUpload" id="fileUpload" required accept=".pdf, .doc, .docx, .ppt, .pptx">
+                <input type="file" name="fileUpload" id="fileUpload" required>
 
-                <label for="reply_description">รายละเอียดงาน:</label>
-                <textarea name="reply_description" id="reply_description" rows="4" required></textarea>
+                <!-- เพิ่ม textarea สำหรับคำอธิบาย -->
+                <label for="reply_description">คำอธิบาย:</label>
+                <textarea name="reply_description" id="reply_description" rows="4" required placeholder="กรุณากรอกคำอธิบาย"></textarea>
 
-                <input type="hidden" name="job_id" id="jobId" value="27"> <!-- เปลี่ยนให้ตรงกับ job_id -->
-
-                <button type="submit" class="btn btn-success">ส่งงานตอบกลับ</button>
+                <input type="text" name="job_id" value="<?php echo $job_id; ?>" hidden>
+                <button type="submit" class="btn btn-primary">อัปโหลดไฟล์</button>
             </form>
 
         </div>
     </div>
 
-    <script src="../js/inbox.js"></script>
+
+
+
+
+    <script>
+        // ฟังก์ชันแสดงรายละเอียดงานทั้งหมดใน popup (แยกต่างหากจากการส่งงาน)
+        function showFullDescription(fullDescription) {
+            // แสดงรายละเอียดทั้งหมดใน popup
+            document.getElementById('fullDescription').textContent = fullDescription;
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+        }
+
+        // ฟังก์ชันแสดง Popup สำหรับการส่งงาน
+        function showPopup2(jobId) {
+
+            // นำข้อมูลที่ต้องการแสดงใน Popup มาตั้งค่า
+            document.getElementById('fullDescription2').innerHTML = 'กำลังส่งงานที่ ID: ' + jobId; // หรือข้อมูลที่ต้องการจากฐานข้อมูล
+            document.getElementById('descriptionPopup2').style.display = 'block'; // เปิด Popup สำหรับการส่งงาน
+        }
+
+
+        // ฟังก์ชันในการอัปโหลดไฟล์โดยไม่รีเฟรชหน้า
+        function uploadFile(event) {
+            event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
+
+            // ตรวจสอบว่าไฟล์ถูกเลือกหรือไม่
+            var fileInput = document.getElementById('fileUpload');
+            if (!fileInput.files.length) {
+                alert('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
+                return; // หยุดการทำงานหากไม่ได้เลือกไฟล์
+            }
+
+            // สร้าง FormData object
+            var formData = new FormData(document.getElementById('uploadForm'));
+
+            // ใช้ XMLHttpRequest (AJAX) ส่งข้อมูล
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'upload.php', true);
+
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    // แสดงผลลัพธ์จาก PHP (ตอบกลับในรูปแบบ JSON)
+                    var response = JSON.parse(xhr.responseText);
+                    alert(response.message); // แสดงข้อความที่ตอบกลับจาก server
+
+                    // ปิด Popup หลังจากการอัปโหลดสำเร็จ
+                    closePopup();
+                } else {
+                    alert('เกิดข้อผิดพลาดในการอัปโหลดไฟล์!');
+                }
+            };
+
+            // ส่งข้อมูลไปยัง server
+            xhr.send(formData);
+        }
+
+
+
+
+        // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
+        function showFullDescription(fullDescription) {
+            // แบ่งคำในรายละเอียดงาน
+            var words = fullDescription.split(' ');
+            var formattedDescription = '';
+
+            // กำหนดให้แต่ละบรรทัดมี 10 คำ
+            for (var i = 0; i < words.length; i += 10) {
+                formattedDescription += words.slice(i, i + 10).join(' ') + '\n'; // ใช้ \n เพื่อเว้นบรรทัด
+            }
+
+            // แสดงรายละเอียดทั้งหมดใน popup
+            document.getElementById('fullDescription').textContent = fullDescription;
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+        }
+
+        // ฟังก์ชันเพื่อปิด popup
+        function closePopup() {
+            document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
+            document.getElementById('descriptionPopup2').style.display = 'none'; // ปิด popup
+        }
+
+        function toggleDetails(button, jobId) {
+            var row = button.closest('tr');
+            var detailsRow = row.nextElementSibling;
+
+            if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
+                detailsRow.style.display = "table-row";
+
+                // แสดงข้อมูลที่ถูกส่ง
+                console.log("ส่งข้อมูลไปยัง update_status.php:", {
+                    job_id: jobId,
+                    status: 'อ่านแล้ว'
+                });
+
+                // ส่งคำขอ AJAX
+                fetch('update_status.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            status: 'อ่านแล้ว'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Response:", data); // Log ค่าที่ได้รับ
+                        if (data.success) {
+                            console.log("อัปเดตสถานะสำเร็จ");
+                        } else {
+                            console.error("เกิดข้อผิดพลาด:", data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+
+            } else {
+                detailsRow.style.display = "none";
+            }
+        }
+
+
+
+        // ฟังก์ชันสำหรับการเรียงลำดับงาน
+        function updateSortOrder() {
+            const sortOrder = document.getElementById('sortOrder').value;
+            if (sortOrder) {
+                window.location.href = `?sort=${sortOrder}`;
+            }
+        }
+
+
+        function searchTable() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toUpperCase(); // ทำให้เป็นตัวอักษรพิมพ์ใหญ่
+            var table = document.getElementById("jobTable"); // ตัวอย่าง table ID
+            var rows = table.getElementsByTagName("tr"); // หาตัวแถวทั้งหมดในตาราง
+
+            // ลูปผ่านทุกแถวในตาราง (เริ่มจากแถวที่สองเพื่อข้ามส่วนหัว)
+            for (var i = 1; i < rows.length; i++) {
+                var cells = rows[i].getElementsByTagName("td"); // หาค่าของแต่ละเซลล์ในแถว
+
+                var match = false;
+                // ลูปผ่านทุกเซลล์ในแถว
+                for (var j = 0; j < cells.length; j++) {
+                    if (cells[j]) {
+                        var textValue = cells[j].textContent || cells[j].innerText;
+                        if (textValue.toUpperCase().indexOf(filter) > -1) {
+                            match = true;
+                            break;
+                        }
+                    }
+                }
+
+                // แสดงหรือซ่อนแถวตามผลการค้นหา
+                if (match) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+
+        function checkEnter(event) {
+            if (event.key === "Enter") { // ตรวจสอบว่าเป็นการกดปุ่ม Enter
+                event.preventDefault(); // ป้องกันการส่งฟอร์มหรือการทำงานอื่น ๆ
+                searchTable(); // เรียกใช้ฟังก์ชัน searchTable
+            }
+        }
+    </script>
     <script src="../js/sidebar.js"></script>
+    <script src="../js/search_assign.js"></script>
 
 </body>
 
