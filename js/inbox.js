@@ -136,12 +136,27 @@ function uploadFile(event) {
     });
 }
 
-// ฟังก์ชันในการแสดงรายละเอียดงานทั้งหมดใน popup
-function showFullDescription(fullDescription) {
-    let formattedDescription = fullDescription.split(' ').map((word, index) => {
-        return (index + 1) % 10 === 0 ? word + '<br>' : word;
-    }).join(' ');
+// ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
+function showFullDescription(event, fullDescription) {
+    if (event) {
+        event.stopPropagation(); // ป้องกันการส่ง event ไปยังปุ่มอื่นๆ
+    }
 
+    // แบ่งคำในรายละเอียดงาน
+    var words = fullDescription.split(' ');
+    var formattedDescription = '';
+
+    // กำหนดให้แต่ละบรรทัดมี 10 คำ
+    for (var i = 0; i < words.length; i += 10) {
+        formattedDescription += words.slice(i, i + 10).join(' ') + '<br>'; // ใช้ <br> แทน \n
+    }
+
+    // แสดงรายละเอียดทั้งหมดใน popup
     document.getElementById('fullDescription').innerHTML = formattedDescription;
-    document.getElementById('descriptionPopup').style.display = 'block';
+    document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+}
+
+// ฟังก์ชันเพื่อปิด popup
+function closePopup() {
+    document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
 }

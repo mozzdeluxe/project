@@ -63,11 +63,145 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
-    <link href="../css/user_page.css" rel="stylesheet">
+    <link href="../css/dashboard.css" rel="stylesheet">
+    <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .user {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            /* จัดตำแหน่งกราฟให้อยู่ตรงกลางแนวนอน */
+            align-items: start;
+            /* จัดตำแหน่งกราฟให้อยู่ตรงกลางแนวตั้ง */
+            height: 100vh;
+            /* ให้ความสูงของ container เต็มหน้าจอ */
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .card-container {
+            margin-top: 40px;
+        }
+
+        /* กล่องเมนูหลัก */
+        .container-box {
+            width: auto;
+            /* ปรับความกว้างตามเนื้อหา */
+            background-color: white;
+            padding: 0px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 150px;
+            left: 10px;
+            bottom: 120px;
+            z-index: 1000;
+            height: fit-content;
+            /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+            transition: none;
+            /* ลบการเปลี่ยนแปลงความกว้าง */
+            max-width: 300px;
+            /* กำหนดความกว้างสูงสุด */
+            max-height: 100vh;
+            /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
+        }
+
+        /* สไตล์สำหรับเมื่อเมนูเปิด */
+        .container-box.open {
+            width: auto;
+            /* กำหนดให้กล่องขยายตามจำนวนหัวข้อ */
+        }
+
+        /* สำหรับลิงก์ในเมนู */
+        .container-box a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* เพิ่มสไตล์สำหรับเมนูที่มี class active */
+        .container-box .menu-item.active {
+            background-color: #02A664;
+            color: white;
+        }
+
+        .container-box .menu-item.active i {
+            color: white;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+        }
+
+        .menu-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .menu-item span {
+            display: none;
+        }
+
+        .container-box.open .menu-item span {
+            display: inline-block;
+        }
+
+
+        .navbar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            background-color: rgb(255, 255, 255);
+            box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            color: black;
+            position: fixed;
+            /* ทำให้ navbar อยู่คงที่ */
+            top: 0;
+            /* ติดอยู่ที่ด้านบนสุด */
+            left: 0;
+            /* แนบขอบซ้าย */
+            width: 100%;
+            /* ให้ navbar กว้างเต็มหน้าจอ */
+            z-index: 1000;
+            /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+        }
+
+        .navbar .menu-item i {
+            color: black !important;
+            /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
+        }
+    </style>
 </head>
 
 <body>
