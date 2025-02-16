@@ -425,8 +425,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         transition: background 0.3s;
         cursor: pointer;
         margin-bottom: 10px;
-        font-size: 20px;
-        /* เพิ่มขนาดข้อความ */
+        font-size: 20px; /* เพิ่มขนาดข้อความ */
     }
 
     .menu-item i {
@@ -440,6 +439,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     .menu-item span {
         display: none;
     }
+
 
     .container-box.open .menu-item span {
         display: inline-block;
@@ -502,13 +502,32 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         top: 10px;
         right: 10px;
     }
-</style>
+    .header {
+        color: rgb(0, 0, 0);
+        /* เปลี่ยนสีฟอนต์ */
+        font-size: 21px;
+        /* เปลี่ยนขนาดฟอนต์ */
+        font-weight: bold;
+        /* เปลี่ยนความหนาของฟอนต์ */
+        font-family: Arial, sans-serif;
+        /* กำหนดฟอนต์ */
+        padding: 5px 10px;
+        /* เพิ่มระยะห่างรอบๆ */
+        margin-left: 15px;
+        /* ระยะห่างจากขอบซ้าย */
+    }
+    </style>
+</head>
 
 <body>
     <!-- Navbar -->
     <div class="navbar">
         <div class="menu-item" onclick="toggleSidebar()">
             <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
+        </div>
+        <!-- เพิ่มหัวข้อใหม่ข้างๆ -->
+        <div class="header">
+            <span>งานที่ได้รับ</span>
         </div>
     </div>
 
@@ -533,7 +552,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
         </div>
         <div class="menu-item">
-            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
+            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขโปรไฟล์</span></a>
         </div>
         <div class="menu-item">
             <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>
@@ -642,23 +661,48 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td colspan="8">';
                             echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
-                            // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
+                            // สมมติว่าคุณมีตัวแปร $currentUserId ที่เก็บ user_id ของผู้ใช้งานที่กำลังล็อกอิน
+                            $currentUserId = $_SESSION['user_id']; // หรืออาจจะได้จากการตรวจสอบ session
+
+                            // ดึงข้อมูลพนักงานที่ได้รับมอบหมายงานนี้และเป็นของผู้ใช้งานนี้
                             $subQuery = $conn->prepare("
-                SELECT 
-                    m.firstname, 
-                    m.lastname, 
-                    m.user_id, 
-                    a.status
-                FROM 
-                    assignments a 
-                LEFT JOIN 
-                    mable m ON a.user_id = m.id 
-                WHERE 
-                    a.job_id = ?
-            ");
-                            $subQuery->bind_param("i", $row['job_id']);
+SELECT 
+    m.firstname, 
+    m.lastname, 
+    m.user_id, 
+    a.status
+FROM 
+    assignments a 
+LEFT JOIN 
+    mable m ON a.user_id = m.id 
+WHERE 
+    a.job_id = ? AND a.user_id = ?
+");
+                            $subQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
+
+                            // ดึงข้อมูลพนักงานคนอื่นที่ได้รับมอบหมายงานเดียวกัน (ไม่รวม user_id ปัจจุบัน)
+                            $otherEmployeesQuery = $conn->prepare("
+SELECT 
+    m.firstname, 
+    m.lastname, 
+    m.user_id, 
+    a.status
+FROM 
+    assignments a 
+LEFT JOIN 
+    mable m ON a.user_id = m.id 
+WHERE 
+    a.job_id = ? AND a.user_id != ?
+");
+                            $otherEmployeesQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id ที่ไม่เท่ากับ user_id ปัจจุบัน
+                            $otherEmployeesQuery->execute();
+                            $otherEmployeesResult = $otherEmployeesQuery->get_result();
+
+
+
+
 
                             if ($subResult->num_rows > 0) {
                                 while ($empRow = $subResult->fetch_assoc()) {
@@ -693,8 +737,13 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     echo '<strong>รายละเอียดงาน: </strong>
 <span class="job-description-preview">' . $short_description . '... </span>
 <button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
-
                                     echo '</div>';
+                                }
+                                // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
+                                echo '<div class="job-detail-grid">';
+                                echo '<strong>พนักงานคนอื่นที่ได้รับงานนี้:</strong><br>';
+                                while ($otherEmpRow = $otherEmployeesResult->fetch_assoc()) {
+                                    echo htmlspecialchars($otherEmpRow['firstname'] . ' ' . $otherEmpRow['lastname']) . '<br>';
                                 }
                             } else {
                                 echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';

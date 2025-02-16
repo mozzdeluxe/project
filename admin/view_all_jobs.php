@@ -472,6 +472,20 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         color: black !important;
         /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
     }
+    .header {
+        color: rgb(0, 0, 0);
+        /* เปลี่ยนสีฟอนต์ */
+        font-size: 21px;
+        /* เปลี่ยนขนาดฟอนต์ */
+        font-weight: bold;
+        /* เปลี่ยนความหนาของฟอนต์ */
+        font-family: Arial, sans-serif;
+        /* กำหนดฟอนต์ */
+        padding: 5px 10px;
+        /* เพิ่มระยะห่างรอบๆ */
+        margin-left: 15px;
+        /* ระยะห่างจากขอบซ้าย */
+    }
 </style>
 
 <body>
@@ -479,6 +493,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <div class="navbar">
         <div class="menu-item" onclick="toggleSidebar()">
             <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
+        </div>
+        <!-- เพิ่มหัวข้อใหม่ข้างๆ -->
+        <div class="header">
+            <span>งานทั้งหมด</span>
         </div>
     </div>
 
@@ -488,7 +506,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="admin_page.php"><i class="fa-regular fa-clipboard"></i> <span>แดชบอร์ด</span></a>
         </div>
         <div class="menu-item">
-            <a href="emp.php"><i class="fa-solid fa-users"></i> <span>รายชื่อพนักงานทั้งหมด</span></a>
+            <a href="emp.php"><i class="fa-solid fa-users"></i> <span>พนักงานทั้งหมด</span></a>
         </div>
         <div class="menu-item active">
             <a href="view_all_jobs.php"><i class="fa-solid fa-briefcase"></i> <span>งานทั้งหมด</span></a>
@@ -497,13 +515,13 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
         </div>
         <div class="menu-item">
-            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>ดูงานที่สั่งแล้ว</span></a>
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่งแล้ว</span></a>
         </div>
         <div class="menu-item">
-            <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>ตรวจสอบงานที่ตอบกลับ</span></a>
+            <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ตอบกลับ</span></a>
         </div>
         <div class="menu-item">
-            <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
+            <a href="edit_profile_admin.php"><i class="fa-solid fa-user-edit"></i> <span>แก้ไขโปรไฟล์</span></a>
         </div>
         <div class="menu-item">
             <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>

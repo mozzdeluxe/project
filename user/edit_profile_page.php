@@ -199,6 +199,20 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             color: black !important;
             /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
         }
+        .header {
+        color: rgb(0, 0, 0);
+        /* เปลี่ยนสีฟอนต์ */
+        font-size: 21px;
+        /* เปลี่ยนขนาดฟอนต์ */
+        font-weight: bold;
+        /* เปลี่ยนความหนาของฟอนต์ */
+        font-family: Arial, sans-serif;
+        /* กำหนดฟอนต์ */
+        padding: 5px 10px;
+        /* เพิ่มระยะห่างรอบๆ */
+        margin-left: 15px;
+        /* ระยะห่างจากขอบซ้าย */
+    }
     </style>
     <script>
         function validateNumber(input) {
@@ -224,6 +238,10 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
         <div class="menu-item" onclick="toggleSidebar()">
             <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
         </div>
+        <!-- เพิ่มหัวข้อใหม่ข้างๆ -->
+        <div class="header">
+            <span>แก้ไขโปรไฟล์</span>
+        </div>
     </div>
 
     <!-- Sidebar เมนูหลัก -->
@@ -247,7 +265,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
         </div>
         <div class="menu-item active">
-            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
+            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขโปรไฟล์</span></a>
         </div>
         <div class="menu-item">
             <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>
