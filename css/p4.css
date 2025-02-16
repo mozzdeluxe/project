@@ -1,0 +1,414 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: rgb(233, 233, 233);
+    overflow: hidden;
+    /* ห้ามเลื่อนทั้งแนวตั้งและแนวนอน */
+}
+
+.container {
+    margin-top: 20px;
+    overflow-x: auto;
+    background-color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    /* จัดกลางแนวนอน */
+    align-items: center;
+    /* จัดกลางแนวตั้ง */
+    height: 600px;
+    /* กำหนดความสูง */
+    border-radius: 30px;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.2);
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+}
+
+.col-md-6 {
+    width: 48%;
+    /* กำหนดความกว้างของแต่ละฝั่งเป็น 48% */
+    box-sizing: border-box;
+    /* เพื่อไม่ให้เกิดการเบียดกัน */
+}
+
+
+
+#main {
+    display: flex;
+    justify-content: center;
+    /* จัดเรียงให้ฟอร์มอยู่กลาง */
+    align-items: center;
+    /* จัดให้ฟอร์มอยู่กลางแนวตั้ง */
+    min-height: 100vh;
+    /* ให้สูงเต็มหน้าจอ */
+    flex-direction: row;
+    gap: 10px;
+    /* ระยะห่างระหว่างฟอร์มทั้งสอง */
+    width: 100%;
+    padding: 20px;
+    padding-right: 500px;
+    /* เพิ่มระยะห่างจากขอบขวา */
+    margin-top: 0;
+    /* ปรับ margin-top เป็น 0 */
+}
+
+
+.form-box {
+    padding: 30px;
+    border-radius: 35px;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
+    background-color: rgb(255, 255, 255);
+    margin: 100px 0 0 0;
+    /* เพิ่ม margin-top 20px */
+    width: 600px;
+    /* ปรับความกว้างเป็น 80% ของหน้าจอ */
+    max-width: 600px;
+    /* จำกัดความกว้างสูงสุด */
+}
+
+
+.form-box+.form-box {
+    margin-left: 0;
+    /* ปิด margin ระหว่างฟอร์ม */
+}
+
+.form-control {
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #727272;
+    border-radius: 0;
+    color: #000;
+    font-size: 16px;
+}
+
+.form-control:focus {
+    border-bottom: 2px solid #727272;
+    outline: none;
+    box-shadow: none;
+}
+
+.form-control option {
+    background-color: transparent;
+    color: #000;
+}
+
+.form-control option:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+
+.btn {
+    font-size: 18px;
+    padding: 10px 20px;
+    margin-top: 30px;
+    border-radius: 30px;
+    background-color: #1e74ba;
+    color: #fff;
+    border: none;
+    /* ลบสีขอบออก */
+}
+
+
+.btn:hover {
+    background: #0a840a;
+    color: #fff;
+}
+
+/* ปุ่มพื้นฐาน */
+.btn-worker {
+    background-color: #28a745;
+    /* สีเขียวสด */
+    border: 2px solid #218838;
+    /* สีขอบเข้ม */
+    color: #fff;
+    /* สีตัวอักษร */
+    font-weight: bold;
+    /* ตัวอักษรหนา */
+    padding: 10px 20px;
+    /* ขยายพื้นที่ในปุ่ม */
+    border-radius: 8px;
+    /* มุมโค้งมน */
+    cursor: pointer;
+    /* เปลี่ยนเคอร์เซอร์เป็นรูปมือ */
+    transition: all 0.3s ease;
+    /* เพิ่มเอฟเฟกต์ */
+}
+
+/* เมื่อเอาเมาส์วางบนปุ่ม */
+.btn-worker:hover {
+    background-color: #218838;
+    /* สีพื้นหลังเข้มขึ้น */
+    border-color: #1e7e34;
+    /* สีขอบเข้มขึ้น */
+    transform: scale(1.05);
+    /* ขยายปุ่มเล็กน้อย */
+}
+
+/* เมื่อกดปุ่ม */
+.btn-worker:active {
+    background-color: #1e7e34;
+    /* สีพื้นหลังเข้มที่สุด */
+    border-color: #19692c;
+    /* สีขอบเข้มขึ้น */
+    transform: scale(0.95);
+    /* ลดขนาดเล็กน้อย */
+}
+
+/* ปุ่มขนาดเล็ก */
+button.btn-worker.small {
+    font-size: 16px !important;
+    /* ลดขนาดตัวอักษร */
+    padding: 5px 5px !important;
+    /* ลดพื้นที่รอบตัวอักษร */
+    border-radius: 10px !important;
+    /* ลดความโค้งมนของมุม */
+    width: auto !important;
+    /* ให้ปุ่มปรับขนาดอัตโนมัติ */
+    height: auto !important;
+    /* ลดความสูง */
+    background-color: rgb(68, 68, 68);
+    border-color: rgb(0, 0, 0);
+}
+
+
+
+
+/* ปุ่มขนาดใหญ่ */
+.btn-worker.large {
+    font-size: 18px;
+    padding: 15px 30px;
+}
+
+/* จัดให้อยู่คนละบรรทัด */
+.mb-3 .form-label,
+.mb-3 .btn-worker {
+    display: block;
+    width: 50%;
+    font-weight: bold;
+    font-size: 25px;
+}
+
+.mb-3 .main-label {
+    display: flex;
+    justify-content: center;
+    /* จัดให้อยู่ตรงกลางแนวนอน */
+    align-items: center;
+    /* จัดให้อยู่ตรงกลางแนวตั้ง */
+    font-weight: bold;
+    font-size: 30px;
+    width: 100%;
+    /* ทำให้ label ขยายเต็มพื้นที่ container */
+    text-align: center;
+    /* จัดข้อความใน label ให้อยู่ตรงกลาง */
+}
+
+
+.selected-user {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin: 5px;
+    font-size: 14px;
+}
+
+.remove-user-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 10px;
+    color: #ff0000;
+    cursor: pointer;
+}
+
+.remove-user-btn:hover {
+    color: #d00000;
+}
+
+
+.list-group-item.selected {
+    font-size: 1.1rem;
+    /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
+    background-color: #4CAF50;
+    /* สีพื้นหลังเมื่อเลือก */
+    color: white;
+    /* สีข้อความเมื่อเลือก */
+    border: 1px solid #4CAF50;
+}
+
+.list-group-item.selected::before {
+    content: "✔ ";
+    /* เครื่องหมายถูก */
+    font-size: 1.1rem;
+    /* ขนาดตัวอักษรของปุ่มที่ถูกเลือก */
+    margin-right: 8px;
+}
+
+/* กล่องเมนูหลัก */
+.container-box {
+    width: auto;
+    /* ปรับความกว้างตามเนื้อหา */
+    background-color: white;
+    padding: 0px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+    position: fixed;
+    top: 150px;
+    left: 10px;
+    bottom: 120px;
+    z-index: 1000;
+    height: fit-content;
+    /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+    transition: none;
+    /* ลบการเปลี่ยนแปลงความกว้าง */
+    max-width: 300px;
+    /* กำหนดความกว้างสูงสุด */
+    max-height: 100vh;
+    /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
+}
+
+.container-box.open {
+    width: 300px;
+    /* ขยายขนาดให้แสดงข้อความเมื่อเปิด */
+}
+
+/* สำหรับลิงก์ในเมนู */
+.container-box a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.content {
+    margin-left: 340px;
+    padding: 20px;
+    height: 200vh;
+    overflow-y: auto;
+}
+
+/* เพิ่มสไตล์สำหรับเมนูที่มี class active */
+.container-box .menu-item.active {
+    background-color: #1e74ba;
+    /* ใช้สีพื้นหลังที่เด่น */
+    color: white;
+    /* เปลี่ยนสีข้อความให้ขาว */
+}
+
+.container-box .menu-item.active i {
+    color: white;
+    /* เปลี่ยนสีไอคอนให้ขาว */
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-radius: 5px;
+    transition: background 0.3s;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-size: 20px; /* เพิ่มขนาดข้อความ */
+}
+
+.menu-item i {
+    margin-right: 10px;
+}
+
+.menu-item:hover {
+    background-color: #e9ecef;
+}
+
+.menu-item span {
+    display: none;
+}
+
+.container-box.open .menu-item span {
+    display: inline-block;
+    /* แสดงข้อความเมื่อเปิด */
+}
+
+.navbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+    padding: 10px;
+    color: white;
+    position: fixed;
+    /* ทำให้ navbar อยู่คงที่ */
+    top: 0;
+    /* ติดอยู่ที่ด้านบนสุด */
+    left: 0;
+    /* แนบขอบซ้าย */
+    width: 100%;
+    /* ให้ navbar กว้างเต็มหน้าจอ */
+    z-index: 1000;
+    /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+}
+
+.navbar .menu-item i {
+    color: black;
+    /* เปลี่ยนสีไอคอนเป็นสีดำ */
+}
+
+.header {
+    color: rgb(0, 0, 0);
+    /* เปลี่ยนสีฟอนต์ */
+    font-size: 21px;
+    /* เปลี่ยนขนาดฟอนต์ */
+    font-weight: bold;
+    /* เปลี่ยนความหนาของฟอนต์ */
+    font-family: Arial, sans-serif;
+    /* กำหนดฟอนต์ */
+    padding: 5px 10px;
+    /* เพิ่มระยะห่างรอบๆ */
+    margin-left: 15px;
+    /* ระยะห่างจากขอบซ้าย */
+}
+
+/* ใช้ Flexbox สำหรับจัดตำแหน่งการ์ด */
+.container-fluid .row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    /* ระยะห่างระหว่างการ์ด */
+    flex-wrap: wrap;
+    margin-top: 20px;
+    /* ห่างจากขอบบน */
+}
+
+/* ปรับขนาดการ์ด */
+.card-container {
+    flex: 1 1 30%;
+    /* ทำให้การ์ดใช้พื้นที่ 30% */
+    max-width: 30%;
+}
+
+/* กำหนดให้การ์ดไม่ขยายเกินขนาด */
+.card {
+    width: 100%;
+}
+
+/* ปรับการจัดตำแหน่งข้อความ */
+.card-title {
+    font-size: 18px;
+    color: #02A664;
+    font-weight: bold;
+}
+
+.icon-container i {
+    font-size: 2.5rem;
+    color: #02A664;
+}
+
+.card-text {
+    font-size: 14px;
+    color: #333;
+}

@@ -25,14 +25,18 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.16/dist/sweetalert2.all.min.js"></script>
     <style>
+        
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(246, 246, 246);
         }
+
         .container {
             margin-top: 20px;
             overflow-x: auto;
         }
+
         .form-container {
             display: flex;
             align-items: center;
@@ -40,31 +44,44 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             min-height: 70vh;
             gap: 50px;
         }
+
         .image-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            background-color: rgb(255, 255, 255);
         }
+
         .circle-images {
             width: 200px;
             height: 200px;
             border-radius: 50%;
             overflow: hidden;
+            margin-bottom: 20px;
         }
+
         .circle-images img {
             width: 100%;
             height: 105%;
             object-fit: cover;
         }
+
         .form-box {
             width: 100%;
             max-width: 500px;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: rgb(255, 255, 255);
         }
+
         .form-control {
             background-color: transparent;
             border: none;
@@ -73,18 +90,22 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             color: #000;
             font-size: 16px;
         }
+
         .form-control:focus {
             border-bottom: 2px solid #727272;
             outline: none;
             box-shadow: none;
         }
+
         .form-control option {
             background-color: transparent;
             color: #000;
         }
+
         .form-control option:hover {
             background-color: rgba(0, 0, 0, 0.1);
         }
+
         .btn {
             font-size: 18px;
             padding: 10px 20px;
@@ -93,15 +114,18 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             background-color: #1dc02b;
             color: #fff;
         }
+
         .btn:hover {
             background: #0a840a;
             color: #fff;
         }
+
         #main {
             transition: margin-left .5s;
             padding: 16px;
             margin-left: 0;
         }
+
         /* กล่องเมนูหลัก */
         .container-box {
             width: auto;

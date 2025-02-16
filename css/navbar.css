@@ -1,71 +1,53 @@
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-}
-.navbar {
-    position: fixed; /* ทำให้ navbar ยึดกับตำแหน่งบนสุด */
-    background:#ffffff; /* ไล่สีเขียวจากสีเข้มไปอ่อน */
-    padding: 10px 20px;
-    justify-content: space-between;
-    color: white;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* เงาเบา ๆ */
-    position: fixed;
-    width: 100%;
-    top: 0;
-    z-index: 2;
-}
 
-.navbar-left {
+.menu-item {
     display: flex;
     align-items: center;
-}
-
-.navbar .nav-item:hover {
-    color: #ccc;
-}
-.navbar h1 {
-    margin-left: 20px;
-    font-size: 24px;
-    color: #ccc;
-}
-.navbar-brand {
-    margin-left: 50px;
-    margin-top: 4px;
-    color: #000000 !important;
-    
-}
-/* Main content styles */
-#main {
-    margin-left: 250px; /* เลื่อนส่วนหลักให้เหมาะสม */
-    transition: 0.5s; /* การทำให้เกิด transition */
-}
-
-/* Menu button styles */
-#menuButton {
-    position: absolute;
-    top: 10px; /* ปรับตามความต้องการ */
-    left: 10px; /* ปุ่มเริ่มที่ด้านซ้าย */
-    font-size: 24px;
+    padding: 20px;
+    border-radius: 5px;
+    transition: background 0.3s;
     cursor: pointer;
-    background-color: transparent; /* เปลี่ยนพื้นหลังตามต้องการ */
-    color: rgb(0, 0, 0);
-    border: none;
-    z-index: 2; /* ให้ปุ่มอยู่ด้านหน้าของ Sidebar */
-    transition: left 0.3s; /* เพิ่ม Transition เมื่อย้ายปุ่ม */
+    margin-bottom: 10px;
+    font-size: 20px; /* เพิ่มขนาดข้อความ */
 }
 
-
-/* Menu button styles */
-.openbtn {
-    font-size: 20px;
-    cursor: pointer;
-    color: rgb(6, 6, 6);
-    border: none;
-    left: 10px; /* ปรับตำแหน่งของปุ่ม */
+.menu-item i {
+    margin-right: 10px;
 }
 
-.openbtn:hover {
-    background-color: #a7a7a7 !important; /* ปรับสีปุ่มเมื่อ hover */
-    border-radius: 40%;
+.menu-item:hover {
+    background-color: #e9ecef;
+}
+
+.menu-item span {
+    display: none;
+}
+
+.container-box.open .menu-item span {
+    display: inline-block;
+    /* แสดงข้อความเมื่อเปิด */
+}
+
+.navbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
+    padding: 10px;
+    color: white;
+    position: fixed;
+    /* ทำให้ navbar อยู่คงที่ */
+    top: 0;
+    /* ติดอยู่ที่ด้านบนสุด */
+    left: 0;
+    /* แนบขอบซ้าย */
+    width: 100%;
+    /* ให้ navbar กว้างเต็มหน้าจอ */
+    z-index: 1000;
+    /* ทำให้ navbar อยู่เหนือเนื้อหาอื่นๆ */
+}
+
+.navbar .menu-item i {
+    color: black;
+    /* เปลี่ยนสีไอคอนเป็นสีดำ */
 }

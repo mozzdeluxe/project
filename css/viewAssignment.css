@@ -8,7 +8,7 @@ body {
     overflow-x: auto;
     border-radius: 25px;
     padding: 20px;
-    background-color: rgb(71, 170, 81);
+    background-color: #1e74ba;
     /* สีพื้นหลังเขียว */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
@@ -39,7 +39,7 @@ body {
 
 .search-container input:focus {
     outline: none;
-    border-color: #1dc02b;
+    border-color: #1e74ba;
     /* เปลี่ยนสีกรอบเมื่อช่องค้นหามีการคลิก */
     box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
     /* เพิ่มเงาเขียว */
@@ -173,6 +173,6 @@ select {
 /* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
 select:focus {
     outline: none;
-    border-color: #1dc02b;
+    border-color: #1e74ba;
     box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
