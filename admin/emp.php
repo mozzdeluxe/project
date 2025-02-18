@@ -41,7 +41,6 @@ $result = mysqli_query($conn, $query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>รายชื่อพนักงานทั้งหมด</title>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -78,7 +77,7 @@ $result = mysqli_query($conn, $query);
             <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
         </div>
         <div class="menu-item">
-            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่งแล้ว</span></a>
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่ง</span></a>
         </div>
         <div class="menu-item">
             <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ตอบกลับ</span></a>

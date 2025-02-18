@@ -105,7 +105,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>งานที่สั่งแล้ว</title>
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
@@ -144,7 +143,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
         </div>
         <div class="menu-item">
-            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่งแล้ว</span></a>
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่ง</span></a>
         </div>
         <div class="menu-item">
             <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ตอบกลับ</span></a>

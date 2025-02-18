@@ -44,14 +44,14 @@ body {
 
 .btn-details {
     font-size: 16px;
-    background-color: #1dc02b;
+    background-color: #1e74ba;
     color: #fff;
     border-radius: 10px;
     /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
 }
 
 .btn-details:hover {
-    background: #0a840a;
+    background: #1a507c;
     color: #fff;
 }
 

@@ -57,18 +57,7 @@ body {
 }
 
 
-.form-box {
-    padding: 30px;
-    border-radius: 35px;
-    box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
-    background-color: rgb(255, 255, 255);
-    margin: 100px 0 0 0;
-    /* เพิ่ม margin-top 20px */
-    width: 600px;
-    /* ปรับความกว้างเป็น 80% ของหน้าจอ */
-    max-width: 600px;
-    /* จำกัดความกว้างสูงสุด */
-}
+
 
 
 .form-box+.form-box {
@@ -100,88 +89,6 @@ body {
     background-color: rgba(0, 0, 0, 0.1);
 }
 
-
-.btn {
-    font-size: 18px;
-    padding: 10px 20px;
-    margin-top: 30px;
-    border-radius: 30px;
-    background-color: #1e74ba;
-    color: #fff;
-    border: none;
-    /* ลบสีขอบออก */
-}
-
-
-.btn:hover {
-    background: #0a840a;
-    color: #fff;
-}
-
-/* ปุ่มพื้นฐาน */
-.btn-worker {
-    background-color: #28a745;
-    /* สีเขียวสด */
-    border: 2px solid #218838;
-    /* สีขอบเข้ม */
-    color: #fff;
-    /* สีตัวอักษร */
-    font-weight: bold;
-    /* ตัวอักษรหนา */
-    padding: 10px 20px;
-    /* ขยายพื้นที่ในปุ่ม */
-    border-radius: 8px;
-    /* มุมโค้งมน */
-    cursor: pointer;
-    /* เปลี่ยนเคอร์เซอร์เป็นรูปมือ */
-    transition: all 0.3s ease;
-    /* เพิ่มเอฟเฟกต์ */
-}
-
-/* เมื่อเอาเมาส์วางบนปุ่ม */
-.btn-worker:hover {
-    background-color: #218838;
-    /* สีพื้นหลังเข้มขึ้น */
-    border-color: #1e7e34;
-    /* สีขอบเข้มขึ้น */
-    transform: scale(1.05);
-    /* ขยายปุ่มเล็กน้อย */
-}
-
-/* เมื่อกดปุ่ม */
-.btn-worker:active {
-    background-color: #1e7e34;
-    /* สีพื้นหลังเข้มที่สุด */
-    border-color: #19692c;
-    /* สีขอบเข้มขึ้น */
-    transform: scale(0.95);
-    /* ลดขนาดเล็กน้อย */
-}
-
-/* ปุ่มขนาดเล็ก */
-button.btn-worker.small {
-    font-size: 16px !important;
-    /* ลดขนาดตัวอักษร */
-    padding: 5px 5px !important;
-    /* ลดพื้นที่รอบตัวอักษร */
-    border-radius: 10px !important;
-    /* ลดความโค้งมนของมุม */
-    width: auto !important;
-    /* ให้ปุ่มปรับขนาดอัตโนมัติ */
-    height: auto !important;
-    /* ลดความสูง */
-    background-color: rgb(68, 68, 68);
-    border-color: rgb(0, 0, 0);
-}
-
-
-
-
-/* ปุ่มขนาดใหญ่ */
-.btn-worker.large {
-    font-size: 18px;
-    padding: 15px 30px;
-}
 
 /* จัดให้อยู่คนละบรรทัด */
 .mb-3 .form-label,
@@ -236,11 +143,11 @@ button.btn-worker.small {
 .list-group-item.selected {
     font-size: 1.1rem;
     /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
-    background-color: #4CAF50;
+    background-color:rgb(40, 110, 167);
     /* สีพื้นหลังเมื่อเลือก */
     color: white;
     /* สีข้อความเมื่อเลือก */
-    border: 1px solid #4CAF50;
+    border: 1px solid #1a517f;
 }
 
 .list-group-item.selected::before {
@@ -399,13 +306,13 @@ button.btn-worker.small {
 /* ปรับการจัดตำแหน่งข้อความ */
 .card-title {
     font-size: 18px;
-    color: #02A664;
+    color: #1a517f;
     font-weight: bold;
 }
 
 .icon-container i {
     font-size: 2.5rem;
-    color: #02A664;
+    color: #1a517f;
 }
 
 .card-text {

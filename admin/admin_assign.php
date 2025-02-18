@@ -144,15 +144,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สั่งงานใหม่</title>
-    <link href="../css/sidebar.css" rel="stylesheet">
-    <link href="../css/navbar.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="../css/p4.css">
 
 </head>
+<style>
+    .btn-primary {
+        background-color: #1e74ba;
+        border-color: rgb(38, 92, 136);
+        border-radius: 15px;
+    }
+
+    .btn-primary:hover {
+        background-color: rgb(22, 60, 91);
+        border-color: rgb(16, 37, 54);
+    }
+
+    .form-box {
+        padding: 50px;
+        border-radius: 35px;
+        box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
+        background-color: rgb(255, 255, 255);
+        width: 1200px;
+        /* ปรับความกว้างของฟอร์ม */
+        max-width: 1800px;
+        /* จำกัดความกว้างสูงสุด */
+        height: 600px;
+        /* กำหนดความสูงของฟอร์ม */
+        margin: 0;
+        margin-left: 500px;
+        /* เพิ่มระยะห่างทางด้านซ้าย */
+    }
+
+    .list-group-item.selected {
+        font-size: 1.1rem;
+        /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
+        background-color: rgb(40, 110, 167);
+        /* สีพื้นหลังเมื่อเลือก */
+        color: white;
+        /* สีข้อความเมื่อเลือก */
+        border: 1px solid #1a517f;
+    }
+
+    .list-group-item.selected::before {
+        content: "✔ ";
+        /* เครื่องหมายถูก */
+        font-size: 1.1rem;
+        /* ขนาดตัวอักษรของปุ่มที่ถูกเลือก */
+        margin-right: 8px;
+    }
+</style>
+
 <body>
     <!-- Navbar -->
     <div class="navbar">
@@ -180,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
         </div>
         <div class="menu-item">
-            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่งแล้ว</span></a>
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>งานที่สั่ง</span></a>
         </div>
         <div class="menu-item">
             <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ตอบกลับ</span></a>
@@ -199,140 +243,155 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     </script>
 
+
     <div id="main">
-        <div class="container">
-            <div class="row">
-                <!-- Container ฝั่งซ้าย -->
-                <div class="col-md-6">
-                    <div class="form-container p-3 border border-secondary rounded-4">
-                        <div class="mb-3">
-                            <label for="main_label" class="main-label fs-2">สั่งงาน</label>
-                        </div>
-                        <div class="mb-3">
-                            <label for="job_title" class="form-label fs-4">หัวข้อ</label>
-                            <input type="text" name="job_title" class="form-control" id="job_title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="job_description" class="form-label fs-4">รายละเอียดงาน</label>
-                            <textarea name="job_description" class="form-control" id="job_description" rows="4" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="file" class="form-label fs-4">อัปโหลดไฟล์</label>
-                            <input type="file" name="file" class="form-control" id="file" accept=".pdf,.doc,.xlsx">
-                            <p class="small mb-0 mt-2 text-danger">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Container ฝั่งขวา -->
-                <div class="col-md-6">
-                    <div class="form-container p-3 border border-secondary rounded-4">
-                        <div class="mb-3">
-                            <label for="due_datetime" class="form-label fs-4">กำหนดเวลา</label>
-                            <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="job_level" class="form-label fs-4">ระดับงาน</label>
-                            <select name="job_level" class="form-control" id="job_level" required>
-                                <option value="ปกติ">ปกติ</option>
-                                <option value="ด่วน">ด่วน</option>
-                                <option value="ด่วนมาก">ด่วนมาก</option>
-                            </select>
-                        </div>
-                        <!-- ฟิลด์เลือกพนักงาน -->
-                        <input type="hidden" name="user_ids" id="user_ids" value="">
-
-                        <div class="mb-3">
-                            <label for="user_ids" class="form-label">เลือกพนักงาน</label>
-                            <button type="button" class="btn btn-worker small" data-bs-toggle="modal" data-bs-target="#userModal">
-                                เลือกพนักงาน
-                            </button>
-                            <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกพนักงาน</div>
-                        </div>
-
-                        <!-- Modal เลือกพนักงาน -->
-                        <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="userModalLabel">เลือกพนักงาน</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="form-container">
+            <div class="form-box">
+                <form action="admin_assign.php" method="POST" enctype="multipart/form-data">
+                    <!-- Modal สำหรับเลือกพนักงาน -->
+                    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="userModalLabel">เลือกพนักงาน</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="list-group">
+                                        <?php while ($user_row = mysqli_fetch_assoc($user_result)) : ?>
+                                            <button type="button" class="list-group-item list-group-item-action" data-id="<?php echo $user_row['id']; ?>" data-name="<?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>">
+                                                <?php echo $user_row['firstname'] . ' ' . $user_row['lastname']; ?>
+                                            </button>
+                                        <?php endwhile; ?>
                                     </div>
-                                    <div class="modal-body">
-                                        <ul class="list-group" id="userList">
-                                            <?php
-                                            // ลูปผ่านข้อมูลพนักงานที่มี userlevel เป็น 'm'
-                                            while ($user = mysqli_fetch_assoc($user_result)) {
-                                                echo '<li class="list-group-item" data-id="' . $user['id'] . '" data-name="' . $user['firstname'] . ' ' . $user['lastname'] . '">';
-                                                echo $user['firstname'] . ' ' . $user['lastname'];
-                                                echo '</li>';
-                                            }
-                                            ?>
-                                        </ul>
-                                    </div>
-
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="save-users-btn">เสร็จสิ้น</button>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- ปุ่มบันทึก -->
-                        <div class="d-flex justify-content-end mt-3">
-                            <button type="submit" class="btn btn-primary">บันทึก</button>
+                    <div class="row">
+                        <!-- ฝั่งซ้าย -->
+                        <div class="col-md-6">
+                            <!-- ฟอร์มข้อมูลงาน -->
+                            <div class="mb-3">
+                                <label for="main_label" class="main-label">สั่งงาน</label>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="job_title" class="form-label">หัวข้อ</label>
+                                <input type="text" name="job_title" class="form-control" id="job_title" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="job_description" class="form-label">รายละเอียดงาน</label>
+                                <textarea name="job_description" class="form-control" id="job_description" rows="4" required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="file" class="form-label">อัปโหลดไฟล์</label>
+                                <input type="file" name="file" class="form-control" id="file" accept=".pdf">
+                                <p class="small mb-0 mt-2"><b>Note:</b>
+                                    <font color="red">เฉพาะไฟล์ PDF, Doc, Xlsx เท่านั้น </font>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- ฝั่งขวา -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="due_datetime" class="form-label">กำหนดเวลา</label>
+                                <input type="datetime-local" name="due_datetime" class="form-control" id="due_datetime" required>
+                            </div>
+
+                            <!-- ฟิลด์ระดับงาน -->
+                            <div class="mb-3">
+                                <label for="job_level" class="form-label">ระดับงาน</label>
+                                <select name="job_level" class="form-control" id="job_level" required>
+                                    <option value="ปกติ">ปกติ</option>
+                                    <option value="ด่วน">ด่วน</option>
+                                    <option value="ด่วนมาก">ด่วนมาก</option>
+                                </select>
+                            </div>
+
+                            <!-- ฟิลด์เลือกพนักงาน -->
+                            <input type="hidden" name="user_ids" id="user_ids" value="">
+
+                            <div class="mb-3">
+                                <label for="user_ids" class="form-label">เลือกพนักงาน</label>
+                                <button type="button" class="btn btn-worker small" data-bs-toggle="modal" data-bs-target="#userModal">
+                                    เลือกพนักงาน
+                                </button>
+                                <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกพนักงาน</div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">บันทึก</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                <script>
-                    let selectedUsers = []; // เก็บ ID ผู้ใช้งานที่เลือก
 
-                    // เมื่อคลิกที่ผู้ใช้งานใน modal
-                    document.querySelectorAll('.list-group-item').forEach(item => {
-                        item.addEventListener('click', (event) => {
-                            const userId = event.target.dataset.id; // รับ ID ของผู้ใช้งาน
-                            const userName = event.target.dataset.name; // รับชื่อของผู้ใช้งาน
 
-                            // ถ้าเลือกผู้ใช้งานอยู่แล้ว ให้ลบออก
-                            if (selectedUsers.includes(userId)) {
-                                selectedUsers = selectedUsers.filter(id => id !== userId); // ลบออกจากอาร์เรย์
-                                event.target.classList.remove('selected'); // ลบคลาส selected
-                            } else {
-                                // เพิ่มผู้ใช้งานใหม่ใน selectedUsers
-                                selectedUsers.push(userId);
-                                event.target.classList.add('selected'); // เพิ่มคลาส selected
-                            }
 
-                            // อัปเดตรายชื่อใน UI
-                            updateSelectedUsersUI();
-                        });
+    <script>
+        let selectedUsers = []; // เก็บ ID ผู้ใช้งานที่เลือก
+
+        // เมื่อคลิกที่ผู้ใช้งานใน modal
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.addEventListener('click', (event) => {
+                const userId = event.target.dataset.id; // รับ ID ของผู้ใช้งาน
+                const userName = event.target.dataset.name; // รับชื่อของผู้ใช้งาน
+
+                // ถ้าเลือกผู้ใช้งานอยู่แล้ว ให้ลบออก
+                if (selectedUsers.includes(userId)) {
+                    selectedUsers = selectedUsers.filter(id => id !== userId); // ลบออกจากอาร์เรย์
+                    event.target.classList.remove('selected'); // ลบคลาส selected
+                } else {
+                    // เพิ่มผู้ใช้งานใหม่ใน selectedUsers
+                    selectedUsers.push(userId);
+                    event.target.classList.add('selected'); // เพิ่มคลาส selected
+                }
+
+                // อัปเดตรายชื่อใน UI
+                updateSelectedUsersUI();
+            });
+        });
+
+        // ฟังก์ชันสำหรับแสดงรายชื่อผู้ใช้งานที่เลือก
+        function updateSelectedUsersUI() {
+            const selectedUsersContainer = document.getElementById('selected-users');
+            selectedUsersContainer.innerHTML = ''; // Clear current list
+
+            if (selectedUsers.length > 0) {
+                selectedUsers.forEach(userId => {
+                    const userName = document.querySelector(`[data-id="${userId}"]`).dataset.name;
+                    const userElement = document.createElement('div');
+                    userElement.classList.add('selected-user');
+                    userElement.innerHTML = `${userName} <button class="remove-user-btn" data-id="${userId}">×</button>`;
+                    selectedUsersContainer.appendChild(userElement);
+
+                    // Remove user when the "×" button is clicked
+                    userElement.querySelector('.remove-user-btn').addEventListener('click', (event) => {
+                        const userIdToRemove = event.target.dataset.id;
+                        selectedUsers = selectedUsers.filter(id => id !== userIdToRemove);
+                        updateSelectedUsersUI(); // Update UI after removal
                     });
+                });
+            } else {
+                selectedUsersContainer.innerHTML = 'ยังไม่ได้เลือกพนักงาน'; // No users selected
+            }
 
-                    // ฟังก์ชันสำหรับแสดงรายชื่อผู้ใช้งานที่เลือก
-                    function updateSelectedUsersUI() {
-                        const selectedUsersContainer = document.getElementById('selected-users');
-                        selectedUsersContainer.innerHTML = ''; // Clear current list
-
-                        if (selectedUsers.length > 0) {
-                            selectedUsers.forEach(userId => {
-                                const userName = document.querySelector(`[data-id="${userId}"]`).dataset.name;
-                                const userElement = document.createElement('div');
-                                userElement.classList.add('selected-user');
-                                userElement.innerHTML = `${userName} <button class="remove-user-btn" data-id="${userId}">×</button>`;
-                                selectedUsersContainer.appendChild(userElement);
-
-                                // Remove user when the "×" button is clicked
-                                userElement.querySelector('.remove-user-btn').addEventListener('click', (event) => {
-                                    const userIdToRemove = event.target.dataset.id;
-                                    selectedUsers = selectedUsers.filter(id => id !== userIdToRemove);
-                                    updateSelectedUsersUI(); // Update UI after removal
-                                });
-                            });
-                        } else {
-                            selectedUsersContainer.innerHTML = 'ยังไม่ได้เลือกพนักงาน'; // No users selected
-                        }
-
-                        // Update hidden field with selected user IDs
-                        document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
-                    }
-                </script>
+            // Update hidden field with selected user IDs
+            document.getElementById('user_ids').value = JSON.stringify(selectedUsers);
+        }
+    </script>
 </body>
+
 </html>
