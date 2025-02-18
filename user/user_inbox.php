@@ -261,43 +261,39 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             // ดึงข้อมูลพนักงานที่ได้รับมอบหมายงานนี้และเป็นของผู้ใช้งานนี้
                             $subQuery = $conn->prepare("
-SELECT 
-    m.firstname, 
-    m.lastname, 
-    m.user_id, 
-    a.status
-FROM 
-    assignments a 
-LEFT JOIN 
-    mable m ON a.user_id = m.id 
-WHERE 
-    a.job_id = ? AND a.user_id = ?
-");
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id = ?
+                                ");
                             $subQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
 
                             // ดึงข้อมูลพนักงานคนอื่นที่ได้รับมอบหมายงานเดียวกัน (ไม่รวม user_id ปัจจุบัน)
                             $otherEmployeesQuery = $conn->prepare("
-SELECT 
-    m.firstname, 
-    m.lastname, 
-    m.user_id, 
-    a.status
-FROM 
-    assignments a 
-LEFT JOIN 
-    mable m ON a.user_id = m.id 
-WHERE 
-    a.job_id = ? AND a.user_id != ?
-");
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id != ?
+                                ");
                             $otherEmployeesQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id ที่ไม่เท่ากับ user_id ปัจจุบัน
                             $otherEmployeesQuery->execute();
                             $otherEmployeesResult = $otherEmployeesQuery->get_result();
-
-
-
-
 
                             if ($subResult->num_rows > 0) {
                                 while ($empRow = $subResult->fetch_assoc()) {
@@ -330,8 +326,8 @@ WHERE
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
                                     // เพิ่มการแสดงผลในแบบย่อ
                                     echo '<strong>รายละเอียดงาน: </strong>
-<span class="job-description-preview">' . $short_description . '... </span>
-<button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                            <span class="job-description-preview">' . $short_description . '... </span>
+                                            <button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
                                 }
                                 // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
@@ -400,8 +396,13 @@ WHERE
             <!-- ฟอร์มสำหรับการอัปโหลดไฟล์ -->
             <form action="reply_upload.php" method="POST" enctype="multipart/form-data">
                 <label for="fileUpload">เลือกไฟล์:</label>
-                <input type="file" name="fileUpload" id="fileUpload" required>
+                <input type="file" name="fileUpload" id="fileUpload" required accept=".pdf, .doc, .docx, .ppt, .pptx">
+
+                <label for="reply_description">รายละเอียดงาน:</label>
+                <textarea name="reply_description" id="reply_description" rows="4" required></textarea>
+
                 <input type="hidden" name="job_id" id="jobId">
+
                 <button type="submit" class="btn btn-primary">อัปโหลดงาน</button>
             </form>
 
@@ -413,6 +414,13 @@ WHERE
 
 
     <script>
+        document.querySelector("form").addEventListener("submit", function(event) {
+            if (!document.getElementById("jobId").value) {
+                alert("เกิดข้อผิดพลาด: ไม่พบ job_id");
+                event.preventDefault(); // ป้องกันการ submit
+            }
+        });
+
         // ฟังก์ชันแสดงรายละเอียดงานทั้งหมดใน popup (แยกต่างหากจากการส่งงาน)
         function showFullDescription(fullDescription) {
             // แสดงรายละเอียดทั้งหมดใน popup
@@ -445,7 +453,7 @@ WHERE
 
             // ใช้ XMLHttpRequest (AJAX) ส่งข้อมูล
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'upload.php', true);
+            xhr.open('POST', 'reply_upload.php', true);
 
             xhr.onload = function() {
                 if (xhr.status == 200) {
