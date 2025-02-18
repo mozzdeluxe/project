@@ -8,24 +8,21 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// รับค่าจากฟอร์ม
-$assign_id = isset($_POST['job_id']) ? $_POST['job_id'] : ''; // ตรวจสอบการส่ง job_id
+// เชื่อมต่อฐานข้อมูล
+include('../connection.php');
+
+// รับค่าจากฟอร์ม และตรวจสอบค่าที่จำเป็น
+$assign_id = isset($_POST['job_id']) ? $_POST['job_id'] : null;
 $user_id = $_SESSION['user_id'];
-$reply_description = isset($_POST['reply_description']) ? $_POST['reply_description'] : ''; // ตรวจสอบการส่งคำอธิบาย
+$reply_description = isset($_POST['reply_description']) ? $_POST['reply_description'] : '';
 
-// ตรวจสอบว่า job_id ไม่ว่าง
+// ตรวจสอบว่าได้รับค่า assign_id หรือไม่
 if (empty($assign_id)) {
-    echo json_encode(['message' => 'กรุณาระบุ job_id']);
+    echo json_encode(['message' => 'ไม่พบ assign_id']);
     exit;
 }
 
-// หากไม่มีคำอธิบายให้แจ้งเตือน
-if (empty($reply_description)) {
-    echo json_encode(['message' => 'กรุณากรอกคำอธิบาย']);
-    exit;
-}
-
-// ตรวจสอบว่าไฟล์ถูกส่งมาหรือไม่
+// ตรวจสอบไฟล์ที่อัปโหลด
 if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
     $fileTmpPath = $_FILES['fileUpload']['tmp_name'];
     $fileName = $_FILES['fileUpload']['name'];
@@ -38,7 +35,7 @@ if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
         exit;
     }
 
-    // ตรวจสอบประเภทไฟล์
+    // ตรวจสอบประเภทไฟล์ที่อนุญาต
     $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx'];
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
@@ -47,12 +44,11 @@ if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
         exit;
     }
 
-    // สร้างชื่อไฟล์ใหม่
+    // สร้างชื่อไฟล์ใหม่ และอัปโหลด
     $uploadDirectory = 'uploads/';
     $newFileName = uniqid('file_', true) . '.' . $fileExtension;
     $destinationPath = $uploadDirectory . $newFileName;
 
-    // อัปโหลดไฟล์
     if (!move_uploaded_file($fileTmpPath, $destinationPath)) {
         echo json_encode(['message' => 'ไม่สามารถอัปโหลดไฟล์ได้']);
         exit;
@@ -62,24 +58,33 @@ if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
     exit;
 }
 
-// เพิ่มบันทึกการตอบกลับในฐานข้อมูล
+// กำหนดค่าเวลา
 $complete_at = date("Y-m-d H:i:s");
 $create_at = date("Y-m-d H:i:s");
 
-include('../connection.php');
-
-// เตรียมคำสั่ง SQL สำหรับการบันทึกข้อมูล
+// เพิ่มบันทึกลงฐานข้อมูล
 $stmt = $conn->prepare("
     INSERT INTO reply (assign_id, user_id, due_datetime, create_at, complete_at, file_reply, reply_description) 
     VALUES (?, ?, NOW(), ?, ?, ?, ?)
 ");
 
-// ผูกค่าพารามิเตอร์
+// ผูกค่าพารามิเตอร์ และดำเนินการบันทึกข้อมูล
 $stmt->bind_param("iissss", $assign_id, $user_id, $create_at, $complete_at, $destinationPath, $reply_description);
 
-// ตรวจสอบการทำงานของคำสั่ง SQL
 if ($stmt->execute()) {
-    echo json_encode(['message' => 'อัปโหลดไฟล์และบันทึกการตอบกลับเสร็จสมบูรณ์']);
+    echo json_encode([
+        'message' => 'อัปโหลดไฟล์และบันทึกการตอบกลับเสร็จสมบูรณ์',
+        'data' => [
+            'reply_id' => $stmt->insert_id,
+            'assign_id' => $assign_id,
+            'user_id' => $user_id,
+            'due_datetime' => date("Y-m-d H:i:s"),
+            'create_at' => $create_at,
+            'complete_at' => $complete_at,
+            'file_reply' => $destinationPath,
+            'reply_description' => $reply_description
+        ]
+    ]);
 } else {
     echo json_encode(['message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
 }
