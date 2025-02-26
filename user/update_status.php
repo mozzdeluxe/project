@@ -2,15 +2,17 @@
 include('../connection.php');
 
 header("Content-Type: application/json");
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// รับค่าจาก AJAX
-$data = json_decode(file_get_contents("php://input"));
+// ✅ รับค่าจาก AJAX (ให้เป็น array)
+$data = json_decode(file_get_contents("php://input"), true);
+error_log(print_r($data, true)); // Debug
 
-if (isset($data->job_id) && isset($data->status)) {
-    $job_id = intval($data->job_id);
-    $status = $data->status;
+if (isset($data['job_id']) && isset($data['status'])) {
+    $job_id = intval($data['job_id']);
+    $status = $data['status'];
 
-    // อัปเดตสถานะเฉพาะเมื่อยังเป็น "ยังไม่อ่าน"
     $stmt = $conn->prepare("UPDATE assignments SET status = ? WHERE job_id = ? AND status = 'ยังไม่อ่าน'");
     $stmt->bind_param("si", $status, $job_id);
 
@@ -30,4 +32,4 @@ if (isset($data->job_id) && isset($data->status)) {
 }
 
 $conn->close();
-?>
+exit;
