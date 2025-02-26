@@ -106,23 +106,19 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
-    <link href="../css/viewAssignment.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="../css/up2.css">
+    <link href="../css/up2.css" rel="stylesheet">
 </head>
+
 
 <body>
     <!-- Navbar -->
     <div class="navbar">
         <div class="menu-item" onclick="toggleSidebar()">
             <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
-        </div>
-        <!-- เพิ่มหัวข้อใหม่ข้างๆ -->
-        <div class="header">
-            <span>งานที่ได้รับ</span>
         </div>
     </div>
 
@@ -147,7 +143,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
         </div>
         <div class="menu-item">
-            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขโปรไฟล์</span></a>
+            <a href="edit_profile_page.php"><i class="fa-solid fa-eye"></i> <span>แก้ไขข้อมูลส่วนตัว</span></a>
         </div>
         <div class="menu-item">
             <a href="../logout.php" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span></a>
@@ -192,7 +188,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
             </div>
             <table class="table table-striped mt-3" id="jobTable">
-                <thead>
+                <thead class="headjob">
                     <tr>
                         <th scope="col">ลำดับ</th>
                         <th scope="col">ชื่องาน</th>
@@ -215,7 +211,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             if (!empty($row['jobs_file'])) {
                                 $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
                                 echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
@@ -241,11 +237,9 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
-                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
+                            echo '<td><button class="btn view-details btn-lg" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
 
-                            echo '<td><button class="btn btn-success" onclick="showPopup2(' . $row['job_id'] . ')">ส่งงาน</button></td>';
-
-
+                            echo '<td><button class="btn btn-success" onclick="showPopup(' . $row['job_id'] . ')">ส่งงาน</button></td>';
 
                             echo '</tr>';
 
@@ -256,44 +250,23 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td colspan="8">';
                             echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
-                            // สมมติว่าคุณมีตัวแปร $currentUserId ที่เก็บ user_id ของผู้ใช้งานที่กำลังล็อกอิน
-                            $currentUserId = $_SESSION['user_id']; // หรืออาจจะได้จากการตรวจสอบ session
-
-                            // ดึงข้อมูลพนักงานที่ได้รับมอบหมายงานนี้และเป็นของผู้ใช้งานนี้
+                            // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
                             $subQuery = $conn->prepare("
-                                SELECT 
-                                    m.firstname, 
-                                    m.lastname, 
-                                    m.user_id, 
-                                    a.status
-                                FROM 
-                                    assignments a 
-                                LEFT JOIN 
-                                    mable m ON a.user_id = m.id 
-                                WHERE 
-                                    a.job_id = ? AND a.user_id = ?
-                                ");
-                            $subQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id
+                SELECT 
+                    m.firstname, 
+                    m.lastname, 
+                    m.user_id, 
+                    a.status
+                FROM 
+                    assignments a 
+                LEFT JOIN 
+                    mable m ON a.user_id = m.id 
+                WHERE 
+                    a.job_id = ?
+            ");
+                            $subQuery->bind_param("i", $row['job_id']);
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
-
-                            // ดึงข้อมูลพนักงานคนอื่นที่ได้รับมอบหมายงานเดียวกัน (ไม่รวม user_id ปัจจุบัน)
-                            $otherEmployeesQuery = $conn->prepare("
-                                SELECT 
-                                    m.firstname, 
-                                    m.lastname, 
-                                    m.user_id, 
-                                    a.status
-                                FROM 
-                                    assignments a 
-                                LEFT JOIN 
-                                    mable m ON a.user_id = m.id 
-                                WHERE 
-                                    a.job_id = ? AND a.user_id != ?
-                                ");
-                            $otherEmployeesQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id ที่ไม่เท่ากับ user_id ปัจจุบัน
-                            $otherEmployeesQuery->execute();
-                            $otherEmployeesResult = $otherEmployeesQuery->get_result();
 
                             if ($subResult->num_rows > 0) {
                                 while ($empRow = $subResult->fetch_assoc()) {
@@ -325,16 +298,8 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     $job_description_preview = htmlspecialchars($row['job_description']);
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
                                     // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong>
-                                            <span class="job-description-preview">' . $short_description . '... </span>
-                                            <button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
-                                }
-                                // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
-                                echo '<div class="job-detail-grid">';
-                                echo '<strong>พนักงานคนอื่นที่ได้รับงานนี้:</strong><br>';
-                                while ($otherEmpRow = $otherEmployeesResult->fetch_assoc()) {
-                                    echo htmlspecialchars($otherEmpRow['firstname'] . ' ' . $otherEmpRow['lastname']) . '<br>';
                                 }
                             } else {
                                 echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';
@@ -385,32 +350,20 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <span class="close-btn" onclick="closePopup()">&times;</span>
             <h3>รายละเอียดงานทั้งหมด</h3>
             <p id="fullDescription"></p>
-        </div>
-    </div>
-    <!-- Popup สำหรับการส่งงาน -->
-    <div id="descriptionPopup2" class="popup" style="display: none;">
-        <div class="popup-content">
-            <span class="close-btn" onclick="closePopup()">&times;</span>
-            <h3>ส่งงาน</h3>
-            <div id="fullDescription2"></div>
-            <!-- ฟอร์มสำหรับการอัปโหลดไฟล์ -->
-            <form action="reply_upload.php" method="POST" enctype="multipart/form-data">
+
+            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
+            <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
                 <label for="fileUpload">เลือกไฟล์:</label>
-                <input type="file" name="fileUpload" id="fileUpload" required accept=".pdf, .doc, .docx, .ppt, .pptx">
+                <input type="file" name="fileUpload" id="fileUpload" required>
 
                 <label for="reply_description">รายละเอียดงาน:</label>
                 <textarea name="reply_description" id="reply_description" rows="4" required></textarea>
 
                 <input type="hidden" name="job_id" id="jobId">
-
-                <button type="submit" class="btn btn-primary">อัปโหลดงาน</button>
+                <button type="submit" class="btn upload">อัปโหลดงาน</button>
             </form>
-
         </div>
     </div>
-
-
-
 
 
     <script>
@@ -458,7 +411,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             xhr.onload = function() {
                 if (xhr.status == 200) {
                     // แสดงผลลัพธ์จาก PHP (ตอบกลับในรูปแบบ JSON)
-                    var response = JSON.parse(xhr.responseText);
+
                     alert(response.message); // แสดงข้อความที่ตอบกลับจาก server
 
                     // ปิด Popup หลังจากการอัปโหลดสำเร็จ
@@ -586,6 +539,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
     </script>
+    <script src="../js/inbox.js"></script>
     <script src="../js/sidebar.js"></script>
 
 </body>
