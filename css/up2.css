@@ -10,14 +10,17 @@
         overflow-x: auto;
         border-radius: 25px;
         padding: 20px;
-
-        /* สีพื้นหลังเขียว */
+        background-color: rgb(48, 114, 55);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
+    .headjob{
+        background-color: rgb(48, 114, 55) !important;
+        color: rgb(171, 66, 66) !important;
+    }
     .table th,
     .table td {
-        padding: 13px;
+        padding: 13px ;
         text-align: left;
         vertical-align: middle;
         font-size: 16px;
@@ -40,70 +43,71 @@
     }
 
     .btn {
-        font-size: 16px;
-        border-radius: 10px;
+        font-size: 16px !important;
+        border-radius: 10px !important;
         /* ขอบมนๆ สำหรับปุ่ม */
     }
 
-    .btn-details {
-        font-size: 16px;
-        background-color: #1dc02b;
-        color: #fff;
-        border-radius: 10px;
-        /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
+    .view-details {
+        font-size: 16px !important;
+        background-color: #1dc02b !important;
+        color: #fff !important;
+        border-radius: 10px !important;/* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
     }
 
-    .btn-details:hover {
-        background: #0a840a;
-        color: #fff;
+    .view-details:hover {
+        background: #0a840a !important;
+        color: #fff !important;
     }
 
 
-    .btn-primary {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: white;
-        border-radius: 10px;
+    .upload  {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        color: white !important;
+        border-radius: 10px !important;
         /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
-        padding: 10px 20px;
-        font-size: 16px;
+        padding: 10px 20px !important;
+        font-size: 16px !important;
     }
+
+    .upload:hover {
+        background-color: #e91328 !important;
+    }
+    
 
     /* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
-    .btn-dl {
-        background-color: #adb5bd;
-        /* สีเทาอ่อนพื้นหลังปุ่ม */
-        color: #ffffff;
-        /* สีตัวอักษร */
-        border: 1px solid #adb5bd;
-        /* สีขอบปุ่ม */
+    .load {
+        background-color: #adb5bd !important; 
+        color: #ffffff !important;
+        border: 1px solid #adb5bd !important;
+        font-size: 16px !important;
+        border-radius: 10px !important;
     }
 
     /* กำหนดสีเมื่อปุ่มถูก hover */
-    .btn-dl:hover {
-        background-color: #868e96;
-        /* สีเทาอ่อนเข้มเมื่อ hover */
-        border-color: #868e96;
-        /* สีขอบเทาอ่อนเข้มเมื่อ hover */
+    .load:hover {
+        background-color: #868e96 !important;
+        border-color: #868e96 !important;
     }
 
     /* กำหนดสีเมื่อปุ่มถูกคลิก */
-    .btn-dl:active {
-        background-color: #6c757d;
+    .load:active {
+        background-color: #6c757d !important;
         /* สีเทาเข้มเมื่อคลิก */
-        border-color: #6c757d;
+        border-color: #6c757d !important;
         /* สีขอบเทาเข้มเมื่อคลิก */
     }
 
     /* ปรับขนาดและระยะห่างของปุ่ม */
     .btn-sm {
-        padding: 5px 10px;
+        padding: 5px 10px !important;
         /* ปรับขนาด padding */
     }
 
     /* ปรับระยะห่างของปุ่มจากข้อความ */
     .ms-2 {
-        margin-left: 0.5rem;
+        margin-left: 0.5rem !important;
         /* ระยะห่างซ้าย */
     }
 
@@ -400,3 +404,136 @@
         margin-left: 15px;
         /* ระยะห่างจากขอบซ้าย */
     }
+
+/*////////////////////////////////////////////////////////////////*/
+.employee-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-container input {
+    width: 300px;
+    font-size: 18px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #fff;
+    transition: border-color 0.3s ease-in-out;
+}
+
+
+
+#main {
+    margin-left: 0;
+    transition: margin-left .5s;
+    padding: 16px;
+}
+
+.status {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.status.text-danger {
+    color: red;
+}
+
+.status.text-warning {
+    color: orange;
+}
+
+.status.text-success {
+    color: green;
+}
+.status.text-info
+
+.status.text-secondary 
+
+
+
+.job-details {
+    display: none;
+}
+
+.job-details td {
+    text-align: left;
+    padding-left: 20px;
+    background-color: #f1f1f1;
+}
+
+.job-detail-container {
+    display: flex;
+    justify-content: space-between;
+    /* แยกฝั่งซ้ายและขวา */
+    gap: 20px;
+    /* ระยะห่างระหว่างสองฝั่ง */
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+
+
+/* กริดคอนเทนเนอร์ */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* ปรับจำนวนคอลัมน์อัตโนมัติ */
+    gap: 15px; /* ระยะห่างระหว่างกล่อง */
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+
+/* กล่องพนักงาน */
+.job-detail-grid {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    border: 1px solid #ddd;
+}
+
+/* สีสถานะ */
+.text-danger {
+    color: red;
+    font-weight: bold;
+}
+
+.text-success {
+    color: green;
+    font-weight: bold;
+}
+
+.text-warning {
+    color: orange;
+    font-weight: bold;
+}
+
+/* เพิ่มขอบมนๆ ให้กับ select */
+select {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
+select:focus {
+    outline: none;
+    border-color: #ba1e1e;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
