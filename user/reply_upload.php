@@ -2,27 +2,20 @@
 // เริ่มเซสชัน
 session_start();
 
+
+
 // ตรวจสอบว่าผู้ใช้ได้เข้าสู่ระบบหรือยัง
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['message' => 'กรุณาเข้าสู่ระบบ']);
     exit;
 }
 
-// เชื่อมต่อฐานข้อมูล
-include('../connection.php');
-
-// รับค่าจากฟอร์ม และตรวจสอบค่าที่จำเป็น
-$assign_id = isset($_POST['job_id']) ? $_POST['job_id'] : null;
+// รับค่าจากฟอร์ม
+$assign_id = $_POST['job_id'];
 $user_id = $_SESSION['user_id'];
-$reply_description = isset($_POST['reply_description']) ? $_POST['reply_description'] : '';
+$reply_description = $_POST['reply_description'];
 
-// ตรวจสอบว่าได้รับค่า assign_id หรือไม่
-if (empty($assign_id)) {
-    echo json_encode(['message' => 'ไม่พบ assign_id']);
-    exit;
-}
-
-// ตรวจสอบไฟล์ที่อัปโหลด
+// ตรวจสอบว่าไฟล์ถูกส่งมาหรือไม่
 if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
     $fileTmpPath = $_FILES['fileUpload']['tmp_name'];
     $fileName = $_FILES['fileUpload']['name'];
@@ -35,7 +28,7 @@ if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
         exit;
     }
 
-    // ตรวจสอบประเภทไฟล์ที่อนุญาต
+    // ตรวจสอบประเภทไฟล์
     $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx'];
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
@@ -44,11 +37,12 @@ if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
         exit;
     }
 
-    // สร้างชื่อไฟล์ใหม่ และอัปโหลด
+    // สร้างชื่อไฟล์ใหม่
     $uploadDirectory = 'uploads/';
     $newFileName = uniqid('file_', true) . '.' . $fileExtension;
     $destinationPath = $uploadDirectory . $newFileName;
 
+    // อัปโหลดไฟล์
     if (!move_uploaded_file($fileTmpPath, $destinationPath)) {
         echo json_encode(['message' => 'ไม่สามารถอัปโหลดไฟล์ได้']);
         exit;
@@ -58,33 +52,24 @@ if (isset($_FILES['fileUpload']) && $_FILES['fileUpload']['error'] === 0) {
     exit;
 }
 
-// กำหนดค่าเวลา
+// เพิ่มบันทึกการตอบกลับในฐานข้อมูล
 $complete_at = date("Y-m-d H:i:s");
 $create_at = date("Y-m-d H:i:s");
 
-// เพิ่มบันทึกลงฐานข้อมูล
+include('../connection.php');
+
+// เตรียมคำสั่ง SQL สำหรับการบันทึกข้อมูล
 $stmt = $conn->prepare("
     INSERT INTO reply (assign_id, user_id, due_datetime, create_at, complete_at, file_reply, reply_description) 
     VALUES (?, ?, NOW(), ?, ?, ?, ?)
 ");
 
-// ผูกค่าพารามิเตอร์ และดำเนินการบันทึกข้อมูล
+// ผูกค่าพารามิเตอร์
 $stmt->bind_param("iissss", $assign_id, $user_id, $create_at, $complete_at, $destinationPath, $reply_description);
 
+// ตรวจสอบการทำงานของคำสั่ง SQL
 if ($stmt->execute()) {
-    echo json_encode([
-        'message' => 'อัปโหลดไฟล์และบันทึกการตอบกลับเสร็จสมบูรณ์',
-        'data' => [
-            'reply_id' => $stmt->insert_id,
-            'assign_id' => $assign_id,
-            'user_id' => $user_id,
-            'due_datetime' => date("Y-m-d H:i:s"),
-            'create_at' => $create_at,
-            'complete_at' => $complete_at,
-            'file_reply' => $destinationPath,
-            'reply_description' => $reply_description
-        ]
-    ]);
+    echo json_encode(['message' => 'อัปโหลดไฟล์และบันทึกการตอบกลับเสร็จสมบูรณ์']);
 } else {
     echo json_encode(['message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
 }
