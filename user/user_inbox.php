@@ -188,7 +188,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
             </div>
             <table class="table table-striped mt-3" id="jobTable">
-                <thead class="headjob">
+                <thead>
                     <tr>
                         <th scope="col">ลำดับ</th>
                         <th scope="col">ชื่องาน</th>
@@ -237,9 +237,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
-                            echo '<td><button class="btn view-details btn-lg" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
+                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
 
-                            echo '<td><button class="btn btn-success" onclick="showPopup(' . $row['job_id'] . ')">ส่งงาน</button></td>';
+                            echo '<td><button class="btn btn-success" onclick="showFullDescription(' . $row['job_id'] . ')">ส่งงาน</button></td>';
+
+
 
                             echo '</tr>';
 
@@ -250,23 +252,44 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td colspan="8">';
                             echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
-                            // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
+                            // สมมติว่าคุณมีตัวแปร $currentUserId ที่เก็บ user_id ของผู้ใช้งานที่กำลังล็อกอิน
+                            $currentUserId = $_SESSION['user_id']; // หรืออาจจะได้จากการตรวจสอบ session
+
+                            // ดึงข้อมูลพนักงานที่ได้รับมอบหมายงานนี้และเป็นของผู้ใช้งานนี้
                             $subQuery = $conn->prepare("
-                SELECT 
-                    m.firstname, 
-                    m.lastname, 
-                    m.user_id, 
-                    a.status
-                FROM 
-                    assignments a 
-                LEFT JOIN 
-                    mable m ON a.user_id = m.id 
-                WHERE 
-                    a.job_id = ?
-            ");
-                            $subQuery->bind_param("i", $row['job_id']);
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id = ?
+                                ");
+                            $subQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
+
+                            // ดึงข้อมูลพนักงานคนอื่นที่ได้รับมอบหมายงานเดียวกัน (ไม่รวม user_id ปัจจุบัน)
+                            $otherEmployeesQuery = $conn->prepare("
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id != ?
+                                ");
+                            $otherEmployeesQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id ที่ไม่เท่ากับ user_id ปัจจุบัน
+                            $otherEmployeesQuery->execute();
+                            $otherEmployeesResult = $otherEmployeesQuery->get_result();
 
                             if ($subResult->num_rows > 0) {
                                 while ($empRow = $subResult->fetch_assoc()) {
@@ -298,8 +321,16 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     $job_description_preview = htmlspecialchars($row['job_description']);
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
                                     // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    echo '<strong>รายละเอียดงาน: </strong>
+                                            <span class="job-description-preview">' . $short_description . '... </span>
+                                            <button class="btn btn-link" onclick="showTextDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
+                                }
+                                // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
+                                echo '<div class="job-detail-grid">';
+                                echo '<strong>พนักงานคนอื่นที่ได้รับงานนี้:</strong><br>';
+                                while ($otherEmpRow = $otherEmployeesResult->fetch_assoc()) {
+                                    echo htmlspecialchars($otherEmpRow['firstname'] . ' ' . $otherEmpRow['lastname']) . '<br>';
                                 }
                             } else {
                                 echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';
@@ -343,12 +374,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             </nav>
         </div>
     </div>
-
     <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
     <div id="descriptionPopup" class="popup" style="display: none;">
         <div class="popup-content">
             <span class="close-btn" onclick="closePopup()">&times;</span>
-            <h3>รายละเอียดงานทั้งหมด</h3>
+            <h3>รายละเอียดการตอบกลับ</h3>
             <p id="fullDescription"></p>
 
             <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
@@ -365,6 +395,14 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         </div>
     </div>
 
+    <!-- Popup สำหรับแสดงเพิ่มเติม -->
+    <div id="descriptionText" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closeDescription()">&times;</span>
+            <h3>รายละเอียดเพิ่มเติม</h3>
+            <p id="textDescription"></p>
+        </div>
+    </div>
 
     <script>
         document.querySelector("form").addEventListener("submit", function(event) {
@@ -374,30 +412,22 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         });
 
-        // ฟังก์ชันแสดงรายละเอียดงานทั้งหมดใน popup (แยกต่างหากจากการส่งงาน)
+        // ฟังก์ชันแสดงรายละเอียดงานทั้งหมดใน popup
         function showFullDescription(fullDescription) {
             // แสดงรายละเอียดทั้งหมดใน popup
             document.getElementById('fullDescription').textContent = fullDescription;
             document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
         }
 
-        // ฟังก์ชันแสดง Popup สำหรับการส่งงาน
-        function showPopup2(jobId) {
-
-            // นำข้อมูลที่ต้องการแสดงใน Popup มาตั้งค่า
-            document.getElementById('fullDescription2').innerHTML = 'กำลังส่งงานที่ ID: ' + jobId; // หรือข้อมูลที่ต้องการจากฐานข้อมูล
-            document.getElementById('descriptionPopup2').style.display = 'block'; // เปิด Popup สำหรับการส่งงาน
-        }
 
 
-        // ฟังก์ชันในการอัปโหลดไฟล์โดยไม่รีเฟรชหน้า
         function uploadFile(event) {
             event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
 
             // ตรวจสอบว่าไฟล์ถูกเลือกหรือไม่
             var fileInput = document.getElementById('fileUpload');
             if (!fileInput.files.length) {
-                alert('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
+                Swal.fire('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
                 return; // หยุดการทำงานหากไม่ได้เลือกไฟล์
             }
 
@@ -411,13 +441,23 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             xhr.onload = function() {
                 if (xhr.status == 200) {
                     // แสดงผลลัพธ์จาก PHP (ตอบกลับในรูปแบบ JSON)
-
-                    alert(response.message); // แสดงข้อความที่ตอบกลับจาก server
+                    var response = JSON.parse(xhr.responseText);
+                    Swal.fire({
+                        title: 'สำเร็จ!',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'ตกลง'
+                    });
 
                     // ปิด Popup หลังจากการอัปโหลดสำเร็จ
                     closePopup();
                 } else {
-                    alert('เกิดข้อผิดพลาดในการอัปโหลดไฟล์!');
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์!',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
             };
 
@@ -428,10 +468,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
 
 
-        // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
-        function showFullDescription(fullDescription) {
+        // ฟังก์ชันเพื่อแสดงรายละเอียดเพิ่มเติม
+        function showTextDescription(textDescription) {
             // แบ่งคำในรายละเอียดงาน
-            var words = fullDescription.split(' ');
+            var words = textDescription.split(' ');
             var formattedDescription = '';
 
             // กำหนดให้แต่ละบรรทัดมี 10 คำ
@@ -440,14 +480,16 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
 
             // แสดงรายละเอียดทั้งหมดใน popup
-            document.getElementById('fullDescription').textContent = fullDescription;
-            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+            document.getElementById('textDescription').textContent = textDescription;
+            document.getElementById('descriptionText').style.display = 'block'; // เปิด popup
         }
 
-        // ฟังก์ชันเพื่อปิด popup
         function closePopup() {
             document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
-            document.getElementById('descriptionPopup2').style.display = 'none'; // ปิด popup
+        }
+
+        function closeDescription() {
+            document.getElementById('descriptionText').style.display = 'none'; // ปิด popup
         }
 
         function toggleDetails(button, jobId) {
