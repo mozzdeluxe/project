@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 18, 2025 at 09:19 AM
+-- Generation Time: Mar 07, 2025 at 07:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -52,6 +52,41 @@ INSERT INTO `assignments` (`assign_id`, `job_id`, `user_id`, `status`, `file_pat
 (39, 28, 7, 'ยังไม่อ่าน', 'job28_user3.pdf'),
 (40, 29, 7, 'ยังไม่อ่าน', 'job29_user3.pdf'),
 (41, 30, 7, 'ยังไม่อ่าน', 'job30_user3.pdf');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `corrections`
+--
+
+CREATE TABLE `corrections` (
+  `correction_id` int(10) NOT NULL COMMENT 'รหัสการส่งกลับแก้ไข',
+  `reply_id` int(10) NOT NULL COMMENT 'รหัสการตอบกลับที่ถูกส่งกลับ',
+  `supervisor_id` int(10) NOT NULL COMMENT 'รหัสหัวหน้างานที่ส่งกลับ',
+  `round` int(5) NOT NULL COMMENT 'รอบที่แก้ไข',
+  `status` enum('รอแก้ไข','แก้ไขแล้ว','อนุมัติ') NOT NULL DEFAULT 'รอแก้ไข' COMMENT 'สถานะการแก้ไข',
+  `comment` text DEFAULT NULL COMMENT 'ความคิดเห็นจากหัวหน้า',
+  `file_correction` varchar(255) DEFAULT NULL COMMENT 'ไฟล์ที่แนบกลับมาแก้ไข',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'วันที่ส่งกลับ',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'วันที่อัปเดต'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Triggers `corrections`
+--
+DELIMITER $$
+CREATE TRIGGER `update_assignment_status` AFTER INSERT ON `corrections` FOR EACH ROW UPDATE assignments
+SET status = 'กำลังดำเนินการ'
+WHERE assign_id = (SELECT assign_id FROM reply WHERE reply_id = NEW.reply_id)
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `update_assignment_status_on_approval` AFTER UPDATE ON `corrections` FOR EACH ROW UPDATE assignments
+SET status = 'ส่งแล้ว'
+WHERE assign_id = (SELECT assign_id FROM reply WHERE reply_id = NEW.reply_id)
+AND NEW.status = 'อนุมัติ'
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -147,7 +182,11 @@ INSERT INTO `reply` (`assign_id`, `reply_id`, `user_id`, `due_datetime`, `create
 (NULL, 6, 4, '2025-02-18 12:46:32.000000', '2025-02-17 23:46:32.000000', '2025-02-18 06:46:32.000000', 'uploads/file_67b41eb89768b2.82807903.pdf', 'ดเกเกด'),
 (NULL, 7, 4, '2025-02-18 15:06:46.000000', '2025-02-18 02:06:46.000000', '2025-02-18 09:06:46.000000', 'uploads/file_67b43f969b37f7.21635216.pdf', 'dfgh'),
 (0, 8, 4, '2025-02-18 15:13:23.000000', '2025-02-18 02:13:23.000000', '2025-02-18 09:13:23.000000', 'uploads/file_67b441230b2f90.43466589.pdf', 'dfgh'),
-(NULL, 9, 4, '2025-02-18 15:16:54.000000', '2025-02-18 02:16:54.000000', '2025-02-18 09:16:54.000000', 'uploads/file_67b441f6301433.71437363.pdf', 'dfgh');
+(NULL, 9, 4, '2025-02-18 15:16:54.000000', '2025-02-18 02:16:54.000000', '2025-02-18 09:16:54.000000', 'uploads/file_67b441f6301433.71437363.pdf', 'dfgh'),
+(27, 10, 4, '2025-03-07 16:11:44.000000', '2025-03-07 03:11:44.000000', '2025-03-07 10:11:44.000000', 'uploads/file_67cab850511e96.60355715.pdf', '่้เดกกดเ'),
+(27, 11, 4, '2025-03-07 16:13:36.000000', '2025-03-07 03:13:36.000000', '2025-03-07 10:13:36.000000', 'uploads/file_67cab8c0b83416.78198549.docx', '่้เดกกดเ'),
+(27, 12, 4, '2025-03-07 16:29:10.000000', '2025-03-07 03:29:10.000000', '2025-03-07 10:29:10.000000', 'uploads/file_67cabc662c3a08.24202271.pdf', 'กหอด'),
+(27, 13, 4, '2025-03-07 16:31:57.000000', '2025-03-07 03:31:57.000000', '2025-03-07 10:31:57.000000', 'uploads/file_67cabd0dce55e5.09472775.docx', 'กดกดเ');
 
 --
 -- Indexes for dumped tables
@@ -159,6 +198,14 @@ INSERT INTO `reply` (`assign_id`, `reply_id`, `user_id`, `due_datetime`, `create
 ALTER TABLE `assignments`
   ADD PRIMARY KEY (`assign_id`),
   ADD KEY `fk_job_id` (`job_id`);
+
+--
+-- Indexes for table `corrections`
+--
+ALTER TABLE `corrections`
+  ADD PRIMARY KEY (`correction_id`),
+  ADD KEY `reply_id` (`reply_id`),
+  ADD KEY `supervisor_id` (`supervisor_id`);
 
 --
 -- Indexes for table `jobs`
@@ -192,6 +239,12 @@ ALTER TABLE `assignments`
   MODIFY `assign_id` int(10) NOT NULL AUTO_INCREMENT COMMENT 'รหัสการมอบหมาย', AUTO_INCREMENT=42;
 
 --
+-- AUTO_INCREMENT for table `corrections`
+--
+ALTER TABLE `corrections`
+  MODIFY `correction_id` int(10) NOT NULL AUTO_INCREMENT COMMENT 'รหัสการส่งกลับแก้ไข';
+
+--
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
@@ -207,7 +260,7 @@ ALTER TABLE `mable`
 -- AUTO_INCREMENT for table `reply`
 --
 ALTER TABLE `reply`
-  MODIFY `reply_id` int(10) NOT NULL AUTO_INCREMENT COMMENT 'รหัสตอบกลับ', AUTO_INCREMENT=10;
+  MODIFY `reply_id` int(10) NOT NULL AUTO_INCREMENT COMMENT 'รหัสตอบกลับ', AUTO_INCREMENT=14;
 
 --
 -- Constraints for dumped tables
@@ -218,6 +271,13 @@ ALTER TABLE `reply`
 --
 ALTER TABLE `assignments`
   ADD CONSTRAINT `fk_job_id` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`job_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `corrections`
+--
+ALTER TABLE `corrections`
+  ADD CONSTRAINT `corrections_ibfk_1` FOREIGN KEY (`reply_id`) REFERENCES `reply` (`reply_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `corrections_ibfk_2` FOREIGN KEY (`supervisor_id`) REFERENCES `mable` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
