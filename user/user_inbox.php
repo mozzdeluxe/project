@@ -159,7 +159,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     </script>
 
 
-    <div id="main">
+<div id="main">
         <div class="container">
             <div class="search-container">
                 <input type="text" id="searchInput" onkeyup="searchTable()" onkeydown="checkEnter(event)" placeholder="ค้นหางาน...">
@@ -204,6 +204,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                     <?php
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
+                            echo '<tr data-job-id="' . htmlspecialchars($row['job_id']) . '">';
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
@@ -390,6 +391,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 <textarea name="reply_description" id="reply_description" rows="4" required></textarea>
 
                 <input type="hidden" name="job_id" id="jobId">
+                <input type="hidden" name="assign_id" id="assignId">
                 <button type="submit" class="btn upload">อัปโหลดงาน</button>
             </form>
         </div>
@@ -416,6 +418,15 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         function showFullDescription(fullDescription) {
             // แสดงรายละเอียดทั้งหมดใน popup
             document.getElementById('fullDescription').textContent = fullDescription;
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+        }
+
+        function showFullDescription(jobId, assignId) {
+            // ตั้งค่า jobId และ assignId ในฟอร์ม
+            document.getElementById('jobId').value = jobId;
+            document.getElementById('assignId').value = assignId;
+
+            // แสดงรายละเอียดทั้งหมดใน popup
             document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
         }
 
@@ -448,6 +459,8 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         icon: 'success',
                         confirmButtonText: 'ตกลง'
                     });
+
+                    
 
                     // ปิด Popup หลังจากการอัปโหลดสำเร็จ
                     closePopup();
@@ -541,6 +554,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 window.location.href = `?sort=${sortOrder}`;
             }
         }
+
 
 
         function searchTable() {
