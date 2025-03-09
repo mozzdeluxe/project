@@ -15,14 +15,14 @@ if (isset($data['job_id']) && isset($data['status']) && isset($data['user_id']))
     $user_id = intval($data['user_id']); // รับค่า user_id
 
     // ปรับปรุงคำสั่ง SQL เพื่ออัปเดตเฉพาะงานของผู้ใช้คนนี้
-    $stmt = $conn->prepare("UPDATE assignments SET status = ? WHERE job_id = ? AND user_id = ? AND status = 'ยังไม่อ่าน'");
+    $stmt = $conn->prepare("UPDATE assignments SET status = ? WHERE job_id = ? AND user_id = ? AND status = 'อ่านแล้ว'");
     $stmt->bind_param("sii", $status, $job_id, $user_id);
 
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
-            echo json_encode(["success" => true, "message" => "สถานะถูกเปลี่ยนเป็น 'อ่านแล้ว'"]);
+            echo json_encode(["success" => true, "message" => "สถานะถูกเปลี่ยนเป็น 'รอตรวจสอบ'"]);
         } else {
-            echo json_encode(["success" => false, "message" => "ไม่มีการเปลี่ยนแปลง (สถานะอาจไม่ใช่ 'ยังไม่อ่าน' หรือไม่ใช่ของผู้ใช้นี้)"]);
+            echo json_encode(["success" => false, "message" => "ไม่มีการเปลี่ยนแปลง (สถานะอาจไม่ใช่ 'อ่านแล้ว' หรือไม่ใช่ของผู้ใช้นี้)"]);
         }
     } else {
         echo json_encode(["success" => false, "error" => $stmt->error]);

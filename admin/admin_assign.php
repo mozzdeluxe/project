@@ -151,16 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 </head>
 <style>
-    .btn-primary {
-        background-color: #1e74ba;
-        border-color: rgb(38, 92, 136);
-        border-radius: 15px;
-    }
-
-    .btn-primary:hover {
-        background-color: rgb(22, 60, 91);
-        border-color: rgb(16, 37, 54);
-    }
+    
 
     .form-box {
         padding: 50px;
@@ -321,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                             <div class="mb-3">
                                 <label for="user_ids" class="form-label">เลือกพนักงาน</label>
-                                <button type="button" class="btn btn-worker small" data-bs-toggle="modal" data-bs-target="#userModal">
+                                <button type="button" class="btn btn-details " data-bs-toggle="modal" data-bs-target="#userModal">
                                     เลือกพนักงาน
                                 </button>
                                 <div id="selected-users" class="mt-2 text-muted">ยังไม่ได้เลือกพนักงาน</div>

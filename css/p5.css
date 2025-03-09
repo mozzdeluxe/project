@@ -5,7 +5,7 @@ body {
 }
 
 .container {
-    margin-top: 100px;
+    margin-top: 120px;
     overflow-x: auto;
     border-radius: 25px;
     padding: 20px;
@@ -50,13 +50,13 @@ body {
 }
 
 .btn-details:hover {
-    background: #0a840a;
+    background: #134c7b;
     color: #fff;
 }
 
 .btn-primary {
-    background-color: #dc3545;
-    border-color: #dc3545;
+    background-color: #3d72e3;
+    border-color: #2d5bbd;
     color: white;
     border-radius: 10px;
     /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
@@ -160,16 +160,14 @@ body {
 
 .pagination .page-item.active .page-link {
     color: white;
-    background-color: #1e74ba;
-    /* เปลี่ยนสีเขียวเป็น #1e74ba */
+    background-color: #3d8ed0;
     border-color: #1e74ba;
-    /* เปลี่ยนสีเขียวเป็น #1e74ba */
 }
 
 .pagination .page-item .page-link:hover {
     color: white;
-    background-color: #0a840a;
-    border-color: #0a840a;
+    background-color: #194c75;
+    border-color: #0a365a;
 }
 
 .pagination .page-item .page-link[aria-label="Previous"],
@@ -180,8 +178,8 @@ body {
 
 .pagination .page-item .page-link[aria-label="Previous"]:hover,
 .pagination .page-item .page-link[aria-label="Next"]:hover {
-    background-color: #0a840a;
-    border-color: #0a840a;
+    background-color: #1d5888;
+    border-color: #113654;
 }
 
 .job-level-container {
@@ -305,4 +303,66 @@ body {
     font-family: Arial, sans-serif;
     padding: 5px 10px;
     margin-left: 15px;
+}
+
+.search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-container input {
+    width: 300px;
+    font-size: 18px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับช่องค้นหา */
+    background-color: #fff;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: #1e74ba;
+    /* เปลี่ยนสีกรอบเมื่อช่องค้นหามีการคลิก */
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    /* เพิ่มเงาเขียว */
+}
+
+/* เพิ่มขอบมนๆ ให้กับ select */
+select {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
+select:focus {
+    outline: none;
+    border-color: #1e74ba;
+    box-shadow: 0 0 5px #0f416b;
+}
+/* กริดคอนเทนเนอร์ */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* ปรับจำนวนคอลัมน์อัตโนมัติ */
+    gap: 15px; /* ระยะห่างระหว่างกล่อง */
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+/* กล่องพนักงาน */
+.job-detail-grid {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    border: 1px solid #ddd;
 }

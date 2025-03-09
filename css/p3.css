@@ -5,14 +5,13 @@ body {
 }
 
 .container {
-    margin-top: 100px;
+    margin-top: 120px;
     overflow-x: auto;
     border-radius: 25px;
     padding: 20px;
-
-    /* เปลี่ยนสีพื้นหลังเป็น #1e74ba */
     background-color: #1e74ba;
-    
+
+    /* สีพื้นหลังเขียว */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -27,51 +26,95 @@ body {
 .table-dark{
     font-size: 20px;
 }
-.btn-details {
+.back-button,
+.job-button {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn {
     font-size: 16px;
-    background-color: #1e74ba;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับปุ่ม */
+}
+
+.btn-details {
+    font-size: 18px;
+    background-color: #1e74ba; /* สีใหม่ */
     color: #fff;
     border-radius: 10px;
+    /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
 }
 
 .btn-details:hover {
-    background: #1a63a1;
+    background: #135f8c; /* สีใหม่เข้ม */
     color: #fff;
 }
+.btn-details2 {
+    font-size: 16px;
+    background-color: #4295d9; /* สีใหม่ */
+    color: #fff;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
+}
+
+.btn-details2:hover {
+    background: #135f8c; /* สีใหม่เข้ม */
+    color: #fff;
+}
+
 
 .btn-primary {
     background-color: #dc3545;
     border-color: #dc3545;
     color: white;
     border-radius: 10px;
+    /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
     padding: 10px 20px;
     font-size: 16px;
 }
 
+
+/* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
 .btn-dl {
     background-color: #adb5bd;
+    /* สีเทาอ่อนพื้นหลังปุ่ม */
     color: #ffffff;
+    /* สีตัวอักษร */
     border: 1px solid #adb5bd;
+    /* สีขอบปุ่ม */
 }
 
+/* กำหนดสีเมื่อปุ่มถูก hover */
 .btn-dl:hover {
     background-color: #868e96;
+    /* สีเทาอ่อนเข้มเมื่อ hover */
     border-color: #868e96;
+    /* สีขอบเทาอ่อนเข้มเมื่อ hover */
 }
 
+/* กำหนดสีเมื่อปุ่มถูกคลิก */
 .btn-dl:active {
     background-color: #6c757d;
+    /* สีเทาเข้มเมื่อคลิก */
     border-color: #6c757d;
+    /* สีขอบเทาเข้มเมื่อคลิก */
 }
 
+/* ปรับขนาดและระยะห่างของปุ่ม */
 .btn-sm {
     padding: 5px 10px;
+    /* ปรับขนาด padding */
 }
 
+/* ปรับระยะห่างของปุ่มจากข้อความ */
 .ms-2 {
     margin-left: 0.5rem;
+    /* ระยะห่างซ้าย */
 }
 
+/* Popup Overlay */
 .popup {
     position: fixed;
     top: 0;
@@ -85,6 +128,7 @@ body {
     z-index: 1000;
 }
 
+/* Popup Content */
 .popup-content {
     background-color: white;
     padding: 20px;
@@ -94,10 +138,14 @@ body {
     text-align: left;
     position: absolute;
     top: 50%;
+    /* อยู่กลางแนวตั้ง */
     left: 50%;
+    /* อยู่กลางแนวนอน */
     transform: translate(-50%, -50%);
+    /* เลื่อนให้ตรงกลางทั้งสองด้าน */
 }
 
+/* ปุ่มปิด popup */
 .close-btn {
     position: absolute;
     top: 10px;
@@ -106,12 +154,16 @@ body {
     cursor: pointer;
 }
 
+/* สำหรับ popup ข้อความ */
 #fullDescription {
     white-space: pre-wrap;
+    /* ให้ข้อความแตกบรรทัดเมื่อเกิน */
     word-wrap: break-word;
+    /* ข้อความที่ยาวจะหักคำเมื่อถึงขอบ */
     max-width: 100%;
 }
 
+/* สำหรับคำอธิบายย่อ */
 .job-description-preview {
     display: inline;
     max-width: 100%;
@@ -120,62 +172,87 @@ body {
     text-overflow: ellipsis;
 }
 
-.job-description-preview + .btn {
+/* ปรับปุ่มให้แสดงในแถวเดียวกัน */
+.job-description-preview+.btn {
     display: inline;
     vertical-align: middle;
 }
 
+/* ให้คำอธิบายและปุ่มอยู่ในบรรทัดเดียวกัน */
 .job-detail-grid {
     white-space: normal;
+    /* ให้ข้อความแสดงในบรรทัดเดียวกัน */
 }
 
+/* การตั้งค่าสีพื้นฐานของปุ่มหน้า */
 .pagination .page-item .page-link {
-    color: #1e74ba;
+    color: #1e74ba; /* สีใหม่ */
     background-color: white;
-    border: 1px solid #1e74ba;
+    border: 1px solid #1e74ba; /* สีใหม่ */
 }
 
+/* การตั้งค่าสีเมื่อปุ่มถูกคลิก (Active state) */
 .pagination .page-item.active .page-link {
     color: white;
-    background-color: #1e74ba;
-    border-color: #1e74ba;
+    background-color: #135f8c; /* สีใหม่เข้ม */
+    border-color: #135f8c; /* สีใหม่เข้ม */
 }
 
+/* การตั้งค่าสีเมื่อปุ่มอยู่ในสถานะ hover (ชี้เมาส์ไปที่ปุ่ม) */
 .pagination .page-item .page-link:hover {
     color: white;
-    background-color: #1e74ba;
-    border-color: #1e74ba;
+    background-color: #135f8c; /* สีใหม่เข้ม */
+    border-color: #135f8c; /* สีใหม่เข้ม */
 }
 
+/* การตั้งค่าสีสำหรับปุ่ม "Previous" และ "Next" */
 .pagination .page-item .page-link[aria-label="Previous"],
 .pagination .page-item .page-link[aria-label="Next"] {
-    color: #1e74ba;
+    color: #1e74ba; /* สีใหม่ */
 }
 
+/* การตั้งค่าสีเมื่อปุ่ม "Previous" หรือ "Next" อยู่ในสถานะ hover */
 .pagination .page-item .page-link[aria-label="Previous"]:hover,
 .pagination .page-item .page-link[aria-label="Next"]:hover {
-    background-color: #1e74ba;
-    border-color: #1e74ba;
+    background-color: #135f8c; /* สีใหม่เข้ม */
+    border-color: #135f8c; /* สีใหม่เข้ม */
 }
+
+.job-level-container {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: transparent;
+    /* ทำให้พื้นหลังโปร่งใส */
+    border-radius: 30px;
+    font-weight: bold;
+    color: rgb(0, 0, 0);
+    /* สีข้อความเป็นดำ */
+}
+
 /* ขอบสีเขียวสำหรับระดับงานปกติ */
 .job-level-container.normal {
     border: 4px solid #28a745;
     color: #28a745;
     /* ขอบเขียว */
 }
-
+/* ขอบสีเหลืองสำหรับระดับงานด่วน */
 .job-level-container.urgent {
     border: 4px solid #ffcc00;
     color: #ffcc00;
+    /* ขอบเหลือง */
 }
 
+/* ขอบสีแดงสำหรับระดับงานด่วนมาก */
 .job-level-container.very-urgent {
     border: 4px solid #ff0000;
     color: #ff0000;
+    /* ขอบแดง */
 }
 
+/* กล่องเมนูหลัก */
 .container-box {
     width: auto;
+    /* ปรับความกว้างตามเนื้อหา */
     background-color: white;
     padding: 0px;
     border-radius: 10px;
@@ -186,26 +263,44 @@ body {
     bottom: 120px;
     z-index: 1000;
     height: fit-content;
+    /* ใช้ fit-content เพื่อให้กล่องสูงตามเนื้อหาภายใน */
+    transition: none;
+    /* ลบการเปลี่ยนแปลงความกว้าง */
     max-width: 300px;
+    /* กำหนดความกว้างสูงสุด */
     max-height: 100vh;
+    /* กำหนดความสูงสูงสุดตามความสูงหน้าจอ */
 }
 
 .container-box.open {
-    width: auto;
+    width: 300px;
+    /* ขยายขนาดให้แสดงข้อความเมื่อเปิด */
 }
 
+/* สำหรับลิงก์ในเมนู */
 .container-box a {
     color: inherit;
     text-decoration: none;
 }
 
+.content {
+    margin-left: 340px;
+    padding: 20px;
+    height: 200vh;
+    overflow-y: auto;
+}
+
+/* เพิ่มสไตล์สำหรับเมนูที่มี class active */
 .container-box .menu-item.active {
-    background-color: #1e74ba;
+    background-color: #1e74ba; /* สีใหม่ */
+    /* ใช้สีพื้นหลังที่เด่น */
     color: white;
+    /* เปลี่ยนสีข้อความให้ขาว */
 }
 
 .container-box .menu-item.active i {
     color: white;
+    /* เปลี่ยนสีไอคอนให้ขาว */
 }
 
 .menu-item {
@@ -216,7 +311,7 @@ body {
     transition: background 0.3s;
     cursor: pointer;
     margin-bottom: 10px;
-    font-size: 20px;
+    font-size: 20px; /* เพิ่มขนาดข้อความ */
 }
 
 .menu-item i {
@@ -233,6 +328,7 @@ body {
 
 .container-box.open .menu-item span {
     display: inline-block;
+    /* แสดงข้อความเมื่อเปิด */
 }
 
 .navbar {
@@ -242,7 +338,7 @@ body {
     background-color: rgb(255, 255, 255);
     box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.4);
     padding: 10px;
-    color: black;
+    color: white;
     position: fixed;
     top: 0;
     left: 0;
@@ -251,9 +347,86 @@ body {
 }
 
 .navbar .menu-item i {
-    color: black !important;
+    color: black;
 }
 
+.navbar .logo {
+    margin-right: 20px;
+}
+
+
+.navbar .menu-item i {
+    margin-right: 5px;
+}
+
+.navbar .menu-item.active {
+    color: #1e74ba;
+    background-color: white;
+    font-weight: bold;
+    /* ทำให้ตัวหนังสือหนา */
+}
+
+.search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-container input {
+    width: 300px;
+    font-size: 18px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับช่องค้นหา */
+    background-color: #fff;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: #1e74ba;
+    /* เปลี่ยนสีกรอบเมื่อช่องค้นหามีการคลิก */
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    /* เพิ่มเงาเขียว */
+}
+
+/* เพิ่มขอบมนๆ ให้กับ select */
+select {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
+select:focus {
+    outline: none;
+    border-color: #1e74ba;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+/* กริดคอนเทนเนอร์ */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* ปรับจำนวนคอลัมน์อัตโนมัติ */
+    gap: 15px; /* ระยะห่างระหว่างกล่อง */
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+/* กล่องพนักงาน */
+.job-detail-grid {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    border: 1px solid #ddd;
+}
 .header {
     color: rgb(0, 0, 0);
     font-size: 21px;

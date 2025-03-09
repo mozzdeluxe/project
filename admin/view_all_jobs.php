@@ -66,7 +66,7 @@ $stmt = $conn->prepare("
     LEFT JOIN 
         mable m ON a.user_id = m.id
     WHERE 
-        a.status = 'ส่งแล้ว'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'ส่งแล้ว' */
+        a.status = 'เสร็จสิ้น'
         $yearCondition
     GROUP BY 
         j.job_id
@@ -105,15 +105,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="../css/sidebar.css" rel="stylesheet">
-    <link href="../css/popup.css" rel="stylesheet">
-    <link href="../css/navbar.css" rel="stylesheet">
-    <link href="../css/viewAssignment.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="../css/p3.css">
+    <link href="../css/p3.css" rel="stylesheet">
 </head>
 
 <body>
@@ -250,7 +246,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             // เพิ่มแถวสำหรับแสดงรายละเอียดพนักงานในรูปแบบกริด
                             echo '<tr class="job-details" style="display:none;">';
-                            echo '<td colspan="8">';
+                            echo '<td colspan="7">';
                             echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
                             // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
@@ -266,6 +262,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                     mable m ON a.user_id = m.id 
                 WHERE 
                     a.job_id = ?
+                    AND a.status = 'เสร็จสิ้น'
             ");
                             $subQuery->bind_param("i", $row['job_id']);
                             $subQuery->execute();
@@ -278,10 +275,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'ส่งแล้ว':
+                                        case 'เสร็จสิ้น':
                                             $status_class = 'text-success';
                                             break;
-                                        case 'กำลังดำเนินการ':
+                                        case 'รอตรวจสอบ':
                                             $status_class = 'text-warning';
                                             break;
                                         case 'อ่านแล้ว':

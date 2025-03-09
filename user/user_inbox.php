@@ -159,7 +159,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     </script>
 
 
-<div id="main">
+    <div id="main">
         <div class="container">
             <div class="search-container">
                 <input type="text" id="searchInput" onkeyup="searchTable()" onkeydown="checkEnter(event)" placeholder="ค้นหางาน...">
@@ -302,7 +302,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ส่งแล้ว':
                                             $status_class = 'text-success';
                                             break;
-                                        case 'กำลังดำเนินการ':
+                                        case 'รอตรวจสอบ':
                                             $status_class = 'text-warning';
                                             break;
                                         case 'อ่านแล้ว':
@@ -435,24 +435,21 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         function uploadFile(event) {
             event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
 
-            // ตรวจสอบว่าไฟล์ถูกเลือกหรือไม่
             var fileInput = document.getElementById('fileUpload');
             if (!fileInput.files.length) {
                 Swal.fire('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
-                return; // หยุดการทำงานหากไม่ได้เลือกไฟล์
+                return;
             }
 
-            // สร้าง FormData object
             var formData = new FormData(document.getElementById('uploadForm'));
 
-            // ใช้ XMLHttpRequest (AJAX) ส่งข้อมูล
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'reply_upload.php', true);
 
             xhr.onload = function() {
                 if (xhr.status == 200) {
-                    // แสดงผลลัพธ์จาก PHP (ตอบกลับในรูปแบบ JSON)
                     var response = JSON.parse(xhr.responseText);
+
                     Swal.fire({
                         title: 'สำเร็จ!',
                         text: response.message,
@@ -460,10 +457,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         confirmButtonText: 'ตกลง'
                     });
 
-                    
+                    var jobId = document.getElementById("jobId").value;
+                    updateStatus(jobId, "รอตรวจสอบ");
 
-                    // ปิด Popup หลังจากการอัปโหลดสำเร็จ
                     closePopup();
+
                 } else {
                     Swal.fire({
                         title: 'เกิดข้อผิดพลาด!',
@@ -474,11 +472,34 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 }
             };
 
-            // ส่งข้อมูลไปยัง server
             xhr.send(formData);
         }
 
+        // ✅ ฟังก์ชันอัปเดตสถานะโดยใช้ Fetch พร้อม assignId
+        function updateStatus(jobId, assignId, newStatus) {
+            fetch('update_status2.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            status: 'รอตรวจสอบ',
+                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                        if (data.success) {
+                            console.log("อัปเดตสถานะสำเร็จ");
+                        } else {
+                            console.error("เกิดข้อผิดพลาด:", data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
 
+        }
 
 
         // ฟังก์ชันเพื่อแสดงรายละเอียดเพิ่มเติม
@@ -516,9 +537,9 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 console.log("ส่งข้อมูลไปยัง update_status.php:", {
                     job_id: jobId,
                     status: 'อ่านแล้ว'
+
                 });
 
-                // ส่งคำขอ AJAX
                 fetch('update_status.php', {
                         method: 'POST',
                         headers: {
@@ -526,12 +547,13 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         },
                         body: JSON.stringify({
                             job_id: jobId,
-                            status: 'อ่านแล้ว'
+                            status: 'อ่านแล้ว',
+                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
                         })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        console.log("Response:", data); // Log ค่าที่ได้รับ
+                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
                         if (data.success) {
                             console.log("อัปเดตสถานะสำเร็จ");
                         } else {
@@ -540,10 +562,13 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                     })
                     .catch(error => console.error('Error:', error));
 
+
+
             } else {
                 detailsRow.style.display = "none";
             }
         }
+        var userId = <?php echo json_encode($currentUserId); ?>; // ส่งค่าจาก PHP ไปยัง JavaScript
 
 
 
@@ -595,8 +620,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
     </script>
-    <script src="../js/inbox.js"></script>
-    <script src="../js/sidebar.js"></script>
 
 </body>
 

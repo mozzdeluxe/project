@@ -88,9 +88,3 @@
         margin-left: 0;
     }
 }
-
-// ดึงข้อมูลงานที่สร้างโดยผู้ใช้ที่เข้าสู่ระบบเท่านั้น
-$query = "SELECT j.job_id, m.firstname, m.lastname, j.job_title, j.job_type, j.job_subtype, j.job_description, j.created_at
-          FROM jobs j
-          JOIN mable m ON j.id = m.id
-          WHERE j.id = ?"; // เพิ่มเงื่อนไขให้แสดงเฉพาะงานที่ถูกสร้างโดยผู้ใช้งานคนนั้น

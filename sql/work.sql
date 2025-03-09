@@ -31,7 +31,7 @@ CREATE TABLE `assignments` (
   `assign_id` int(10) NOT NULL COMMENT 'รหัสการมอบหมาย',
   `job_id` int(10) DEFAULT NULL COMMENT 'รหัสงาน',
   `user_id` int(11) DEFAULT NULL COMMENT 'รหัสพนักงาน',
-  `status` enum('ยังไม่อ่าน','อ่านแล้ว','กำลังดำเนินการ','ส่งแล้ว','ช้า') DEFAULT 'ยังไม่อ่าน' COMMENT 'สถานะ',
+  `status` enum('ยังไม่อ่าน','อ่านแล้ว','รอตรวจสอบ','ส่งแล้ว','ช้า') DEFAULT 'ยังไม่อ่าน' COMMENT 'สถานะ',
   `file_path` varchar(50) NOT NULL COMMENT 'ไฟล์ที่อัป'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
@@ -76,7 +76,7 @@ CREATE TABLE `corrections` (
 --
 DELIMITER $$
 CREATE TRIGGER `update_assignment_status` AFTER INSERT ON `corrections` FOR EACH ROW UPDATE assignments
-SET status = 'กำลังดำเนินการ'
+SET status = 'รอตรวจสอบ'
 WHERE assign_id = (SELECT assign_id FROM reply WHERE reply_id = NEW.reply_id)
 $$
 DELIMITER ;

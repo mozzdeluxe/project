@@ -10,8 +10,7 @@
         overflow-x: auto;
         border-radius: 25px;
         padding: 20px;
-
-        /* สีพื้นหลังเขียว */
+        background-color: rgb(48, 114, 55)!important;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
@@ -309,13 +308,11 @@
         transition: background 0.3s;
         cursor: pointer;
         margin-bottom: 10px;
-        font-size: 20px;
-        /* เพิ่มขนาดข้อความ */
+        font-size: 20px; /* เพิ่มขนาดข้อความ */
     }
 
     .menu-item i {
         margin-right: 10px;
-
     }
 
     .menu-item:hover {
@@ -355,7 +352,6 @@
         color: black !important;
         /* เพิ่ม !important เพื่อให้แน่ใจว่าค่าสีนี้จะถูกนำไปใช้ */
     }
-
     .header {
         color: rgb(0, 0, 0);
         /* เปลี่ยนสีฟอนต์ */
@@ -370,3 +366,46 @@
         margin-left: 15px;
         /* ระยะห่างจากขอบซ้าย */
     }
+    
+.search-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-container input {
+    width: 300px;
+    font-size: 18px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับช่องค้นหา */
+    background-color: #fff;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: #1e74ba;
+    /* เปลี่ยนสีกรอบเมื่อช่องค้นหามีการคลิก */
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    /* เพิ่มเงาเขียว */
+}
+
+/* เพิ่มขอบมนๆ ให้กับ select */
+select {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* การปรับสไตล์ให้ปุ่ม select เมื่อมีการเลือก */
+select:focus {
+    outline: none;
+    border-color: #1e74ba;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}

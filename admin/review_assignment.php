@@ -58,13 +58,17 @@ $stmt = $conn->prepare("
         DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at, 
         j.jobs_file, 
         j.job_level,
-        GROUP_CONCAT(CONCAT(m.firstname, ' ', m.lastname, ' (สถานะ: ', a.status, ')') SEPARATOR ', ') AS employee_details
+        GROUP_CONCAT(CONCAT(m.firstname, ' ', m.lastname, ' (สถานะ: ', a.status, ')') SEPARATOR ', ') AS employee_details,
+        r.reply_description,  /* เพิ่มฟิลด์ reply_description */
+        r.file_reply
     FROM 
         jobs j
     LEFT JOIN 
         assignments a ON j.job_id = a.job_id
     LEFT JOIN 
         mable m ON a.user_id = m.id
+    LEFT JOIN 
+        reply r ON r.reply_id = r.reply_id AND r.user_id = a.user_id
     WHERE 
         a.status = 'รอตรวจสอบ'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'รอตรวจสอบ' */
         $yearCondition
@@ -74,6 +78,8 @@ $stmt = $conn->prepare("
         $orderBy
     LIMIT ?, ?
 ");
+
+
 
 // ผูกค่า `offset` และ `limit`
 $stmt->bind_param("ii", $offset, $limit);
@@ -105,8 +111,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="../css/popup.css" rel="stylesheet">
-    <link href="../css/viewAssignment.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -117,13 +121,13 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 </head>
 <style>
     .header {
-    color: rgb(0, 0, 0);
-    font-size: 21px;
-    font-weight: bold;
-    font-family: Arial, sans-serif;
-    padding: 5px 10px;
-    margin-left: 15px;
-}
+        color: rgb(0, 0, 0);
+        font-size: 21px;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+        padding: 5px 10px;
+        margin-left: 15px;
+    }
 </style>
 
 <body>
@@ -213,120 +217,134 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         <th scope="col">กำหนดส่ง</th> <!-- เพิ่มคอลัมน์ กำหนดส่ง -->
                         <th scope="col">ระดับงาน</th> <!-- เพิ่มคอลัมน์ ระดับงาน -->
                         <th scope="col">ดูเพิ่มเติม</th> <!-- ปุ่มดูเพิ่มเติม -->
+                        <th scope="col">ตอบกลับ</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
-                            echo '<tr>';
-                            echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
-                            echo '<td>';
-                            if (!empty($row['jobs_file'])) {
-                                $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
-                                echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
-                            } else {
-                                echo '<span class="text-muted">ไม่มีไฟล์</span>';
-                            }
-                            echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
-
-                            // ตรวจสอบระดับงานและกำหนดคลาส CSS ตามระดับงาน
-                            $jobLevel = htmlspecialchars($row['job_level']);
-                            $levelClass = '';
-
-                            // กำหนดคลาสตามระดับงาน
-                            switch ($jobLevel) {
-                                case 'ด่วน':
-                                    $levelClass = 'urgent'; // คลาสสำหรับระดับงานด่วน
-                                    break;
-                                case 'ด่วนมาก':
-                                    $levelClass = 'very-urgent'; // คลาสสำหรับระดับงานด่วนมาก
-                                    break;
-                                default:
-                                    $levelClass = 'normal'; // คลาสสำหรับระดับงานปกติ
-                                    break;
-                            }
-
-                            echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
-
-                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-
-                            echo '</tr>';
-
-
-
-                            // เพิ่มแถวสำหรับแสดงรายละเอียดพนักงานในรูปแบบกริด
-                            echo '<tr class="job-details" style="display:none;">';
-                            echo '<td colspan="8">';
-                            echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
-
                             // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
                             $subQuery = $conn->prepare("
                 SELECT 
                     m.firstname, 
                     m.lastname, 
                     m.user_id, 
-                    a.status
+                    a.status,
+                    r.reply_id,
+                    r.assign_id AS assign_id,
+                    r.reply_description,
+                    r.file_reply
                 FROM 
                     assignments a 
                 LEFT JOIN 
                     mable m ON a.user_id = m.id 
+                LEFT JOIN
+                    reply r ON r.reply_id AND r.user_id = m.id
                 WHERE 
-                    a.job_id = ?
+                    a.job_id = ? 
+                    AND a.status = 'รอตรวจสอบ'  /* เพิ่มเงื่อนไขสถานะ 'รอตรวจสอบ' */
             ");
                             $subQuery->bind_param("i", $row['job_id']);
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
 
+                            // ถ้ามีพนักงานที่เกี่ยวข้องกับงานนี้
                             if ($subResult->num_rows > 0) {
+                                // วนลูปแสดงแต่ละแถวสำหรับพนักงานที่เกี่ยวข้อง
                                 while ($empRow = $subResult->fetch_assoc()) {
+                                    // กำหนดคลาสสถานะตามสถานะของงาน
                                     $status_class = '';
                                     switch ($empRow['status']) {
                                         case 'ช้า':
-                                            $status_class = 'text-danger';
+                                            $status_class = 'text-danger'; // สีแดง
                                             break;
                                         case 'ส่งแล้ว':
-                                            $status_class = 'text-success';
+                                            $status_class = 'text-success'; // สีเขียว
                                             break;
                                         case 'รอตรวจสอบ':
-                                            $status_class = 'text-warning';
+                                            $status_class = 'text-warning'; // สีเหลือง
                                             break;
                                         case 'อ่านแล้ว':
-                                            $status_class = 'text-info';
+                                            $status_class = 'text-info'; // สีน้ำเงิน
                                             break;
                                         case 'ยังไม่อ่าน':
-                                            $status_class = 'text-secondary';
+                                            $status_class = 'text-secondary'; // สีเทา
                                             break;
                                     }
 
-                                    // แต่ละพนักงานแสดงในกล่อง (Grid Item)
+                                    echo '<tr>';
+                                    echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
+
+                                    // แสดงไฟล์ที่เกี่ยวข้อง
+                                    if (!empty($empRow['file_reply'])) {
+                                        $filePath = htmlspecialchars($empRow['file_reply']); // ป้องกัน XSS
+                                        echo '<td><span>' . $filePath . '</span>';
+                                        echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a></td>';
+                                    } else {
+                                        echo '<td><span class="text-muted">ไม่มีไฟล์</span></td>';
+                                    }
+
+                                    echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
+
+                                    // ตรวจสอบระดับงานและกำหนดคลาส CSS ตามระดับงาน
+                                    $jobLevel = htmlspecialchars($row['job_level']);
+                                    $levelClass = '';
+
+                                    // กำหนดคลาสตามระดับงาน
+                                    switch ($jobLevel) {
+                                        case 'ด่วน':
+                                            $levelClass = 'urgent'; // คลาสสำหรับระดับงานด่วน
+                                            break;
+                                        case 'ด่วนมาก':
+                                            $levelClass = 'very-urgent'; // คลาสสำหรับระดับงานด่วนมาก
+                                            break;
+                                        default:
+                                            $levelClass = 'normal'; // คลาสสำหรับระดับงานปกติ
+                                            break;
+                                    }
+
+                                    echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
+                                    echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
+                                    echo '<td><button class="btn btn-details2 " onclick="showFullDescription(' . $row['job_id'] . ')">ตอบกลับ</button></td>';
+
+                                    echo '</tr>'; // จบแถวข้อมูลพนักงานที่เกี่ยวข้อง
+
+                                    // เพิ่มแถวสำหรับแสดงรายละเอียด
+                                    echo '<tr class="job-details" style="display:none;">'; // ซ่อนแถวเริ่มต้น
+                                    echo '<td colspan="8">'; // ตั้งค่าให้ครอบคลุมทุกคอลัมน์
+
+
                                     echo '<div class="job-detail-grid">';
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
+                                    
                                     // แสดงคำอธิบายงาน (แค่ 10 ตัวอักษรแรก)
-                                    $job_description_preview = htmlspecialchars($row['job_description']);
+                                    $job_description_preview = htmlspecialchars($empRow['reply_description']);
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
-                                    // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    echo '<strong>รายละเอียดเพิ่มเติม: </strong><span class="job-description-preview">' . $short_description . '... </span>';
+                                    echo '<button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($empRow['reply_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
+
+                                    echo '</div>'; // ปิด div grid-container
+                                    echo '</td>';
+                                    echo '</tr>'; // จบแถวรายละเอียด
                                 }
                             } else {
-                                echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';
+                                echo '<tr><td colspan="7" class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</td></tr>';
                             }
-
-                            echo '</div>'; // ปิด div grid-container
-                            echo '</td>';
-                            echo '</tr>';
                         }
                     } else {
                         echo '<tr><td colspan="7" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
                     }
                     ?>
                 </tbody>
+
+
+
             </table>
             <!-- ปุ่มสำหรับเปลี่ยนหน้า -->
             <nav aria-label="Page navigation">
@@ -408,6 +426,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             // แสดง modal
             $('#uploadModal').modal('show');
         }
+        
 
         // ฟังก์ชันเพื่อส่งข้อมูลงาน
         function submitJob() {
@@ -519,8 +538,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
     </script>
-    <script src="../js/sidebar.js"></script>
-    <script src="../js/search_assign.js"></script>
 
 </body>
 

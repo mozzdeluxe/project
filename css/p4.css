@@ -319,3 +319,29 @@ body {
     font-size: 14px;
     color: #333;
 }
+.btn-details {
+    font-size: 16px;
+    background-color: #1e74ba;
+    /* เปลี่ยนสีเขียวเป็น #1e74ba */
+    color: #fff;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
+}
+
+.btn-details:hover {
+    background: #114570;
+    color: #fff;
+}
+.btn-primary {
+    font-size: 18px;
+    background-color: #1e74ba;
+    /* เปลี่ยนสีเขียวเป็น #1e74ba */
+    color: #fff;
+    border-radius: 25px;
+    /* ขอบมนๆ สำหรับปุ่ม "ดูเพิ่มเติม" */
+}
+
+.btn-primary:hover {
+    background: #114570;
+    color: #fff;
+}
