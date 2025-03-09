@@ -12,6 +12,7 @@
         padding: 20px;
 
         /* สีพื้นหลังเขียว */
+        background-color: rgb(48, 114, 55);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 

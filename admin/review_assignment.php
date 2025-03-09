@@ -47,7 +47,7 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
-// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "กำลังดำเนินการ" สำหรับแอดมิน
+// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "รอตรวจสอบ" สำหรับแอดมิน
 $stmt = $conn->prepare("
     SELECT 
         j.job_id, 
@@ -66,7 +66,7 @@ $stmt = $conn->prepare("
     LEFT JOIN 
         mable m ON a.user_id = m.id
     WHERE 
-        a.status = 'กำลังดำเนินการ'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'กำลังดำเนินการ' */
+        a.status = 'รอตรวจสอบ'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'รอตรวจสอบ' */
         $yearCondition
     GROUP BY 
         j.job_id
@@ -291,7 +291,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ส่งแล้ว':
                                             $status_class = 'text-success';
                                             break;
-                                        case 'กำลังดำเนินการ':
+                                        case 'รอตรวจสอบ':
                                             $status_class = 'text-warning';
                                             break;
                                         case 'อ่านแล้ว':
