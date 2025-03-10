@@ -65,17 +65,6 @@ body {
 }
 
 
-.btn-primary {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-    border-radius: 10px;
-    /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
-    padding: 10px 20px;
-    font-size: 16px;
-}
-
-
 /* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
 .btn-dl {
     background-color: #adb5bd;

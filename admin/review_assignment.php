@@ -128,6 +128,27 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         padding: 5px 10px;
         margin-left: 15px;
     }
+
+    .btn-primary {
+        font-size: 16px;
+        padding: 5px 25px;
+        /* ขนาดปุ่ม: บนล่าง 10px ซ้ายขวา 25px */
+        background-color: rgb(198, 41, 41);
+        /* สีพื้นหลัง */
+        color: #fff;
+        border-radius: 10px;
+        /* ขอบมน */
+        border: 2px solid rgb(150, 30, 30);
+        /* สีขอบปุ่ม */
+    }
+
+    .btn-primary:hover {
+        background-color: rgb(111, 17, 17);
+        /* สีพื้นหลังตอน hover */
+        border-color: rgb(90, 10, 10);
+        /* สีขอบตอน hover */
+        color: #fff;
+    }
 </style>
 
 <body>
@@ -308,7 +329,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                                     echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
                                     echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                                    echo '<td><button class="btn btn-details2 " onclick="showFullDescription(' . $row['job_id'] . ')">ตอบกลับ</button></td>';
+                                    echo '<td><button class="btn btn-details2" data-bs-toggle="modal" data-bs-target="#replyJobModal" onclick="loadReplyJob">ตอบกลับ</button></td>';
 
                                     echo '</tr>'; // จบแถวข้อมูลพนักงานที่เกี่ยวข้อง
 
@@ -321,7 +342,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
-                                    
+
                                     // แสดงคำอธิบายงาน (แค่ 10 ตัวอักษรแรก)
                                     $job_description_preview = htmlspecialchars($empRow['reply_description']);
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
@@ -385,48 +406,71 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     </div>
 
     <!-- Modal สำหรับอัปโหลดงาน -->
-    <div id="uploadModal" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="replyJobModal" tabindex="-1" aria-labelledby="replyJobLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">ส่งงาน</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h1 class="modal-title" id="replyJobLabel">ตรวจสอบงาน</h1>
                 </div>
-                <div class="modal-body">
-                    <!-- ฟอร์มอัปโหลดงาน -->
-                    <form id="uploadForm" method="post" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="jobFile">อัปโหลดไฟล์งาน</label>
-                            <input type="file" class="form-control" id="jobFile" name="jobFile" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jobDetails">รายละเอียดเพิ่มเติม</label>
-                            <textarea class="form-control" id="jobDetails" name="jobDetails" rows="4" required></textarea>
-                        </div>
-                        <input type="hidden" id="jobId" name="jobId">
-                    </form>
+                <div class="modal-body" id="modalReplyJob">
+                    <h3>ต้องการอนุมัติงานหรือส่งกลับเพื่อแก้ไขงานนี้</h3>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary" onclick="submitJob()">ส่งงาน</button>
+
+                    <button type="button" class="btn btn-success"
+                        data-assign-id="123" data-user-id="456"
+                        onclick="approveJob(this)">อนุมัติผ่าน</button>
+
+
+
+                    <button type="button" class="btn btn-primary" onclick="editJob()">แก้ไขงาน</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
                 </div>
             </div>
         </div>
     </div>
 
-
     <script>
-        // ฟังก์ชันเพื่อเปิด Modal สำหรับส่งงาน
-        function showUploadModal(jobId) {
-            // ตั้งค่า job_id ให้กับ hidden field
-            document.getElementById('jobId').value = jobId;
+        function approveJob(button) {
+            // ดึงค่าจาก data-* attributes ของปุ่มที่ถูกคลิก
+            var assignId = button.getAttribute('data-assign-id');
+            var userId = button.getAttribute('data-user-id');
+            var status = 'เสร็จสิ้น'; // กำหนดสถานะเป็น "เสร็จสิ้น"
 
-            // แสดง modal
-            $('#uploadModal').modal('show');
+            // สร้าง object สำหรับส่งไปยัง PHP
+            var data = {
+                assign_id: assignId,
+                status: status,
+                user_id: userId
+            };
+
+            // ส่งข้อมูลไปยัง PHP ด้วย AJAX
+            fetch('update_status3.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('สถานะถูกเปลี่ยนเป็น "เสร็จสิ้น"');
+                        // ปิด modal และทำสิ่งอื่นๆ ที่ต้องการหลังจากอัปเดตสำเร็จ
+                        $('#replyJobModal').modal('hide');
+                    } else {
+                        alert(data.message || 'เกิดข้อผิดพลาด');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('เกิดข้อผิดพลาดในการอัปเดต');
+                });
         }
-        
+
+
+
+        //========================================================================================================================================//
 
         // ฟังก์ชันเพื่อส่งข้อมูลงาน
         function submitJob() {
@@ -536,6 +580,14 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 event.preventDefault(); // ป้องกันการส่งฟอร์มหรือการทำงานอื่น ๆ
                 searchTable(); // เรียกใช้ฟังก์ชัน searchTable
             }
+        }
+
+        function loadReplyJob() {
+            // ฟังก์ชันนี้จะถูกเรียกเมื่อคลิกปุ่ม "ตอบกลับ"
+            console.log("โหลดข้อมูลเพื่อแสดงใน modal");
+
+            // ตัวอย่างการเปลี่ยนเนื้อหาใน modal
+            document.getElementById('modalReplyJob').innerHTML = "<p>กรุณาตรวจสอบงานนี้ก่อนการอนุมัติ</p>";
         }
     </script>
 

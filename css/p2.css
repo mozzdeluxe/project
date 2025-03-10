@@ -31,7 +31,7 @@
             overflow-x: auto;
             border-radius: 25px;
             padding: 20px;
-            background-color: #1e74ba;
+            background-color: #1e74ba !important;
 
             /* สีพื้นหลังเขียว */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -68,6 +68,22 @@
 
         .btn-detal:active {
             background: #1e74ba!important;
+            /* สีปุ่มเมื่อกด */
+            color: #fff !important;
+        }
+        .btn-detal2 {
+            font-size: 20px;
+            background-color: #4a91ca;
+            color: #fff;
+        }
+
+        .btn-detal2:hover {
+            background: #3a5e7b;
+            color: #fff;
+        }
+
+        .btn-detal2:active {
+            background: rgb(30, 89, 138);
             /* สีปุ่มเมื่อกด */
             color: #fff !important;
         }
@@ -214,3 +230,4 @@
         margin-left: 15px;
         /* ระยะห่างจากขอบซ้าย */
     }
+    

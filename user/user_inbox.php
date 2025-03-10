@@ -562,7 +562,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                     }
                 })
                 .catch(error => console.error('Error:', error));
-
         }
 
 

@@ -35,9 +35,9 @@ $imgPath = !empty($employee['img_path']) && file_exists('../imgs/' . $employee['
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รายละเอียดพนักงาน</title>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="./css/navbar.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="../css/p2.css" rel="stylesheet">
     <style>
         
         body {
@@ -70,19 +70,6 @@ $imgPath = !empty($employee['img_path']) && file_exists('../imgs/' . $employee['
         .btn {
             font-size: 20px;
         }
-        .btn-detal {
-            font-size: 20px;
-            background-color: #1dc02b;
-            color: #fff;
-        }
-        .btn-detal:hover {
-            background: #0a840a;
-            color: #fff;
-        }
-        .btn-detal:active {
-            background: #229224 !important; /* สีปุ่มเมื่อกด */
-            color: #fff !important;
-        }
         .container_popup {
             margin-top: 20px;
             max-width: 800px; /* กำหนดความกว้างสูงสุดของ container */
@@ -100,16 +87,9 @@ $imgPath = !empty($employee['img_path']) && file_exists('../imgs/' . $employee['
             vertical-align: middle;
             font-size: 20px; /* เพิ่มขนาดฟอนต์ */
         }
-        .table th {
-            background-color: #21a42e; /* Header background color */
-            color: white;
-        }
         .back-button, .job-button {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
-        }
-        .container {
             margin-top: 20px;
         }
         .table-container {
