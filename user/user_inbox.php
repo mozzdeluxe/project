@@ -64,7 +64,8 @@ $stmt = $conn->prepare("
     LEFT JOIN 
         mable m ON a.user_id = m.id
     WHERE 
-        a.user_id = ?  -- ตรวจสอบว่าเป็นพนักงานที่ได้รับมอบหมายงาน
+        a.user_id = ? 
+        AND a.status IN ('ยังไม่อ่าน', 'อ่านแล้ว')
         $yearCondition
     GROUP BY 
         j.job_id

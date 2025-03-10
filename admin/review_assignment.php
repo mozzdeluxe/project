@@ -70,7 +70,7 @@ $stmt = $conn->prepare("
     LEFT JOIN 
         reply r ON r.reply_id = r.reply_id AND r.user_id = a.user_id
     WHERE 
-        a.status = 'รอตรวจสอบ'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'รอตรวจสอบ' */
+        a.status = 'รอตรวจสอบ'
         $yearCondition
     GROUP BY 
         j.job_id
