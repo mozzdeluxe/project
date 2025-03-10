@@ -43,7 +43,6 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
-// คำสั่ง SQL สำหรับดึงข้อมูลงานที่ถูกมอบหมายให้กับพนักงาน และสถานะ "ส่งแล้ว"
 $stmt = $conn->prepare("
     SELECT 
         j.job_id, 
@@ -63,7 +62,7 @@ $stmt = $conn->prepare("
         mable m ON a.user_id = m.id
     WHERE 
         a.user_id = ?  /* ตรวจสอบว่าเป็นพนักงานที่ได้รับมอบหมายงาน */
-        AND a.status = 'ส่งแล้ว'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'ส่งแล้ว' */
+        AND a.status = 'แก้ไข'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'แก้ไข' */
         $yearCondition
     GROUP BY 
         j.job_id
@@ -83,7 +82,7 @@ $countQuery = "
     FROM jobs j
     LEFT JOIN assignments a ON j.job_id = a.job_id
     LEFT JOIN mable m ON a.user_id = m.id
-    WHERE a.user_id = ? AND a.status = 'ส่งแล้ว' $yearCondition
+    WHERE a.user_id = ? AND a.status = 'เสร็จสิ้้น' $yearCondition
 ";
 $countStmt = $conn->prepare($countQuery);
 $countStmt->bind_param("i", $user_id);
@@ -140,7 +139,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> <span>งานที่ได้รับ</span></a>
         </div>
         <div class="menu-item">
-            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ส่งแล้ว</span></a>
+            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่เสร็จแล้ว</span></a>
         </div>
         <div class="menu-item active">
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
@@ -275,7 +274,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'ส่งแล้ว':
+                                        case 'เสร็จสิ้้น':
                                             $status_class = 'text-success';
                                             break;
                                         case 'รอตรวจสอบ':

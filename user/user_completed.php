@@ -43,7 +43,7 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
-// คำสั่ง SQL สำหรับดึงข้อมูลงานที่ถูกมอบหมายให้กับพนักงาน และสถานะ "ส่งแล้ว"
+// คำสั่ง SQL สำหรับดึงข้อมูลงานที่ถูกมอบหมายให้กับพนักงาน และสถานะ "เสร็จสิ้้น"
 $stmt = $conn->prepare("
     SELECT 
         j.job_id, 
@@ -63,7 +63,7 @@ $stmt = $conn->prepare("
         mable m ON a.user_id = m.id
     WHERE 
         a.user_id = ?  /* ตรวจสอบว่าเป็นพนักงานที่ได้รับมอบหมายงาน */
-        AND a.status = 'ส่งแล้ว'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'ส่งแล้ว' */
+        AND a.status = 'เสร็จสิ้น'  /* เงื่อนไขเฉพาะงานที่มีสถานะ 'เสร็จสิ้้น' */
         $yearCondition
     GROUP BY 
         j.job_id
@@ -83,7 +83,7 @@ $countQuery = "
     FROM jobs j
     LEFT JOIN assignments a ON j.job_id = a.job_id
     LEFT JOIN mable m ON a.user_id = m.id
-    WHERE a.user_id = ? AND a.status = 'ส่งแล้ว' $yearCondition
+    WHERE a.user_id = ? AND a.status = 'เสร็จสิ้้น' $yearCondition
 ";
 $countStmt = $conn->prepare($countQuery);
 $countStmt->bind_param("i", $user_id);
@@ -103,16 +103,17 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>งานที่สั่งแล้ว</title>
-    <link href="../css/sidebar.css" rel="stylesheet">
-    <link href="../css/popup.css" rel="stylesheet">
-    <link href="../css/navbar.css" rel="stylesheet">
-    <link href="../css/viewAssignment.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="../css/up3.css" rel="stylesheet">
+    <link href="../css/up2.css" rel="stylesheet">
 </head>
+<style>
+    .status.text-success {
+        color: green;
+    }
+</style>
 
 <body>
     <!-- Navbar -->
@@ -122,7 +123,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         </div>
         <!-- เพิ่มหัวข้อใหม่ข้างๆ -->
         <div class="header">
-            <span>งานที่ส่งแล้ว</span>
+            <span>งานที่เสร็จแล้ว</span>
         </div>
     </div>
 
@@ -141,7 +142,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> <span>งานที่ได้รับ</span></a>
         </div>
         <div class="menu-item active">
-            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ส่งแล้ว</span></a>
+            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่เสร็จแล้ว</span></a>
         </div>
         <div class="menu-item">
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
@@ -207,6 +208,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                     <?php
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
+                            echo '<tr data-job-id="' . htmlspecialchars($row['job_id']) . '">';
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
@@ -214,7 +216,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             if (!empty($row['jobs_file'])) {
                                 $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
                                 echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
@@ -240,8 +242,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
-                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                            
+                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
+
+
+
+
                             echo '</tr>';
 
 
@@ -251,23 +256,44 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td colspan="8">';
                             echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
-                            // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
+                            // สมมติว่าคุณมีตัวแปร $currentUserId ที่เก็บ user_id ของผู้ใช้งานที่กำลังล็อกอิน
+                            $currentUserId = $_SESSION['user_id']; // หรืออาจจะได้จากการตรวจสอบ session
+
+                            // ดึงข้อมูลพนักงานที่ได้รับมอบหมายงานนี้และเป็นของผู้ใช้งานนี้
                             $subQuery = $conn->prepare("
-                SELECT 
-                    m.firstname, 
-                    m.lastname, 
-                    m.user_id, 
-                    a.status
-                FROM 
-                    assignments a 
-                LEFT JOIN 
-                    mable m ON a.user_id = m.id 
-                WHERE 
-                    a.job_id = ?
-            ");
-                            $subQuery->bind_param("i", $row['job_id']);
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id = ?
+                                ");
+                            $subQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
+
+                            // ดึงข้อมูลพนักงานคนอื่นที่ได้รับมอบหมายงานเดียวกัน (ไม่รวม user_id ปัจจุบัน)
+                            $otherEmployeesQuery = $conn->prepare("
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id != ?
+                                ");
+                            $otherEmployeesQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id ที่ไม่เท่ากับ user_id ปัจจุบัน
+                            $otherEmployeesQuery->execute();
+                            $otherEmployeesResult = $otherEmployeesQuery->get_result();
 
                             if ($subResult->num_rows > 0) {
                                 while ($empRow = $subResult->fetch_assoc()) {
@@ -276,7 +302,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'ส่งแล้ว':
+                                        case 'เสร็จสิ้น':
                                             $status_class = 'text-success';
                                             break;
                                         case 'รอตรวจสอบ':
@@ -302,6 +328,12 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
                                 }
+                                // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
+                                echo '<div class="job-detail-grid">';
+                                echo '<strong>พนักงานคนอื่นที่ได้รับงานนี้:</strong><br>';
+                                while ($otherEmpRow = $otherEmployeesResult->fetch_assoc()) {
+                                    echo htmlspecialchars($otherEmpRow['firstname'] . ' ' . $otherEmpRow['lastname']) . '<br>';
+                                }
                             } else {
                                 echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';
                             }
@@ -311,7 +343,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '</tr>';
                         }
                     } else {
-                        echo '<tr><td colspan="7" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
+                        echo '<tr><td colspan="8" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
                     }
                     ?>
                 </tbody>
@@ -507,8 +539,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
     </script>
-    <script src="../js/sidebar.js"></script>
-    <script src="../js/search_assign.js"></script>
 
 </body>
 

@@ -103,7 +103,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>งานที่สั่งแล้ว</title>
+    <title>งานที่ได้รับ</title>
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
@@ -114,12 +114,15 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <link href="../css/up2.css" rel="stylesheet">
 </head>
 
-
 <body>
     <!-- Navbar -->
     <div class="navbar">
         <div class="menu-item" onclick="toggleSidebar()">
             <i class="fa-solid fa-bars"></i> <span>หัวข้อ</span>
+        </div>
+        <!-- เพิ่มหัวข้อใหม่ข้างๆ -->
+        <div class="header">
+            <span>งานที่ได้รับ</span>
         </div>
     </div>
 
@@ -138,7 +141,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> <span>งานที่ได้รับ</span></a>
         </div>
         <div class="menu-item">
-            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ส่งแล้ว</span></a>
+            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่เสร็จแล้ว</span></a>
         </div>
         <div class="menu-item">
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
@@ -300,7 +303,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'ส่งแล้ว':
+                                        case 'เสร็จสิ้้น':
                                             $status_class = 'text-success';
                                             break;
                                         case 'รอตรวจสอบ':
@@ -380,23 +383,83 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <div id="descriptionPopup" class="popup" style="display: none;">
         <div class="popup-content">
             <span class="close-btn" onclick="closePopup()">&times;</span>
-            <h3>รายละเอียดการตอบกลับ</h3>
+            <h3>ส่งงาน</h3>
             <p id="fullDescription"></p>
 
             <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
             <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
-                <label for="fileUpload">เลือกไฟล์:</label>
+
+                <label for="reply_description">รายละเอียดงาน:</label><br>
+                <textarea name="reply_description" id="reply_description" rows="4" required></textarea><br><br>
+
+                <label for="fileUpload">เลือกไฟล์:</label><br>
                 <input type="file" name="fileUpload" id="fileUpload" required>
 
-                <label for="reply_description">รายละเอียดงาน:</label>
-                <textarea name="reply_description" id="reply_description" rows="4" required></textarea>
 
                 <input type="hidden" name="job_id" id="jobId">
                 <input type="hidden" name="assign_id" id="assignId">
+
                 <button type="submit" class="btn upload">อัปโหลดงาน</button>
+
             </form>
+
         </div>
     </div>
+    <style>
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .popup-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        width: 400px; /* <--- ปรับความกว้างตรงนี้ เช่น 400px หรือ % */
+        max-width: 90%; /* ป้องกันล้นหน้าจอบนอุปกรณ์เล็ก */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .popup-content h3 {
+        margin-top: 0;
+    }
+
+    .btn.upload {
+        margin-top: 15px;
+        padding: 8px 16px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn.upload:hover {
+        background-color: #0056b3;
+    }
+
+    textarea, input[type="file"] {
+        width: 100%;
+    }
+</style>
+
 
     <!-- Popup สำหรับแสดงเพิ่มเติม -->
     <div id="descriptionText" class="popup" style="display: none;">
@@ -479,26 +542,26 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         // ✅ ฟังก์ชันอัปเดตสถานะโดยใช้ Fetch พร้อม assignId
         function updateStatus(jobId, assignId, newStatus) {
             fetch('update_status2.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            job_id: jobId,
-                            status: 'รอตรวจสอบ',
-                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
-                        })
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        job_id: jobId,
+                        status: 'รอตรวจสอบ',
+                        user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
-                        if (data.success) {
-                            console.log("อัปเดตสถานะสำเร็จ");
-                        } else {
-                            console.error("เกิดข้อผิดพลาด:", data.error);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                    if (data.success) {
+                        console.log("อัปเดตสถานะสำเร็จ");
+                    } else {
+                        console.error("เกิดข้อผิดพลาด:", data.error);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
 
         }
 

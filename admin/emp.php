@@ -47,7 +47,7 @@ $result = mysqli_query($conn, $query);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="../css/p2.css">
+    <link href="../css/p2.css" rel="stylesheet">
 </head>
 
 <body>

@@ -278,7 +278,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'ส่งแล้ว':
+                                        case 'เสร็จสิ้้น':
                                             $status_class = 'text-success';
                                             break;
                                         case 'รอตรวจสอบ':

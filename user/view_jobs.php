@@ -139,7 +139,7 @@ if (!$result) {
                 <a href="user_page.php"><i class="fa-regular fa-clipboard"></i> แดชบอร์ด</a>
                 <a href="view_jobs.php"><i class="fa-solid fa-briefcase"></i> ดูงานที่สร้าง</a>
                 <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> งานที่ได้รับ</a>
-                <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่ส่งแล้ว</a>
+                <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> งานที่เสร็จแล้ว</a>
                 <a href="user_corrected_assignments.php">งานที่ถูกส่งกลับมาแก้ไข</a>
                 <a href="edit_profile_page.php"><i class="fa-solid fa-user-edit"></i> แก้ไขข้อมูลส่วนตัว</a>
                 <a href="../logout.php"><i class="fa-solid fa-sign-out-alt"></i> ออกจากระบบ</a>

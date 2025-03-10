@@ -47,7 +47,7 @@ switch ($sortOrder) {
         $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
 }
 
-// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "ส่งแล้ว" สำหรับแอดมิน
+// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "เสร็จสิ้้น" สำหรับแอดมิน
 $stmt = $conn->prepare("
     SELECT 
         j.job_id, 
@@ -86,7 +86,7 @@ $countQuery = "
     FROM jobs j
     LEFT JOIN assignments a ON j.job_id = a.job_id
     LEFT JOIN mable m ON a.user_id = m.id
-    WHERE a.status = 'ส่งแล้ว' $yearCondition
+    WHERE a.status = 'เสร็จสิ้้น' $yearCondition
 ";
 $countStmt = $conn->prepare($countQuery);
 $countStmt->execute();
@@ -506,8 +506,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
     </script>
-    <script src="../js/sidebar.js"></script>
-    <script src="../js/search_assign.js"></script>
 
 </body>
 

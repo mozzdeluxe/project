@@ -6,11 +6,14 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+$user_id = $_SESSION['user_id']; // ย้ายบรรทัดนี้ขึ้นมาด้านบนก่อนใช้ทุก Query
+
 $userlevel = $_SESSION['userlevel'];
 if ($userlevel != 'm') {
     header("Location: ../logout.php");
     exit();
 }
+
 
 include('../connection.php');
 
@@ -18,8 +21,27 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$user_id = $_SESSION['user_id'];
+// สถานะที่คุณต้องการนับ
+$allStatuses = ['ยังไม่อ่าน', 'อ่านแล้ว', 'รอตรวจสอบ', 'เสร็จสิ้น', 'ช้า'];
 
+$statusCounts = array_fill_keys($allStatuses, 0); // เตรียมตัวนับสถานะ
+
+// นับจำนวนงานตามสถานะของผู้ใช้งานคนปัจจุบัน
+$query = "SELECT status, COUNT(*) as count FROM assignments WHERE user_id = '$user_id' GROUP BY status";
+$result = mysqli_query($conn, $query);
+
+while ($row = mysqli_fetch_assoc($result)) {
+    if (in_array($row['status'], $allStatuses)) {
+        $statusCounts[$row['status']] = $row['count'];
+    }
+}
+
+// แปลงเป็น array แยกสำหรับใช้งานต่อ
+$statuses = array_keys($statusCounts);
+$counts = array_values($statusCounts);
+
+
+$user_id = $_SESSION['user_id'];
 // Count total jobs assigned to the logged-in user (for non-admin users)
 $query = "SELECT COUNT(*) as totalJobs FROM assignments WHERE user_id = '$user_id'";
 $result = mysqli_query($conn, $query);
@@ -27,19 +49,23 @@ $row = mysqli_fetch_assoc($result);
 $totalJobs = $row['totalJobs'];
 
 // Count total assignments that are either complete or late for the logged-in user (for non-admin users)
-$query = "SELECT COUNT(*) as totalAssignments FROM assignments WHERE user_id = '$user_id' AND status IN ('complete', 'late')";
+$query = "SELECT COUNT(*) as totalAssignments FROM assignments WHERE user_id = '$user_id' AND status IN ('ยังไม่อ่าน', 'อ่านแล้ว')";
 $result = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($result);
 $totalAssignments = $row['totalAssignments'];
 
+// Count total assignments that are either complete or late for the logged-in user (for non-admin users)
+$query = "SELECT COUNT(*) as totalAssignments FROM assignments WHERE user_id = '$user_id' AND status = 'เสร็จสิ้น'";
+$result = mysqli_query($conn, $query);
+$row = mysqli_fetch_assoc($result);
+$totalAssignments2 = $row['totalAssignments'];
+
+$query = "SELECT COUNT(*) as totalAssignments FROM assignments WHERE user_id = '$user_id' AND status IN ('รอตรวจสอบ')";
+$result = mysqli_query($conn, $query);
+$row = mysqli_fetch_assoc($result);
+$totalAssignments3 = $row['totalAssignments'];
 
 
-$query = $conn->prepare("SELECT COUNT(*) AS pendingAssignments FROM assignments WHERE user_id = ? AND status = 'pending'");
-$query->bind_param("i", $user_id);
-$query->execute();
-$result = $query->get_result();
-$row = $result->fetch_assoc();
-$pendingAssignments = $row['pendingAssignments'];
 
 // Get user information
 $query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
@@ -61,16 +87,16 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน้าหลักผู้ใช้</title>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="../css/sidebar.css" rel="stylesheet">
-    <link href="../css/navbar.css" rel="stylesheet">
     <link href="../css/dashboard.css" rel="stylesheet">
-    <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="../css/up1.css">
+    <link href="../css/up1.css" rel="stylesheet">
 </head>
+<style>
+    
+    </style>
 
 <body>
     <!-- Navbar -->
@@ -99,7 +125,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             <a href="user_inbox.php"><i class="fa-solid fa-inbox"></i> <span>งานที่ได้รับ</span></a>
         </div>
         <div class="menu-item">
-            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ส่งแล้ว</span></a>
+            <a href="user_completed.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่เสร็จแล้ว</span></a>
         </div>
         <div class="menu-item">
             <a href="user_corrected_assignments.php"><i class="fa-solid fa-tasks"></i> <span>งานที่ถูกส่งกลับมาแก้ไข</span></a>
@@ -121,69 +147,155 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
     </script>
 
 
-    <div id="main">
-        <div class="user">
+<div id="main">
+        <div class="admin">
             <h1>สวัสดี
                 <?php
                 echo htmlspecialchars($user['firstname']) . " " . htmlspecialchars($user['lastname']);
-                if ($userlevel == 'm') {
-                    echo " (ผู้ใช้งาน)";
+                if ($userlevel == 'a') {
+                    echo " (หัวหน้า)";
                 }
                 ?>
             </h1>
         </div>
+        <hr style="border: 1px solid rgb(18, 97, 11);">
 
-        <div class="container-fluid"> <!-- เปลี่ยนจาก container เป็น container-fluid -->
-            <div class="row justify-content-center gy-4 g-0"> <!-- ลบระยะห่างของ row -->
-                <!-- การ์ด งานที่ส่งแล้ว -->
-                <div class="col-lg-7 col-md-10 col-sm-12 mb-4">
-                    <div class="card-container border rounded shadow-sm position-relative"
-                        style="background-color:rgb(64, 84, 49); height: 100%; margin: auto;"> <!-- ลบ max-width -->
-                        <div class="p-4 d-flex flex-column position-static">
-                            <h3 class="mb-3" style="color: #e8f0fe;">
-                                <i class="fa-solid fa-check-circle" style="color: #ffffff;"></i>
-                                งานที่ส่งแล้ว
-                            </h3>
-                            <hr style="border: 1px solid #ffffff;">
-                            <p class="card-text mb-3" style="color:#e8f0fe;">
-                                <b>จำนวนงานทั้งหมด: </b><span><?php echo $totalAssignments; ?></span>
-                            </p>
-                            <a href="user_completed.php" class="icon-link gap-1 icon-link-hover stretched-link mt-auto" style="color:#ffffff;">
-                                ดูเพิ่มเติม
-                                <i class="fa-solid fa-arrow-right" style="color:#ffffff;"></i>
-                            </a>
+        <div class="container">
+            <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <!-- งานทั้งหมดที่สั่ง -->
+                <div class="col-md-4 mb-4 card-container">
+                    <div class="card shadow-sm border-0 rounded h-100">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <h3 class="card-title text-center mb-3" style="color: #28a745;;">งานที่ได้รับ</h3>
+                            <div class="icon-container mb-4">
+                                <i class="fa-solid fa-tasks fa-3x" style="color: #28a745;;"></i>
+                            </div>
+                            <p class="card-text text-center" style="color: #28a745;;"><strong>จำนวนงานทั้งหมด:</strong> <?php echo $totalAssignments; ?></p>
+                            <a href="user_inbox.php" class="btn btn-outline-success stretched-link mt-auto text-center">ดูเพิ่มเติม</a>
                         </div>
                     </div>
                 </div>
 
-                <!-- การ์ด งานที่ได้รับมอบหมาย -->
-                <div class="col-lg-7 col-md-10 col-sm-12 mb-4">
-                    <div class="card-container border rounded shadow-sm position-relative"
-                        style="background-color:rgb(109, 139, 84); height: 100%; margin: auto;"> <!-- ลบ max-width -->
-                        <div class="p-4 d-flex flex-column position-static">
-                            <h3 class="mb-3" style="color: #ffffff;">
-                                <i class="fa-solid fa-tasks" style="color: #ffffff;"></i>
-                                งานที่ได้รับมอบหมาย
-                            </h3>
-                            <hr style="border: 1px solid #ffffff;">
-                            <p class="card-text mb-3" style="color: #ffffff;">
-                                <b>จำนวนงานทั้งหมด: </b><span><?php echo $pendingAssignments; ?></span>
-                            </p>
-                            <a href="user_inbox.php" class="icon-link gap-1 icon-link-hover stretched-link mt-auto" style="color:#ffffff;">
-                                ดูเพิ่มเติม
-                                <i class="fa-solid fa-arrow-right" style="color:#ffffff;"></i>
-                            </a>
+                <!-- งานที่เสร็จสิ้น -->
+                <div class="col-md-4 mb-4 card-container">
+                    <div class="card shadow-sm border-0 rounded h-100">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <h3 class="card-title text-center mb-3" style="color: #28a745;;">งานที่เสร็จแล้ว</h3>
+                            <div class="icon-container mb-4">
+                                <i class="fa-solid fa-tasks fa-3x" style="color: #28a745;;"></i>
+                            </div>
+                            <p class="card-text text-center" style="color: #28a745;;"><strong>จำนวนงานทั้งหมด:</strong> <?php echo $totalAssignments2; ?></p>
+                            <a href="user_completed.php" class="btn btn-outline-success stretched-link mt-auto text-center">ดูเพิ่มเติม</a>
                         </div>
                     </div>
                 </div>
+
+                <!-- รอตรวจสอบ -->
+                <div class="col-md-4 mb-4 card-container">
+                    <div class="card shadow-sm border-0 rounded h-100">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <h3 class="card-title text-center mb-3" style="color: #28a745;;">งานที่รอตรวจสอบ</h3>
+                            <div class="icon-container mb-4">
+                                <i class="fa-solid fa-tasks fa-3x" style="color: #28a745;;"></i>
+                            </div>
+                            <p class="card-text text-center" style="color: #28a745;;"><strong>จำนวนงานทั้งหมด:</strong> <?php echo $totalAssignments3; ?></p>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
             </div>
         </div>
 
 
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const data = {
+                labels: <?php echo json_encode($statuses); ?>, // ใช้ค่า $statuses ที่ส่งจาก PHP
+                datasets: [{
+                    label: 'สถานะของงาน',
+                    data: <?php echo json_encode($counts); ?>, // ใช้ค่า $counts ที่ส่งจาก PHP
+                    backgroundColor: '#28a745', // สีของแท่ง
+                    borderColor: '#28a745', // สีของกรอบแท่ง
+                    borderWidth: 1,
+                    hoverBackgroundColor: '#28a745', // สีของแท่งเมื่อ hover
+                    hoverBorderColor: '#28a745', // สีของกรอบแท่งเมื่อ hover
+                    hoverBorderWidth: 2 // ความหนาของกรอบแท่งเมื่อ hover
+                }]
+            };
 
-    </div>
-    <script src="../js/sidebar.js"></script>
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            const statusChart = new Chart(ctx, {
+                type: 'bar', // กราฟแบบแท่ง
+                data: data,
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'สถานะของงาน', // แสดงชื่อแกน x
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'จำนวนงาน', // แสดงชื่อแกน y
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.raw + ' งาน'; // แสดงจำนวนงานใน Tooltip
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: function(value) {
+                                return value + ' งาน'; // เพิ่มข้อความ 'งาน' หลังตัวเลขใน label
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    }
+                },
+            });
+        </script>
 </body>
+
 
 </html>
 

@@ -92,7 +92,7 @@ $countQuery = "
     FROM jobs j
     LEFT JOIN assignments a ON j.job_id = a.job_id
     LEFT JOIN mable m ON a.user_id = m.id
-    WHERE a.status = 'ส่งแล้ว' $yearCondition
+    WHERE a.status = 'เสร็จสิ้้น' $yearCondition
 ";
 $countStmt = $conn->prepare($countQuery);
 $countStmt->execute();
@@ -259,7 +259,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger'; // สีแดง
                                             break;
-                                        case 'ส่งแล้ว':
+                                        case 'เสร็จสิ้้น':
                                             $status_class = 'text-success'; // สีเขียว
                                             break;
                                         case 'รอตรวจสอบ':
