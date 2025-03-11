@@ -109,6 +109,22 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <link href="../css/up3.css" rel="stylesheet">
 
 </head>
+<style>
+.btn-primary {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    border-radius: 10px;
+    /* ขอบมนๆ สำหรับปุ่ม "แก้ไข" */
+    padding: 8px 20px;
+    font-size: 16px;
+}
+.btn-primary:hover {
+    background: #510808;
+    color: #fff;
+} 
+
+</style>
 
 
 <body>
@@ -161,7 +177,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     </script>
 
 
-    <div id="main">
+<div id="main">
         <div class="container">
             <div class="search-container">
                 <input type="text" id="searchInput" onkeyup="searchTable()" onkeydown="checkEnter(event)" placeholder="ค้นหางาน...">
@@ -199,12 +215,14 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         <th scope="col">กำหนดส่ง</th> <!-- เพิ่มคอลัมน์ กำหนดส่ง -->
                         <th scope="col">ระดับงาน</th> <!-- เพิ่มคอลัมน์ ระดับงาน -->
                         <th scope="col">ดูเพิ่มเติม</th> <!-- ปุ่มดูเพิ่มเติม -->
+                        <th scope="col">แก้ไขงาน</th> <!-- ปุ่มดูส่งงาน -->
                     </tr>
                 </thead>
                 <tbody>
                     <?php
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
+                            echo '<tr data-job-id="' . htmlspecialchars($row['job_id']) . '">';
                             echo '<tr>';
                             echo '<td>' . htmlspecialchars($row['job_id']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
@@ -212,7 +230,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             if (!empty($row['jobs_file'])) {
                                 $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
                                 echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
@@ -238,7 +256,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
-                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
+                            echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this, ' . $row['job_id'] . ')">รายละเอียดเพิ่มเติม</button></td>';
+
+                            echo '<td><button class="btn btn-primary" onclick="showFullDescription(' . $row['job_id'] . ')">แก้ไข</button></td>';
+
+
 
                             echo '</tr>';
 
@@ -249,29 +271,50 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td colspan="8">';
                             echo '<div class="grid-container">'; // ใช้ div ที่มี class "grid-container"
 
-                            // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
+                            // สมมติว่าคุณมีตัวแปร $currentUserId ที่เก็บ user_id ของผู้ใช้งานที่กำลังล็อกอิน
+                            $currentUserId = $_SESSION['user_id']; // หรืออาจจะได้จากการตรวจสอบ session
+
+                            // ดึงข้อมูลพนักงานที่ได้รับมอบหมายงานนี้และเป็นของผู้ใช้งานนี้
                             $subQuery = $conn->prepare("
-                SELECT 
-                    m.firstname, 
-                    m.lastname, 
-                    m.user_id, 
-                    a.status
-                FROM 
-                    assignments a 
-                LEFT JOIN 
-                    mable m ON a.user_id = m.id 
-                WHERE 
-                    a.job_id = ?
-            ");
-                            $subQuery->bind_param("i", $row['job_id']);
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id = ?
+                                ");
+                            $subQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
+
+                            // ดึงข้อมูลพนักงานคนอื่นที่ได้รับมอบหมายงานเดียวกัน (ไม่รวม user_id ปัจจุบัน)
+                            $otherEmployeesQuery = $conn->prepare("
+                                SELECT 
+                                    m.firstname, 
+                                    m.lastname, 
+                                    m.user_id, 
+                                    a.status
+                                FROM 
+                                    assignments a 
+                                LEFT JOIN 
+                                    mable m ON a.user_id = m.id 
+                                WHERE 
+                                    a.job_id = ? AND a.user_id != ?
+                                ");
+                            $otherEmployeesQuery->bind_param("ii", $row['job_id'], $currentUserId); // bind job_id และ user_id ที่ไม่เท่ากับ user_id ปัจจุบัน
+                            $otherEmployeesQuery->execute();
+                            $otherEmployeesResult = $otherEmployeesQuery->get_result();
 
                             if ($subResult->num_rows > 0) {
                                 while ($empRow = $subResult->fetch_assoc()) {
                                     $status_class = '';
                                     switch ($empRow['status']) {
-                                        case 'ช้า':
+                                        case 'แก้ไข':
                                             $status_class = 'text-danger';
                                             break;
                                         case 'เสร็จสิ้้น':
@@ -297,8 +340,16 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     $job_description_preview = htmlspecialchars($row['job_description']);
                                     $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
                                     // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    echo '<strong>รายละเอียดงาน: </strong>
+                                            <span class="job-description-preview">' . $short_description . '... </span>
+                                            <button class="btn btn-link" onclick="showTextDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
                                     echo '</div>';
+                                }
+                                // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
+                                echo '<div class="job-detail-grid">';
+                                echo '<strong>พนักงานคนอื่นที่ได้รับงานนี้:</strong><br>';
+                                while ($otherEmpRow = $otherEmployeesResult->fetch_assoc()) {
+                                    echo htmlspecialchars($otherEmpRow['firstname'] . ' ' . $otherEmpRow['lastname']) . '<br>';
                                 }
                             } else {
                                 echo '<div class="text-center">ไม่มีพนักงานที่เกี่ยวข้อง</div>';
@@ -309,7 +360,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '</tr>';
                         }
                     } else {
-                        echo '<tr><td colspan="7" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
+                        echo '<tr><td colspan="8" class="text-center">ไม่พบงานที่สั่ง</td></tr>';
                     }
                     ?>
                 </tbody>
@@ -342,86 +393,196 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             </nav>
         </div>
     </div>
-
     <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
     <div id="descriptionPopup" class="popup" style="display: none;">
         <div class="popup-content">
             <span class="close-btn" onclick="closePopup()">&times;</span>
-            <h3>รายละเอียดงานทั้งหมด</h3>
+            <h3>ส่งงานที่แก้ไข</h3>
             <p id="fullDescription"></p>
+
+            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
+            <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
+
+                <label for="reply_description">รายละเอียดงาน:</label><br>
+                <textarea name="reply_description" id="reply_description" rows="4" required></textarea><br><br>
+
+                <label for="fileUpload">เลือกไฟล์:</label><br>
+                <input type="file" name="fileUpload" id="fileUpload" required>
+
+
+                <input type="hidden" name="job_id" id="jobId">
+                <input type="hidden" name="assign_id" id="assignId">
+
+                <button type="submit" class="btn upload">อัปโหลดงาน</button>
+
+            </form>
+
         </div>
     </div>
+    <style>
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-    <!-- Modal สำหรับอัปโหลดงาน -->
-    <div id="uploadModal" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">ส่งงาน</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- ฟอร์มอัปโหลดงาน -->
-                    <form id="uploadForm" method="post" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="jobFile">อัปโหลดไฟล์งาน</label>
-                            <input type="file" class="form-control" id="jobFile" name="jobFile" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jobDetails">รายละเอียดเพิ่มเติม</label>
-                            <textarea class="form-control" id="jobDetails" name="jobDetails" rows="4" required></textarea>
-                        </div>
-                        <input type="hidden" id="jobId" name="jobId">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary" onclick="submitJob()">ส่งงาน</button>
-                </div>
-            </div>
+    .popup-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        width: 400px; /* <--- ปรับความกว้างตรงนี้ เช่น 400px หรือ % */
+        max-width: 90%; /* ป้องกันล้นหน้าจอบนอุปกรณ์เล็ก */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .popup-content h3 {
+        margin-top: 0;
+    }
+
+    .btn.upload {
+        margin-top: 15px;
+        padding: 8px 16px;
+        background-color:rgb(61, 152, 49);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn.upload:hover {
+        background-color:rgb(28, 94, 31);
+    }
+
+    textarea, input[type="file"] {
+        width: 100%;
+    }
+</style>
+
+
+    <!-- Popup สำหรับแสดงเพิ่มเติม -->
+    <div id="descriptionText" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closeDescription()">&times;</span>
+            <h3>รายละเอียดเพิ่มเติม</h3>
+            <p id="textDescription"></p>
         </div>
     </div>
-
 
     <script>
-        // ฟังก์ชันเพื่อเปิด Modal สำหรับส่งงาน
-        function showUploadModal(jobId) {
-            // ตั้งค่า job_id ให้กับ hidden field
-            document.getElementById('jobId').value = jobId;
+        document.querySelector("form").addEventListener("submit", function(event) {
+            if (!document.getElementById("jobId").value) {
+                alert("เกิดข้อผิดพลาด: ไม่พบ job_id");
+                event.preventDefault(); // ป้องกันการ submit
+            }
+        });
 
-            // แสดง modal
-            $('#uploadModal').modal('show');
+        // ฟังก์ชันแสดงรายละเอียดงานทั้งหมดใน popup
+        function showFullDescription(fullDescription) {
+            // แสดงรายละเอียดทั้งหมดใน popup
+            document.getElementById('fullDescription').textContent = fullDescription;
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
         }
 
-        // ฟังก์ชันเพื่อส่งข้อมูลงาน
-        function submitJob() {
+        function showFullDescription(jobId, assignId) {
+            // ตั้งค่า jobId และ assignId ในฟอร์ม
+            document.getElementById('jobId').value = jobId;
+            document.getElementById('assignId').value = assignId;
+
+            // แสดงรายละเอียดทั้งหมดใน popup
+            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+        }
+
+
+
+        function uploadFile(event) {
+            event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
+
+            var fileInput = document.getElementById('fileUpload');
+            if (!fileInput.files.length) {
+                Swal.fire('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
+                return;
+            }
+
             var formData = new FormData(document.getElementById('uploadForm'));
 
-            // ส่งข้อมูลผ่าน AJAX
-            $.ajax({
-                url: 'submit_job.php', // เปลี่ยนเป็นไฟล์ PHP ที่รับข้อมูล
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    // ทำสิ่งที่ต้องการหลังส่งงานสำเร็จ (เช่น แสดงข้อความ หรือปิด modal)
-                    alert('ส่งงานสำเร็จ!');
-                    $('#uploadModal').modal('hide');
-                    location.reload(); // โหลดหน้าใหม่หลังจากส่งงาน
-                },
-                error: function(xhr, status, error) {
-                    alert('เกิดข้อผิดพลาดในการส่งงาน');
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'reply_upload.php', true);
+
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    var response = JSON.parse(xhr.responseText);
+
+                    Swal.fire({
+                        title: 'สำเร็จ!',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'ตกลง'
+                    });
+
+                    var jobId = document.getElementById("jobId").value;
+                    updateStatus(jobId, "รอตรวจสอบ");
+
+                    closePopup();
+
+                } else {
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด!',
+                        text: 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์!',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง'
+                    });
                 }
-            });
+            };
+
+            xhr.send(formData);
         }
 
-        // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
-        function showFullDescription(fullDescription) {
+        // ✅ ฟังก์ชันอัปเดตสถานะโดยใช้ Fetch พร้อม assignId
+        function updateStatus(jobId, assignId, newStatus) {
+            fetch('update_status2.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        job_id: jobId,
+                        status: 'รอตรวจสอบ',
+                        user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                    if (data.success) {
+                        console.log("อัปเดตสถานะสำเร็จ");
+                    } else {
+                        console.error("เกิดข้อผิดพลาด:", data.error);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+
+        // ฟังก์ชันเพื่อแสดงรายละเอียดเพิ่มเติม
+        function showTextDescription(textDescription) {
             // แบ่งคำในรายละเอียดงาน
-            var words = fullDescription.split(' ');
+            var words = textDescription.split(' ');
             var formattedDescription = '';
 
             // กำหนดให้แต่ละบรรทัดมี 10 คำ
@@ -430,42 +591,73 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
 
             // แสดงรายละเอียดทั้งหมดใน popup
-            document.getElementById('fullDescription').textContent = fullDescription;
-            document.getElementById('descriptionPopup').style.display = 'block'; // เปิด popup
+            document.getElementById('textDescription').textContent = textDescription;
+            document.getElementById('descriptionText').style.display = 'block'; // เปิด popup
         }
 
-        // ฟังก์ชันเพื่อปิด popup
         function closePopup() {
             document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
         }
-    </script>
-    <script>
-        // ฟังก์ชันเปิด/ปิดการแสดงรายละเอียดงาน
-        function toggleDetails(button) {
-            var row = button.closest('tr'); // ค้นหาแถวที่มีปุ่มนั้น
-            var detailsRow = row.nextElementSibling; // แถวถัดไปที่มีข้อมูลรายละเอียด
 
-            // เช็คว่ามีการแสดงรายละเอียดอยู่หรือไม่
-            if (detailsRow && detailsRow.classList.contains('job-details')) {
-                var isVisible = detailsRow.style.display === 'table-row';
+        function closeDescription() {
+            document.getElementById('descriptionText').style.display = 'none'; // ปิด popup
+        }
 
-                if (isVisible) {
-                    detailsRow.style.display = 'none'; // ซ่อนรายละเอียด
-                    button.textContent = 'รายละเอียดเพิ่มเติม'; // เปลี่ยนปุ่มเป็น "ดูเพิ่มเติม"
-                } else {
-                    detailsRow.style.display = 'table-row'; // แสดงรายละเอียด
-                    button.textContent = 'ซ่อนรายละเอียด'; // เปลี่ยนปุ่มเป็น "ซ่อนรายละเอียด"
-                }
+        function toggleDetails(button, jobId) {
+            var row = button.closest('tr');
+            var detailsRow = row.nextElementSibling;
+
+            if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
+                detailsRow.style.display = "table-row";
+
+                // แสดงข้อมูลที่ถูกส่ง
+                console.log("ส่งข้อมูลไปยัง update_status.php:", {
+                    job_id: jobId,
+                    status: 'อ่านแล้ว'
+
+                });
+
+                fetch('update_status.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            status: 'อ่านแล้ว',
+                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                        if (data.success) {
+                            console.log("อัปเดตสถานะสำเร็จ");
+                        } else {
+                            console.error("เกิดข้อผิดพลาด:", data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+
+
+
+            } else {
+                detailsRow.style.display = "none";
             }
         }
+        var userId = <?php echo json_encode($currentUserId); ?>; // ส่งค่าจาก PHP ไปยัง JavaScript
+
+
 
         // ฟังก์ชันสำหรับการเรียงลำดับงาน
         function updateSortOrder() {
             const sortOrder = document.getElementById('sortOrder').value;
             if (sortOrder) {
-                window.location.href = `?sort=${sortOrder}`; // เปลี่ยน URL ตามค่าที่เลือก
+                window.location.href = `?sort=${sortOrder}`;
             }
         }
+
+
 
         function searchTable() {
             var input = document.getElementById("searchInput");
@@ -505,8 +697,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
     </script>
-    <script src="../js/sidebar.js"></script>
 
 </body>
-
 </html>

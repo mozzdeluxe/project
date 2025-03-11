@@ -149,6 +149,50 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         /* สีขอบตอน hover */
         color: #fff;
     }
+
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1055;
+        /* สูงกว่า modal */
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .popup-content {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 400px;
+        max-width: 90%;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        right: 10px;
+        top: 5px;
+        cursor: pointer;
+        font-size: 24px;
+    }
+    .btn.upload {
+        margin-top: 15px;
+        padding: 8px 16px;
+        background-color:rgb(61, 137, 219);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn.upload:hover {
+        background-color: #0056b3;
+    }
 </style>
 
 <body>
@@ -429,44 +473,65 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             </div>
         </div>
     </div>
+    <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
+    <div id="editjobPopup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <h3>ส่งกลับไปแก้ไข</h3>
+            <p id="fullDescription"></p>
+
+            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
+            <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
+                <label for="reply_description">รายละเอียดการแก้ไข:</label><br>
+                <textarea name="reply_description" id="reply_description" rows="4" required></textarea><br><br>
+
+
+                <input type="hidden" name="job_id" id="jobId">
+                <input type="hidden" name="assign_id" id="assignId">
+
+                <button type="submit" class="btn upload">submit</button>
+            </form>
+        </div>
+    </div>
 
     <script>
         function approveJob(button) {
-            // ดึงค่าจาก data-* attributes ของปุ่มที่ถูกคลิก
-            var assignId = button.getAttribute('data-assign-id');
-            var userId = button.getAttribute('data-user-id');
-            var status = 'เสร็จสิ้น'; // กำหนดสถานะเป็น "เสร็จสิ้น"
 
-            // สร้าง object สำหรับส่งไปยัง PHP
-            var data = {
-                assign_id: assignId,
-                status: status,
-                user_id: userId
-            };
-
-            // ส่งข้อมูลไปยัง PHP ด้วย AJAX
-            fetch('update_status3.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('สถานะถูกเปลี่ยนเป็น "เสร็จสิ้น"');
-                        // ปิด modal และทำสิ่งอื่นๆ ที่ต้องการหลังจากอัปเดตสำเร็จ
-                        $('#replyJobModal').modal('hide');
-                    } else {
-                        alert(data.message || 'เกิดข้อผิดพลาด');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('เกิดข้อผิดพลาดในการอัปเดต');
-                });
         }
+
+
+        
+        // เปิด popup แก้ไขงาน และปิด modal
+        function editJob() {
+            // ปิด Bootstrap Modal (ถ้าใช้ Bootstrap 5)
+            const modal = bootstrap.Modal.getInstance(document.getElementById('replyJobModal'));
+            if (modal) {
+                modal.hide();
+            }
+
+            // เปิด popup แก้ไขงาน
+            document.getElementById("editjobPopup").style.display = "block";
+        }
+
+        // ฟังก์ชันอัปโหลดไฟล์ (จำลอง)
+        function uploadFile(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById("uploadForm"));
+
+            // ส่งข้อมูลด้วย fetch หรือ XMLHttpRequest ก็ได้
+            // จำลองการส่ง
+            console.log("รายละเอียด:", formData.get("reply_description"));
+            console.log("ไฟล์:", formData.get("fileUpload"));
+            console.log("Job ID:", formData.get("job_id"));
+            console.log("Assign ID:", formData.get("assign_id"));
+
+            alert("ส่งงานเรียบร้อยแล้ว!");
+
+            // ปิด popup หลังส่ง
+            closePopup();
+        }
+
 
 
 
@@ -514,6 +579,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         // ฟังก์ชันเพื่อปิด popup
         function closePopup() {
             document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
+            document.getElementById("editjobPopup").style.display = "none";
         }
     </script>
     <script>

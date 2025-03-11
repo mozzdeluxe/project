@@ -66,6 +66,10 @@ body {
     padding: 10px 20px;
     font-size: 16px;
 }
+.btn-primary:hover {
+    background: #510808;
+    color: #fff;
+}
 
 /* กำหนดสีพื้นหลังและขอบของปุ่มเป็นสีเทาอ่อน */
 .btn-dl {
