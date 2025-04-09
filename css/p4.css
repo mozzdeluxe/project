@@ -1,9 +1,7 @@
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: rgb(233, 233, 233);
-    overflow: hidden;
-    /* ห้ามเลื่อนทั้งแนวตั้งและแนวนอน */
+    background: linear-gradient(135deg, rgb(246, 246, 246), rgb(215, 233, 255));
 }
 
 .container {
@@ -143,7 +141,7 @@ body {
 .list-group-item.selected {
     font-size: 1.1rem;
     /* ขนาดตัวอักษรในแต่ละชื่อพนักงาน */
-    background-color:rgb(40, 110, 167);
+    background-color: rgb(40, 110, 167);
     /* สีพื้นหลังเมื่อเลือก */
     color: white;
     /* สีข้อความเมื่อเลือก */
@@ -220,7 +218,8 @@ body {
     transition: background 0.3s;
     cursor: pointer;
     margin-bottom: 10px;
-    font-size: 20px; /* เพิ่มขนาดข้อความ */
+    font-size: 20px;
+    /* เพิ่มขนาดข้อความ */
 }
 
 .menu-item i {
@@ -319,6 +318,7 @@ body {
     font-size: 14px;
     color: #333;
 }
+
 .btn-details {
     font-size: 16px;
     background-color: #1e74ba;
@@ -332,6 +332,7 @@ body {
     background: #114570;
     color: #fff;
 }
+
 .btn-primary {
     font-size: 18px;
     background-color: #1e74ba;

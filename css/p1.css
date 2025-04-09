@@ -1,7 +1,7 @@
  body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background-color: rgb(246, 246, 246);
+            background: linear-gradient(135deg, rgb(246, 246, 246),rgb(215, 233, 255));
         }
 
         .admin {
@@ -157,6 +157,7 @@
             flex-wrap: wrap;
             margin-top: 20px;
             /* ห่างจากขอบบน */
+            
         }
 
         /* ปรับขนาดการ์ด */
@@ -169,6 +170,7 @@
         /* กำหนดให้การ์ดไม่ขยายเกินขนาด */
         .card {
             width: 100%;
+            
         }
 
         /* ปรับการจัดตำแหน่งข้อความ */
@@ -191,14 +193,14 @@
 
         /* เปลี่ยนสีของปุ่ม */
         .btn {
-            font-size: 14px;
+            font-size: 16px;
             background-color: #1e74ba;
             /* สีพื้นหลังของปุ่ม */
             color: white;
             /* สีข้อความในปุ่ม */
             padding: 8px 16px;
             /* เพิ่ม padding ให้ปุ่ม */
-            border-radius: 4px;
+            border-radius: 25px;
             /* ทำมุมของปุ่มให้โค้ง */
         }
 

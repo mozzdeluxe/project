@@ -106,7 +106,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="../css/up3.css" rel="stylesheet">
+    <link href="../css/up2.css" rel="stylesheet">
 
 </head>
 <style>
@@ -437,7 +437,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         background-color: #fff;
         padding: 20px;
         border-radius: 10px;
-        width: 400px; /* <--- ปรับความกว้างตรงนี้ เช่น 400px หรือ % */
+        width: 600px; /* <--- ปรับความกว้างตรงนี้ เช่น 400px หรือ % */
         max-width: 90%; /* ป้องกันล้นหน้าจอบนอุปกรณ์เล็ก */
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         position: relative;

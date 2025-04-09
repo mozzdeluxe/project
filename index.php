@@ -18,7 +18,7 @@
             padding: 0;
             margin: 0;
             font-family: 'Inter';
-            background: linear-gradient(135deg, #32a852, #7ddf75);
+            background: linear-gradient(135deg,rgb(40, 175, 83),rgb(14, 79, 35));
         }
         .success, .error {
             width: 50%;
@@ -62,12 +62,12 @@
             border-radius: 30px;
         }
         .btn-success {
-            background: #1dc02b;
+            background: #02a654;
             border: 0;
             color: #fff;
         }
         .btn-success:hover {
-            background: #0a840a;
+            background:rgb(5, 119, 62);
         }
         .btn-light {  
             border: 1px solid;

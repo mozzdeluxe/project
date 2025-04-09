@@ -416,21 +416,11 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         align-items: center;
     }
 
-    .popup-content {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 10px;
-        width: 400px; /* <--- ปรับความกว้างตรงนี้ เช่น 400px หรือ % */
-        max-width: 90%; /* ป้องกันล้นหน้าจอบนอุปกรณ์เล็ก */
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        position: relative;
-    }
-
     .close-btn {
         position: absolute;
         top: 10px;
         right: 15px;
-        font-size: 20px;
+        font-size: 30px;
         cursor: pointer;
     }
 
