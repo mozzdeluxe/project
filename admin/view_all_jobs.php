@@ -239,7 +239,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
                             echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                            
+
                             echo '</tr>';
 
 
@@ -286,6 +286,12 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                             break;
                                         case 'ยังไม่อ่าน':
                                             $status_class = 'text-secondary';
+                                            break;
+                                        case 'รอดำเนินการ':
+                                            $status_class = 'text-primary';
+                                            break;
+                                        case 'แก้ไข':
+                                            $status_class = 'text-danger';
                                             break;
                                     }
 

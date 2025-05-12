@@ -278,7 +278,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                         case 'ช้า':
                                             $status_class = 'text-danger';
                                             break;
-                                        case 'เสร็จสิ้้น':
+                                        case 'เสร็จสิ้น':
                                             $status_class = 'text-success';
                                             break;
                                         case 'รอตรวจสอบ':
@@ -289,6 +289,12 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                             break;
                                         case 'ยังไม่อ่าน':
                                             $status_class = 'text-secondary';
+                                            break;
+                                        case 'รอดำเนินการ':
+                                            $status_class = 'text-primary';
+                                            break;
+                                        case 'แก้ไข':
+                                            $status_class = 'text-danger';
                                             break;
                                     }
 

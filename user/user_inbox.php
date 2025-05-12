@@ -376,6 +376,8 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             </nav>
         </div>
     </div>
+
+
     <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
     <div id="descriptionPopup" class="popup" style="display: none;">
         <div class="popup-content">
@@ -383,69 +385,128 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             <h3>ส่งงาน</h3>
             <p id="fullDescription"></p>
 
-            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
             <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
-
                 <label for="reply_description">รายละเอียดงาน:</label><br>
                 <textarea name="reply_description" id="reply_description" rows="4" required></textarea><br><br>
 
                 <label for="fileUpload">เลือกไฟล์:</label><br>
-                <input type="file" name="fileUpload" id="fileUpload" required>
+                <input type="file" name="fileUpload" id="fileUpload" required
+                    accept=".pdf, .doc, .docx, .ppt, .pptx">
 
 
                 <input type="hidden" name="job_id" id="jobId">
                 <input type="hidden" name="assign_id" id="assignId">
 
                 <button type="submit" class="btn upload">อัปโหลดงาน</button>
-
             </form>
+
 
         </div>
     </div>
     <style>
-    .popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            display: none;
+        }
 
-    .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        font-size: 30px;
-        cursor: pointer;
-    }
+        .popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease-in-out;
+        }
 
-    .popup-content h3 {
-        margin-top: 0;
-    }
+        .popup-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
 
-    .btn.upload {
-        margin-top: 15px;
-        padding: 8px 16px;
-        background-color: #007BFF;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
+        .popup-content label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+        }
 
-    .btn.upload:hover {
-        background-color: #0056b3;
-    }
+        .popup-content input[type="file"],
+        .popup-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
 
-    textarea, input[type="file"] {
-        width: 100%;
-    }
-</style>
+        .popup-content .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007bff;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .popup-content .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            font-size: 24px;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        .popup-content h3 {
+            margin-top: 0;
+        }
+
+        .btn.upload {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn.upload:hover {
+            background-color: #0056b3;
+        }
+
+        textarea,
+        input[type="file"] {
+            width: 100%;
+        }
+    </style>
 
 
     <!-- Popup สำหรับแสดงเพิ่มเติม -->
@@ -587,9 +648,9 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 console.log("ส่งข้อมูลไปยัง update_status.php:", {
                     job_id: jobId,
                     status: 'อ่านแล้ว'
-
                 });
 
+                // ส่งคำขอ AJAX
                 fetch('update_status.php', {
                         method: 'POST',
                         headers: {
@@ -597,13 +658,12 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         },
                         body: JSON.stringify({
                             job_id: jobId,
-                            status: 'อ่านแล้ว',
-                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
+                            status: 'อ่านแล้ว'
                         })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                        console.log("Response:", data); // Log ค่าที่ได้รับ
                         if (data.success) {
                             console.log("อัปเดตสถานะสำเร็จ");
                         } else {
@@ -611,8 +671,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                         }
                     })
                     .catch(error => console.error('Error:', error));
-
-
 
             } else {
                 detailsRow.style.display = "none";
@@ -669,6 +727,51 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 searchTable(); // เรียกใช้ฟังก์ชัน searchTable
             }
         }
+
+        function toggleDetails(button, jobId) {
+            var row = button.closest('tr');
+            var detailsRow = row.nextElementSibling;
+
+            if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
+                detailsRow.style.display = "table-row";
+
+                // แสดงข้อมูลที่ถูกส่ง
+                console.log("ส่งข้อมูลไปยัง update_status.php:", {
+                    job_id: jobId,
+                    status: 'อ่านแล้ว'
+
+                });
+
+                fetch('update_status.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            status: 'อ่านแล้ว',
+                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                        if (data.success) {
+                            console.log("อัปเดตสถานะสำเร็จ");
+                        } else {
+                            console.error("เกิดข้อผิดพลาด:", data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+
+
+
+            } else {
+                detailsRow.style.display = "none";
+            }
+        }
+        var userId = <?php echo json_encode($currentUserId); ?>; // ส่งค่าจาก PHP ไปยัง JavaScript
+
     </script>
 
 </body>
