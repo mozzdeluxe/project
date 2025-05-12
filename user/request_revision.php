@@ -1,5 +1,8 @@
 <?php
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 
 // ตรวจสอบว่าเข้าสู่ระบบแล้วหรือยัง
 if (!isset($_SESSION['user_id'])) {
@@ -26,10 +29,11 @@ if (!$assign_id || !$reply_description) {
 }
 
 // ตรวจสอบสิทธิ์ว่าผู้ใช้นี้ได้รับมอบหมาย assign_id นี้หรือไม่
-$check = $conn->prepare("SELECT assign_id FROM assignments WHERE assign_id = ? AND user_id = ?");
+$check = $conn->prepare("SELECT 1 FROM assignments WHERE assign_id = ? AND user_id = ?");
 $check->bind_param("ii", $assign_id, $user_id);
 $check->execute();
 $check->store_result();
+
 if ($check->num_rows === 0) {
     echo "ไม่พบการมอบหมายงานนี้ของคุณ";
     exit;
