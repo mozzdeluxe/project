@@ -319,6 +319,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
+                                    
                                     $job_description_preview = htmlspecialchars($row['job_description']);
                                     $short_job_description = mb_substr($job_description_preview, 0, 20);
                                     echo '<p class="mb-1"><strong>รายละเอียดงาน:</strong> <span class="text-muted">' . $short_job_description . '...</span>';
@@ -542,47 +543,55 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
 
         function uploadFile(event) {
-            event.preventDefault(); // ป้องกันการรีเฟรชหน้าจากการส่งฟอร์ม
+                    event.preventDefault();
 
-            var fileInput = document.getElementById('fileUpload');
-            if (!fileInput.files.length) {
-                Swal.fire('กรุณาเลือกไฟล์ที่ต้องการอัปโหลด');
-                return;
-            }
+                    const fileInput = document.getElementById('fileUpload');
+                    if (!fileInput.files.length) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'กรุณาเลือกไฟล์!',
+                            confirmButtonText: 'ตกลง'
+                        });
+                        return;
+                    }
 
-            var formData = new FormData(document.getElementById('uploadForm'));
+                    const form = document.getElementById('uploadForm');
+                    const formData = new FormData(form);
 
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'reply_upload.php', true);
+                    fetch('reply_upload.php', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(resp => resp.text())
+                        .then(data => {
+                            if (data.includes("อัปโหลดไฟล์สำเร็จ")) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'ตอบกลับสำเร็จ!',
 
-            xhr.onload = function() {
-                if (xhr.status == 200) {
-                    var response = JSON.parse(xhr.responseText);
-
-                    Swal.fire({
-                        title: 'สำเร็จ!',
-                        text: response.message,
-                        icon: 'success',
-                        confirmButtonText: 'ตกลง'
-                    });
-
-                    var jobId = document.getElementById("jobId").value;
-                    updateStatus(jobId, "รอตรวจสอบ");
-
-                    closePopup();
-
-                } else {
-                    Swal.fire({
-                        title: 'เกิดข้อผิดพลาด!',
-                        text: 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์!',
-                        icon: 'error',
-                        confirmButtonText: 'ตกลง'
-                    });
+                                    confirmButtonText: 'ตกลง'
+                                }).then(() => {
+                                    closePopup();
+                                    // หรือ: window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'เกิดข้อผิดพลาด',
+                                    text: data,
+                                    confirmButtonText: 'ลองใหม่'
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'อัปโหลดล้มเหลว',
+                                text: 'เกิดข้อผิดพลาดในการส่งข้อมูล',
+                                confirmButtonText: 'ตกลง'
+                            });
+                        });
                 }
-            };
-
-            xhr.send(formData);
-        }
 
         // ✅ ฟังก์ชันอัปเดตสถานะโดยใช้ Fetch พร้อม assignId
         function updateStatus(jobId, assignId, newStatus = 'รอตรวจสอบ') {
