@@ -1,84 +1,107 @@
 <?php
 session_start();
 
+// ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
+$user_id = $_SESSION['user_id'];
 if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
     header("Location: ../logout.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
 include('../connection.php');
 
+// ดึงข้อมูลผู้ใช้งาน
 $query = "SELECT firstname, lastname, img_path FROM mable WHERE id = '$user_id'";
 $result = mysqli_query($conn, $query);
 $user = mysqli_fetch_assoc($result);
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
-$sortOrder = $_GET['sort'] ?? 'DESC';
-$selectedYear = $_GET['year'] ?? '';
-$page = $_GET['page'] ?? 1;
-$limit = 10;
-$offset = ($page - 1) * $limit;
+// รับค่าการเรียงลำดับจาก URL
+$sortOrder = isset($_GET['sort']) ? $_GET['sort'] : 'DESC'; // ค่าเริ่มต้น DESC (ใหม่สุด)
+$selectedYear = isset($_GET['year']) ? $_GET['year'] : ''; // รับค่าปีที่เลือก
+$page = isset($_GET['page']) ? $_GET['page'] : 1; // รับค่าหน้าปัจจุบัน
+$limit = 10; // จำนวนงานที่จะแสดงต่อหน้า
+$offset = ($page - 1) * $limit; // คำนวณค่า offset
 
-$yearCondition = $selectedYear ? "AND YEAR(j.created_at) = '$selectedYear'" : "";
-
-switch ($sortOrder) {
-    case 'ASC':
-        $orderBy = "j.created_at ASC";
-        break;
-    case 'URGENT':
-        $orderBy = "j.job_level DESC";
-        break;
-    case 'NEAREST_DUE':
-        $orderBy = "j.due_datetime ASC";
-        break;
-    default:
-        $orderBy = "j.created_at DESC";
-        break;
+// สร้างเงื่อนไขกรองตามปี
+$yearCondition = "";
+if ($selectedYear) {
+    $yearCondition = "AND YEAR(j.created_at) = '$selectedYear'";
 }
 
-// ดึงรายการงานพร้อมการตอบกลับของพนักงาน
-$stmt = $conn->prepare("SELECT 
-    j.job_id,
-    j.job_title,
-    j.job_description,
-    j.jobs_file,
-    j.job_level,
-    DATE_FORMAT(j.due_datetime, '%d-%m-%Y %H:%i') AS due_datetime,
-    DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at,
-    r.reply_id,
-    r.reply_description,
-    r.file_reply,
-    DATE_FORMAT(r.create_at, '%d-%m-%Y %H:%i') AS replied_at,
-    m.user_id,
-    m.firstname,
-    m.lastname
-FROM jobs j
-JOIN assignments a ON j.job_id = a.job_id
-JOIN reply r ON r.assign_id = a.assign_id
-JOIN mable m ON a.user_id = m.id
-WHERE a.status = 'รอตรวจสอบ' $yearCondition
-ORDER BY m.user_id ASC, $orderBy
-LIMIT ?, ?
+// สร้างเงื่อนไขการเรียงลำดับตามตัวเลือก
+switch ($sortOrder) {
+    case 'DESC':
+        $orderBy = "j.created_at DESC";  // ใหม่สุด
+        break;
+    case 'ASC':
+        $orderBy = "j.created_at ASC";   // เก่าสุด
+        break;
+    case 'URGENT':
+        $orderBy = "j.job_level DESC";   // ด่วนสุด (การจัดลำดับตามระดับงาน)
+        break;
+    case 'NEAREST_DUE':
+        $orderBy = "j.due_datetime ASC"; // ใกล้กำหนด (การจัดลำดับตามวันที่กำหนดส่ง)
+        break;
+    default:
+        $orderBy = "j.created_at DESC";  // ค่าเริ่มต้น: ใหม่สุด
+}
+
+// คำสั่ง SQL สำหรับดึงข้อมูลงานที่มีสถานะ "รอตรวจสอบ" สำหรับแอดมิน
+$stmt = $conn->prepare("
+    SELECT 
+        j.job_id, 
+        j.supervisor_id, 
+        j.job_title, 
+        j.job_description, 
+        DATE_FORMAT(j.due_datetime, '%d-%m-%Y %H:%i') AS due_datetime, 
+        DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at, 
+        j.jobs_file, 
+        j.job_level,
+        GROUP_CONCAT(CONCAT(m.firstname, ' ', m.lastname, ' (สถานะ: ', a.status, ')') SEPARATOR ', ') AS employee_details,
+        r.reply_description,  /* เพิ่มฟิลด์ reply_description */
+        r.file_reply
+        
+    FROM 
+        jobs j
+    LEFT JOIN 
+        assignments a ON j.job_id = a.job_id
+    LEFT JOIN 
+        mable m ON a.user_id = m.id
+    LEFT JOIN 
+    reply r ON r.assign_id = a.assign_id
+
+    WHERE 
+        a.status IN ('รอตรวจสอบ', 'ล่าช้า')
+        $yearCondition
+    GROUP BY 
+        j.job_id
+    ORDER BY 
+        $orderBy
+    LIMIT ?, ?
 ");
 
+
+
+// ผูกค่า `offset` และ `limit`
 $stmt->bind_param("ii", $offset, $limit);
 $stmt->execute();
 $result = $stmt->get_result();
 
-$countQuery = "SELECT COUNT(*) AS total_jobs
+// คำนวณจำนวนหน้าทั้งหมด
+$countQuery = "
+    SELECT COUNT(*) AS total_jobs
     FROM jobs j
-    JOIN assignments a ON j.job_id = a.job_id
-    JOIN reply r ON r.assign_id = a.assign_id
-    WHERE a.status = 'รอตรวจสอบ' $yearCondition";
-
-
+    LEFT JOIN assignments a ON j.job_id = a.job_id
+    LEFT JOIN mable m ON a.user_id = m.id
+    WHERE a.status = 'เสร็จสิ้้น' $yearCondition
+";
 $countStmt = $conn->prepare($countQuery);
 $countStmt->execute();
 $countResult = $countStmt->get_result();
 $countRow = $countResult->fetch_assoc();
 $totalJobs = $countRow['total_jobs'];
-$totalPages = ceil($totalJobs / $limit);
+$totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน้าทั้งหมด
 ?>
 
 
@@ -90,7 +113,6 @@ $totalPages = ceil($totalJobs / $limit);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>งานที่สั่งแล้ว</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -99,6 +121,82 @@ $totalPages = ceil($totalJobs / $limit);
 
 
 </head>
+<style>
+    .header {
+        color: rgb(0, 0, 0);
+        font-size: 21px;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+        padding: 5px 10px;
+        margin-left: 15px;
+    }
+
+    .btn-primary {
+        font-size: 16px;
+        padding: 5px 25px;
+        /* ขนาดปุ่ม: บนล่าง 10px ซ้ายขวา 25px */
+        background-color: rgb(198, 41, 41);
+        /* สีพื้นหลัง */
+        color: #fff;
+        border-radius: 10px;
+        /* ขอบมน */
+        border: 2px solid rgb(150, 30, 30);
+        /* สีขอบปุ่ม */
+    }
+
+    .btn-primary:hover {
+        background-color: rgb(111, 17, 17);
+        /* สีพื้นหลังตอน hover */
+        border-color: rgb(90, 10, 10);
+        /* สีขอบตอน hover */
+        color: #fff;
+    }
+
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1055;
+        /* สูงกว่า modal */
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .popup-content {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 400px;
+        max-width: 90%;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        right: 10px;
+        top: 5px;
+        cursor: pointer;
+        font-size: 24px;
+    }
+
+    .btn.upload {
+        margin-top: 15px;
+        padding: 8px 16px;
+        background-color: rgb(61, 137, 219);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn.upload:hover {
+        background-color: #0056b3;
+    }
+</style>
 
 <body>
     <!-- Navbar -->
@@ -127,7 +225,7 @@ $totalPages = ceil($totalJobs / $limit);
             <a href="admin_assign.php"><i class="fa-solid fa-tasks"></i> <span>สั่งงาน</span></a>
         </div>
         <div class="menu-item">
-            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>ดูงานที่สั่งแล้ว</span></a>
+            <a href="admin_view_assignments.php"><i class="fa-solid fa-eye"></i> <span>ดูงานที่สั่ง</span></a>
         </div>
         <div class="menu-item active">
             <a href="review_assignment.php"><i class="fa-solid fa-check-circle"></i> <span>งานที่ตอบกลับ</span></a>
@@ -182,168 +280,156 @@ $totalPages = ceil($totalJobs / $limit);
             $index = 1;
             $displayedJobs = [];
 
-            // ✅ เลือกเฉพาะงานที่มีพนักงานสถานะ "รอตรวจสอบ"
-            $sql = "
-SELECT DISTINCT j.*
-FROM jobs j
-INNER JOIN assignments a ON j.job_id = a.job_id
-WHERE a.status = 'รอตรวจสอบ'
-ORDER BY j.created_at DESC
-";
-
-            $result = $conn->query($sql);
-
             if ($result->num_rows > 0) {
                 echo '<table class="table table-striped mt-3" id="jobTable">
-<thead class="table-dark">
-<tr>
-    <th scope="col">ลำดับ</th>
-    <th scope="col">ชื่องาน</th>
-    <th scope="col">ไฟล์งาน</th>
-    <th scope="col">ไฟล์ตอบกลับ</th>
-    <th scope="col">วันที่สั่งงาน</th>
-    <th scope="col">กำหนดส่ง</th>
-    <th scope="col">ระดับงาน</th>
-    <th scope="col">ดูเพิ่มเติม</th>
-</tr>
-</thead>
-<tbody>';
+            <thead class="table-dark">
+            <tr>
+            <th scope="col">ลำดับ</th>
+            <th scope="col">ชื่องาน</th>
+            <th scope="col">ไฟล์งาน</th>
+            <th scope="col">ไฟล์ตอบกลับ</th>
+            <th scope="col">วันที่สั่งงาน</th>
+            <th scope="col">กำหนดส่ง</th>
+            <th scope="col">ระดับงาน</th>
+            <th scope="col">ดูเพิ่มเติม</th>
+            </tr>
+            </thead>
+            <tbody>';
 
                 while ($row = $result->fetch_assoc()) {
                     if (in_array($row['job_id'], $displayedJobs)) continue;
                     $displayedJobs[] = $row['job_id'];
 
-                    // ✅ แสดงพนักงานสถานะรอตรวจสอบ
+                    echo '<tr>';
+                    echo '<td>' . $index++ . '</td>';
+                    echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
+
+                    echo '<td>';
+                    if (!empty($row['jobs_file'])) {
+                        $fileName = htmlspecialchars($row['jobs_file']);
+                        $jobId = (int)$row['job_id'];
+                        $downloadPath = "../upload/$jobId/$fileName"; // แสดง path ใหม่ให้ตรงกับที่อัปโหลดจริง
+
+                        echo '<a href="' . $downloadPath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
+                    } else {
+                        echo '<span class="text-muted">ไม่มีไฟล์</span>';
+                    }
+                    echo '</td>';
+
+                    echo '<td>';
+                    if (!empty($row['file_reply'])) {
+                        $replyFile = htmlspecialchars($row['file_reply']);
+                        echo '<a href="../' . $replyFile . '" class="btn btn-sm btn-outline-success" download>ตอบกลับ</a>';
+                    } else {
+                        echo '<span class="text-muted">ยังไม่ส่ง</span>';
+                    }
+                    echo '</td>';
+
+                    echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
+
+                    $jobLevel = isset($row['job_level']) ? htmlspecialchars($row['job_level']) : 'ไม่ระบุ';
+                    $levelClass = '';
+                    switch ($jobLevel) {
+                        case 'ด่วน':
+                            $levelClass = 'urgent';
+                            break;
+                        case 'ด่วนมาก':
+                            $levelClass = 'very-urgent';
+                            break;
+                        default:
+                            $levelClass = 'normal';
+                            break;
+                    }
+                    echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>';
+                    echo '<td><button class="btn btn-details btn-sm view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
+                    echo '</tr>';
+
+                    echo '<tr class="job-details" style="display:none;">';
+                    echo '<td colspan="8">';
+                    echo '<div class="grid-container">';
+
                     $subQuery = $conn->prepare("
-        SELECT 
-            m.firstname, 
-            m.lastname, 
-            m.user_id, 
-            a.status
-        FROM 
-            assignments a 
-        LEFT JOIN 
-            mable m ON a.user_id = m.id 
-        WHERE 
-            a.job_id = ?
-            AND a.status = 'รอตรวจสอบ'
-        ");
+    SELECT 
+        m.firstname, 
+        m.lastname, 
+        m.user_id, 
+        a.status,
+        r.reply_description,
+        DATE_FORMAT(r.create_at, '%d-%m-%Y %H:%i') as reply_time
+    FROM assignments a 
+    LEFT JOIN mable m ON a.user_id = m.id 
+    LEFT JOIN reply r ON r.assign_id = a.assign_id
+    WHERE a.job_id = ? AND a.status in ('รอตรวจสอบ', 'ล่าช้า')
+    ORDER BY r.create_at DESC
+    LIMIT 1
+");
                     $subQuery->bind_param("i", $row['job_id']);
                     $subQuery->execute();
                     $subResult = $subQuery->get_result();
 
                     if ($subResult->num_rows > 0) {
-                        while ($empRow = $subResult->fetch_assoc()) {
-                            echo '<tr>';
-                            echo '<td>' . $index++ . '</td>';
-                            echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
-
-                            echo '<td>';
-                            if (!empty($row['jobs_file'])) {
-                                $filePath = htmlspecialchars($row['jobs_file']);
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-sm btn-outline-primary" download>ดาวน์โหลด</a>';
-                            } else {
-                                echo '<span class="text-muted">ไม่มีไฟล์</span>';
-                            }
-                            echo '</td>';
-
-                            echo '<td>';
-                            if (!empty($row['file_reply'])) {
-                                $replyFile = htmlspecialchars($row['file_reply']);
-                                echo '<a href="' . $replyFile . '" class="btn btn-sm btn-outline-success" download>ตอบกลับ</a>';
-                            } else {
-                                echo '<span class="text-muted">ยังไม่ส่ง</span>';
-                            }
-                            echo '</td>';
-
-                            echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
-                            echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
-
-                            $jobLevel = isset($row['job_level']) ? htmlspecialchars($row['job_level']) : 'ไม่ระบุ';
-                            $levelClass = '';
-                            switch ($jobLevel) {
-                                case 'ด่วน':
-                                    $levelClass = 'urgent';
-                                    break;
-                                case 'ด่วนมาก':
-                                    $levelClass = 'very-urgent';
-                                    break;
-                                default:
-                                    $levelClass = 'normal';
-                                    break;
-                            }
-                            echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>';
-                            echo '<td><button class="btn btn-details btn-sm view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                            echo '</tr>';
-
-                            // แสดงรายละเอียดพนักงาน
-                            $status_class = '';
-                            switch ($empRow['status']) {
-                                case 'ช้า':
-                                    $status_class = 'text-danger';
-                                    break;
-                                case 'เสร็จสิ้้น':
-                                    $status_class = 'text-success';
-                                    break;
-                                case 'รอตรวจสอบ':
-                                    $status_class = 'text-warning';
-                                    break;
-                                case 'อ่านแล้ว':
-                                    $status_class = 'text-info';
-                                    break;
-                                case 'ยังไม่อ่าน':
-                                    $status_class = 'text-secondary';
-                                    break;
-                                case 'รอดำเนินการ':
-                                    $status_class = 'text-primary';
-                                    break;
-                                case 'แก้ไข':
-                                    $status_class = 'text-danger';
-                                    break;
-                            }
-
-                            echo '<tr class="job-details" style="display:none;">';
-                            echo '<td colspan="8">';
-                            echo '<div class="grid-container">';
-                            echo '<div class="job-detail-grid">';
-                            echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
-                            echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
-                            echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
-
-
-                            $reply_description_preview = htmlspecialchars($row['reply_description']);
-                            $short_description = substr($reply_description_preview, 0, 10);
-                            echo '<strong>ข้อมูลงานเพิ่มเติม: </strong><span class="reply-description-preview">' . $short_description . '... </span>';
-                            echo '<button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['reply_description']) . '\')">เพิ่มเติม</button><br>';
-
-
-                            echo '<div class="mt-3">';
-                            echo '<button class="btn btn-success btn-sm me-2" onclick="markApproved(' . $row['job_id'] . ',' . $empRow['user_id'] . ')">อนุมัติ</button>';
-                            echo '<button class="btn btn-danger btn-sm" onclick="markRevision(' . $row['job_id'] . ',' . $empRow['user_id'] . ')">ให้แก้ไข</button>';
-                            echo '</div>';
-                            echo '</div>';
-                            echo '</div>';
-                            echo '</td>';
-                            echo '</tr>';
+                        $empRow = $subResult->fetch_assoc();
+                        $status_class = '';
+                        switch ($empRow['status']) {
+                            case 'ล่าช้า':
+                                $status_class = 'text-danger';
+                                break;
+                            case 'เสร็จสิ้้น':
+                                $status_class = 'text-success';
+                                break;
+                            case 'รอตรวจสอบ':
+                                $status_class = 'text-warning';
+                                break;
+                            case 'อ่านแล้ว':
+                                $status_class = 'text-info';
+                                break;
+                            case 'ยังไม่อ่าน':
+                                $status_class = 'text-secondary';
+                                break;
                         }
-                    } else {
-                        echo '<tr>';
-                        echo '<td colspan="8" class="text-center text-muted">ไม่มีพนักงานในสถานะรอตรวจสอบ</td>';
-                        echo '</tr>';
-                    }
-                }
+                        echo '<div class="job-detail-grid">';
+                        echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
+                        echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
+                        echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
 
+                        // คำอธิบายงาน
+                        $job_description_preview = htmlspecialchars($row['job_description']);
+                        $short_job_description = mb_substr($job_description_preview, 0, 20);
+                        echo '<p class="mb-1"><strong>รายละเอียดงาน:</strong> <span class="text-muted">' . $short_job_description . '...</span>';
+                        echo ' <button class="btn btn-sm btn-link p-0" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button></p>';
+
+                        // คำอธิบายที่ตอบกลับ
+                        $reply_preview = htmlspecialchars($empRow['reply_description']);
+                        $short_reply = mb_substr($reply_preview, 0, 20);
+                        echo '<p class="mb-1"><strong>รายละเอียดที่ส่งมา:</strong> <span class="text-muted">' . $short_reply . '...</span>';
+                        echo ' <button class="btn btn-sm btn-link p-0" onclick="showFullDescription(\'' . addslashes($empRow['reply_description']) . '\')">เพิ่มเติม</button></p>';
+                        echo '<strong>เวลาที่ส่งงาน: </strong>' . htmlspecialchars($empRow['reply_time']) . '<br>';
+
+
+                        echo '<div class="mt-3">';
+                        echo '<button class="btn btn-success btn-sm me-2" onclick="markApproved(' . $row['job_id'] . ',' . $empRow['user_id'] . ')">อนุมัติ</button>';
+                        echo '<button class="btn btn-danger btn-sm" onclick="markEdit(' . $row['job_id'] . ',' . $empRow['user_id'] . ')">ให้แก้ไข</button>';
+                        echo '</div>';
+                        echo '</div>';
+                    } else {
+                        echo '<div class="text-center">ไม่มีพนักงานที่กำลังดำเนินการ</div>';
+                    }
+
+                    echo '</div>';
+                    echo '</td>';
+                    echo '</tr>';
+                }
                 echo '</tbody></table>';
             } else {
-                echo '<div class="alert alert-warning text-center">ไม่พบงานที่มีพนักงานในสถานะ "รอตรวจสอบ"</div>';
+                echo '<div class="alert alert-warning text-center">ไม่พบงานที่สั่ง</div>';
             }
             ?>
 
-
-
-
-
             </tbody>
+
+
+
             </table>
             <!-- ปุ่มสำหรับเปลี่ยนหน้า -->
             <nav aria-label="Page navigation">
@@ -383,6 +469,27 @@ ORDER BY j.created_at DESC
         </div>
     </div>
 
+
+    <!-- Popup สำหรับแสดงรายละเอียดทั้งหมด -->
+    <div id="editjobPopup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <h3>ส่งกลับไปแก้ไข</h3>
+            <p id="fullDescription"></p>
+
+            <!-- ฟอร์มสำหรับอัปโหลดไฟล์ -->
+            <form id="uploadForm" onsubmit="uploadFile(event)" enctype="multipart/form-data">
+                <label for="reply_description">รายละเอียดการแก้ไข:</label><br>
+                <textarea name="reply_description" id="reply_description" rows="4" required></textarea><br><br>
+
+
+                <input type="hidden" name="job_id" id="jobId">
+                <input type="hidden" name="assign_id" id="assignId">
+
+                <button type="submit" class="btn upload">submit</button>
+            </form>
+        </div>
+    </div>
     <script>
         function markApproved(jobId, userId) {
             Swal.fire({
@@ -406,16 +513,16 @@ ORDER BY j.created_at DESC
             });
         }
 
-        function markRevision(jobId, userId) {
+        function markEdit(jobId, userId) {
             Swal.fire({
-                title: 'กรอกเหตุผลที่ให้แก้ไข',
+                title: 'กรอกรายละเอียดที่แก้ไข',
                 input: 'textarea',
-                inputPlaceholder: 'รายละเอียดที่ต้องแก้ไข...',
+                inputPlaceholder: 'รายละเอียดการแก้ไข...',
                 showCancelButton: true,
-                confirmButtonText: 'ส่งกลับแก้ไข',
+                confirmButtonText: 'ยืนยัน',
                 cancelButtonText: 'ยกเลิก',
                 preConfirm: (text) => {
-                    if (!text) return Swal.showValidationMessage('จำเป็นต้องกรอก');
+                    if (!text) return Swal.showValidationMessage('กรุณากรอกข้อความ');
                     return text;
                 }
             }).then((result) => {
@@ -427,15 +534,11 @@ ORDER BY j.created_at DESC
                         },
                         body: `job_id=${jobId}&user_id=${userId}&detail=${encodeURIComponent(result.value)}`
                     }).then(res => res.text()).then(msg => {
-                        Swal.fire('ส่งสำเร็จ', msg, 'success').then(() => location.reload());
-                    }).catch(err => {
-                        Swal.fire('ผิดพลาด', 'ไม่สามารถส่งข้อมูลได้', 'error');
-                        console.error(err);
+                        Swal.fire('สำเร็จ', msg, 'success').then(() => location.reload());
                     });
                 }
             });
         }
-
 
 
         // ฟังก์ชันเพื่อแสดงรายละเอียดงานทั้งหมดใน popup
@@ -458,7 +561,8 @@ ORDER BY j.created_at DESC
         function closePopup() {
             document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
         }
-        
+    </script>
+    <script>
         // ฟังก์ชันเปิด/ปิดการแสดงรายละเอียดงาน
         function toggleDetails(button) {
             var row = button.closest('tr'); // ค้นหาแถวที่มีปุ่มนั้น
@@ -523,51 +627,7 @@ ORDER BY j.created_at DESC
                 searchTable(); // เรียกใช้ฟังก์ชัน searchTable
             }
         }
-        function toggleDetails(button, jobId) {
-            var row = button.closest('tr');
-            var detailsRow = row.nextElementSibling;
-
-            if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
-                detailsRow.style.display = "table-row";
-
-                // แสดงข้อมูลที่ถูกส่ง
-                console.log("ส่งข้อมูลไปยัง update_status.php:", {
-                    job_id: jobId,
-                    status: 'อ่านแล้ว'
-
-                });
-
-                fetch('update_status.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            job_id: jobId,
-                            status: 'อ่านแล้ว',
-                            user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
-                        if (data.success) {
-                            console.log("อัปเดตสถานะสำเร็จ");
-                        } else {
-                            console.error("เกิดข้อผิดพลาด:", data.error);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-
-
-
-            } else {
-                detailsRow.style.display = "none";
-            }
-        }
-        var userId = <?php echo json_encode($currentUserId); ?>; // ส่งค่าจาก PHP ไปยัง JavaScript
     </script>
-
 </body>
 
 </html>

@@ -58,6 +58,10 @@ $stmt = $conn->prepare("
         DATE_FORMAT(j.created_at, '%d-%m-%Y %H:%i') AS created_at, 
         j.jobs_file, 
         j.job_level,
+        r.reason,
+        rp.file_reply,
+        rp.reply_description,
+        DATE_FORMAT(rp.create_at, '%d-%m-%Y %H:%i') AS replied_at,
         GROUP_CONCAT(CONCAT(m.firstname, ' ', m.lastname, ' (สถานะ: ', a.status, ')') SEPARATOR ', ') AS employee_details
     FROM 
         jobs j
@@ -65,8 +69,12 @@ $stmt = $conn->prepare("
         assignments a ON j.job_id = a.job_id
     LEFT JOIN 
         mable m ON a.user_id = m.id
+    LEFT JOIN 
+        revisions r ON r.assign_id = a.assign_id AND r.job_id = j.job_id
+    LEFT JOIN 
+        reply rp ON rp.assign_id = a.assign_id
     WHERE 
-        a.status = 'เสร็จสิ้น'
+        a.status in ('เสร็จสิ้น', 'เสร็จล่าช้า')
         $yearCondition
     GROUP BY 
         j.job_id
@@ -74,6 +82,8 @@ $stmt = $conn->prepare("
         $orderBy
     LIMIT ?, ?
 ");
+
+
 
 // ผูกค่า `offset` และ `limit`
 $stmt->bind_param("ii", $offset, $limit);
@@ -210,9 +220,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                             echo '<td>';
                             if (!empty($row['jobs_file'])) {
-                                $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
-                                echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                $fileName = htmlspecialchars($row['jobs_file']);
+                                $jobId = (int)$row['job_id'];
+                                $downloadPath = "../upload/$jobId/$fileName"; // แสดง path ใหม่ให้ตรงกับที่อัปโหลดจริง
+                                echo '<a href="' . $downloadPath . '"  class="btn btn-dl btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
@@ -251,19 +262,32 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             // ดึงพนักงานทั้งหมดที่เกี่ยวข้องกับงานนี้
                             $subQuery = $conn->prepare("
-                SELECT 
-                    m.firstname, 
-                    m.lastname, 
-                    m.user_id, 
-                    a.status
-                FROM 
-                    assignments a 
-                LEFT JOIN 
-                    mable m ON a.user_id = m.id 
-                WHERE 
-                    a.job_id = ?
-                    AND a.status = 'เสร็จสิ้น'
-            ");
+    SELECT 
+        m.firstname, 
+        m.lastname, 
+        m.user_id, 
+        a.status,
+        rev.reason,
+        rep.reply_description,
+        DATE_FORMAT(rep.create_at, '%d-%m-%Y %H:%i') as reply_time,
+        DATE_FORMAT(rev.revision_at, '%d-%m-%Y %H:%i') as revision_at
+    FROM 
+        assignments a 
+    LEFT JOIN 
+        mable m ON a.user_id = m.id 
+    LEFT JOIN 
+        revisions rev ON a.assign_id = rev.assign_id
+    LEFT JOIN 
+        reply rep ON rep.assign_id = a.assign_id
+    WHERE 
+        a.job_id = ?
+        AND a.status in ('เสร็จสิ้น', 'เสร็จล่าช้า')
+    ORDER BY 
+        rev.revision_at DESC
+    LIMIT 1
+");
+
+
                             $subQuery->bind_param("i", $row['job_id']);
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
@@ -272,7 +296,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                 while ($empRow = $subResult->fetch_assoc()) {
                                     $status_class = '';
                                     switch ($empRow['status']) {
-                                        case 'ช้า':
+                                        case 'เสร็จล่าช้า':
                                             $status_class = 'text-danger';
                                             break;
                                         case 'เสร็จสิ้น':
@@ -295,16 +319,32 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                             break;
                                     }
 
+
                                     // แต่ละพนักงานแสดงในกล่อง (Grid Item)
                                     echo '<div class="job-detail-grid">';
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
-                                    // แสดงคำอธิบายงาน (แค่ 10 ตัวอักษรแรก)
+                                    // คำอธิบายงาน
                                     $job_description_preview = htmlspecialchars($row['job_description']);
-                                    $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
-                                    // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    $short_job_description = mb_substr($job_description_preview, 0, 20);
+                                    echo '<p class="mb-1"><strong>รายละเอียดงาน:</strong> <span class="text-muted">' . $short_job_description . '...</span>';
+                                    echo ' <button class="btn btn-sm btn-link p-0" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button></p>';
+
+                                    // คำอธิบายที่ตอบกลับ
+                                    $reply_preview = htmlspecialchars($empRow['reply_description']);
+                                    $short_reply = mb_substr($reply_preview, 0, 20);
+                                    echo '<p class="mb-1"><strong>รายละเอียดที่ส่งมา:</strong> <span class="text-muted">' . $short_reply . '...</span>';
+                                    echo ' <button class="btn btn-sm btn-link p-0" onclick="showFullDescription(\'' . addslashes($empRow['reply_description']) . '\')">เพิ่มเติม</button></p>';
+
+                                    echo '<strong>เวลาที่ส่งงาน: </strong>' . htmlspecialchars($empRow['reply_time']) . '<br>';
+                                    
+                                    if (!empty($row['file_reply'])) {
+                                        $replyFile = htmlspecialchars($row['file_reply']);
+                                        echo '<a href="../' . $replyFile . '" class="btn btn-sm btn-outline-success" download>งานที่เสร็จแล้ว</a>';
+                                    } else {
+                                        echo '<span class="text-muted">ยังไม่ส่ง</span>';
+                                    }
                                     echo '</div>';
                                 }
                             } else {

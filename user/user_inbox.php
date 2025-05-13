@@ -211,15 +211,15 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                             echo '<td>';
                             if (!empty($row['jobs_file'])) {
-                                $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
-                                echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                $fileName = htmlspecialchars($row['jobs_file']);
+                                $jobId = (int)$row['job_id'];
+                                $downloadPath = "../upload/$jobId/$fileName"; // แสดง path ใหม่ให้ตรงกับที่อัปโหลดจริง
+                                echo '<a href="' . $downloadPath . '"  class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
                             echo '<td>' . htmlspecialchars($row['created_at']) . '</td>';
                             echo '<td>' . htmlspecialchars($row['due_datetime']) . '</td>';
-
                             // ตรวจสอบระดับงานและกำหนดคลาส CSS ตามระดับงาน
                             $jobLevel = htmlspecialchars($row['job_level']);
                             $levelClass = '';
@@ -297,7 +297,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                 while ($empRow = $subResult->fetch_assoc()) {
                                     $status_class = '';
                                     switch ($empRow['status']) {
-                                        case 'ช้า':
+                                        case 'ล่าช้า':
                                             $status_class = 'text-danger';
                                             break;
                                         case 'เสร็จสิ้้น':
@@ -319,13 +319,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
-                                    // แสดงคำอธิบายงาน (แค่ 10 ตัวอักษรแรก)
                                     $job_description_preview = htmlspecialchars($row['job_description']);
-                                    $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
-                                    // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong>
-                                            <span class="job-description-preview">' . $short_description . '... </span>
-                                            <button class="btn btn-link" onclick="showTextDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    $short_job_description = mb_substr($job_description_preview, 0, 20);
+                                    echo '<p class="mb-1"><strong>รายละเอียดงาน:</strong> <span class="text-muted">' . $short_job_description . '...</span>';
+                                    echo ' <button class="btn btn-sm btn-link p-0" onclick="showTextDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button></p>';
                                     echo '</div>';
                                 }
                                 // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"
@@ -588,7 +585,13 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
         }
 
         // ✅ ฟังก์ชันอัปเดตสถานะโดยใช้ Fetch พร้อม assignId
-        function updateStatus(jobId, assignId, newStatus) {
+        function updateStatus(jobId, assignId, newStatus = 'รอตรวจสอบ') {
+            console.log("🔧 กำลังส่งข้อมูล:", {
+                job_id: jobId,
+                status: newStatus,
+                user_id: assignId
+            });
+
             fetch('update_status2.php', {
                     method: 'POST',
                     headers: {
@@ -596,21 +599,23 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                     },
                     body: JSON.stringify({
                         job_id: jobId,
-                        status: 'รอตรวจสอบ',
-                        user_id: userId // ส่ง user_id ของผู้ใช้ที่กำลังเข้าสู่ระบบ
+                        status: newStatus,
+                        user_id: assignId // 🔥 ใช้ assignId จริง
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Response:", data); // ตรวจสอบข้อมูลที่ได้รับจาก PHP
+                    console.log("Response:", data);
                     if (data.success) {
-                        console.log("อัปเดตสถานะสำเร็จ");
+                        console.log("✅ อัปเดตสถานะสำเร็จ:", data.message);
                     } else {
-                        console.error("เกิดข้อผิดพลาด:", data.error);
+                        console.error("❌ เกิดข้อผิดพลาด:", data.message || data.error);
                     }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => console.error('❗ Error:', error));
         }
+
+
 
 
         // ฟังก์ชันเพื่อแสดงรายละเอียดเพิ่มเติม
@@ -637,46 +642,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             document.getElementById('descriptionText').style.display = 'none'; // ปิด popup
         }
 
-        function toggleDetails(button, jobId) {
-            var row = button.closest('tr');
-            var detailsRow = row.nextElementSibling;
-
-            if (detailsRow.style.display === "none" || detailsRow.style.display === "") {
-                detailsRow.style.display = "table-row";
-
-                // แสดงข้อมูลที่ถูกส่ง
-                console.log("ส่งข้อมูลไปยัง update_status.php:", {
-                    job_id: jobId,
-                    status: 'อ่านแล้ว'
-                });
-
-                // ส่งคำขอ AJAX
-                fetch('update_status.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            job_id: jobId,
-                            status: 'อ่านแล้ว'
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log("Response:", data); // Log ค่าที่ได้รับ
-                        if (data.success) {
-                            console.log("อัปเดตสถานะสำเร็จ");
-                        } else {
-                            console.error("เกิดข้อผิดพลาด:", data.error);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-
-            } else {
-                detailsRow.style.display = "none";
-            }
-        }
-        var userId = <?php echo json_encode($currentUserId); ?>; // ส่งค่าจาก PHP ไปยัง JavaScript
 
 
 
@@ -771,7 +736,6 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
             }
         }
         var userId = <?php echo json_encode($currentUserId); ?>; // ส่งค่าจาก PHP ไปยัง JavaScript
-
     </script>
 
 </body>

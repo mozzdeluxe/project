@@ -1,52 +1,46 @@
 <?php
 include('../connection.php');
-
 header("Content-Type: application/json");
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// ✅ รับค่าจาก AJAX
+// รับค่าจาก fetch
 $data = json_decode(file_get_contents("php://input"), true);
-error_log("📥 ข้อมูลที่รับมา: " . print_r($data, true));
+error_log("📥 รับข้อมูล: " . print_r($data, true));
 
-if (isset($data['job_id']) && isset($data['status']) && isset($data['user_id'])) {
-    $job_id = intval($data['job_id']);
-    $status = $data['status'];
-    $user_id = intval($data['user_id']); // รับค่า user_id (หรือ assign_id หากคุณใช้ชื่อนี้)
-
-    // ✅ ตรวจสอบก่อนว่า record นี้มีอยู่หรือไม่
-    $check = $conn->prepare("SELECT * FROM assignments WHERE job_id = ? AND assign_id = ?");
-    $check->bind_param("ii", $job_id, $user_id);
-    $check->execute();
-    $result = $check->get_result();
-
-    if ($result->num_rows === 0) {
-        echo json_encode(["success" => false, "message" => "ไม่พบงานนี้หรือไม่ตรงกับผู้ใช้"]);
-        $check->close();
-        $conn->close();
-        exit;
-    }
-    $check->close();
-
-    // ✅ อัปเดตสถานะ (ลบเงื่อนไข status เดิมชั่วคราว)
-    $stmt = $conn->prepare("UPDATE assignments SET status = ? WHERE job_id = ? AND assign_id = ?");
-    $stmt->bind_param("sii", $status, $job_id, $user_id);
-
-    if ($stmt->execute()) {
-        if ($stmt->affected_rows > 0) {
-            echo json_encode(["success" => true, "message" => "อัปเดตสถานะเป็น '$status' สำเร็จ"]);
-        } else {
-            echo json_encode(["success" => false, "message" => "ไม่มีการเปลี่ยนแปลง (สถานะเดิมอาจเหมือนกัน)"]);
-        }
-    } else {
-        echo json_encode(["success" => false, "error" => $stmt->error]);
-    }
-
-    $stmt->close();
-} else {
+// ตรวจสอบว่าค่าที่จำเป็นถูกส่งมาครบ
+if (!isset($data['job_id'], $data['user_id'], $data['status'])) {
     echo json_encode(["success" => false, "error" => "Missing parameters"]);
+    exit;
 }
 
-$conn->close();
-exit;
+$job_id = intval($data['job_id']);
+$user_id = intval($data['user_id']);
+$status = trim($data['status']);
 
+// ตรวจสอบค่าที่อนุญาตให้เปลี่ยน
+$allowed_statuses = ['ยังไม่อ่าน','อ่านแล้ว','รอตรวจสอบ','เสร็จสิ้น','ล่าช้า','แก้ไข'];
+if (!in_array($status, $allowed_statuses)) {
+    echo json_encode(["success" => false, "error" => "สถานะไม่ถูกต้อง: $status"]);
+    exit;
+}
+
+// อัปเดตสถานะ
+$sql = "UPDATE assignments SET status = ? WHERE job_id = ? AND user_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("sii", $status, $job_id, $user_id);
+
+if ($stmt->execute()) {
+    if ($stmt->affected_rows > 0) {
+        echo json_encode(["success" => true, "message" => "อัปเดตสถานะเป็น '$status' สำเร็จ"]);
+    } else {
+        // กรณีที่ไม่มีการเปลี่ยนแปลงข้อมูล เช่น ค่าสถานะเดิม
+        echo json_encode(["success" => false, "message" => "ไม่มีการเปลี่ยนแปลงข้อมูล (สถานะอาจเหมือนเดิม)"]);
+    }
+} else {
+    echo json_encode(["success" => false, "error" => $stmt->error]);
+}
+
+$stmt->close();
+$conn->close();

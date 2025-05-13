@@ -23,78 +23,56 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
 $user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'm'";
 $user_result = mysqli_query($conn, $user_query);
 
-// ตรวจสอบการส่งฟอร์ม
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // ตรวจสอบข้อมูลจากฟอร์ม
     $job_title = isset($_POST['job_title']) ? mysqli_real_escape_string($conn, $_POST['job_title']) : null;
     $job_description = isset($_POST['job_description']) ? mysqli_real_escape_string($conn, $_POST['job_description']) : null;
     $due_date = isset($_POST['due_datetime']) ? mysqli_real_escape_string($conn, $_POST['due_datetime']) : null;
-    $job_level = mysqli_real_escape_string($conn, $_POST['job_level']); // รับค่าระดับงาน
+    $job_level = mysqli_real_escape_string($conn, $_POST['job_level']);
 
-    // ตรวจสอบว่าข้อมูลสำคัญครบถ้วน
     if (!$job_title || !$job_description || !$due_date) {
         die('กรุณากรอกข้อมูลให้ครบถ้วน');
     }
 
-    // เพิ่มข้อมูลลงตาราง jobs
     $insert_job_query = "INSERT INTO jobs (supervisor_id, job_title, job_description, due_datetime, jobs_file, job_level) 
-                         VALUES (?, ?, ?, ?, ?, ?)";
+                         VALUES (?, ?, ?, ?, '', ?)";
     $stmt = $conn->prepare($insert_job_query);
+    if (!$stmt) die('Prepare failed for jobs: ' . $conn->error);
 
-    if (!$stmt) {
-        die('Prepare failed for jobs: ' . $conn->error);
-    }
+    $stmt->bind_param("issss", $user_id, $job_title, $job_description, $due_date, $job_level);
+    if (!$stmt->execute()) die('Error inserting job: ' . $stmt->error);
 
-    $file_name = ''; // ไฟล์จะอัปโหลดในขั้นตอนถัดไป
-    $stmt->bind_param("isssss", $user_id, $job_title, $job_description, $due_date, $file_name, $job_level);
-
-    // Execute การเพิ่มข้อมูล jobs
-    if (!$stmt->execute()) {
-        die('Error inserting job: ' . $stmt->error);
-    }
-
-    // รับ job_id ที่ถูกสร้างขึ้นล่าสุด
     $job_id = $conn->insert_id;
 
-    // (ส่วนของการอัปโหลดไฟล์และการเพิ่ม assignments อยู่ด้านล่าง)
-
-    // ตรวจสอบการอัปโหลดไฟล์
+    // จัดการไฟล์แนบ
     if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
         $file = $_FILES['file'];
-        $upload_directory = '../upload/';
-        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $upload_dir = __DIR__ . '/../upload/' . $job_id . '/';
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
+        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!in_array($file_extension, ['pdf', 'doc', 'xlsx'])) {
             die('โปรดอัปโหลดไฟล์ PDF, DOC, หรือ XLSX เท่านั้น');
         }
 
-        if (!is_dir($upload_directory)) {
-            mkdir($upload_directory, 0777, true);
-        }
-
-        // ใช้ job_id และ user_id ในชื่อไฟล์
+        $date_suffix = date('dmy');
         $file_name = "job{$job_id}_user{$user_id}.{$file_extension}";
+        $full_path = $upload_dir . $file_name;
 
-        if (!move_uploaded_file($file['tmp_name'], $upload_directory . $file_name)) {
+        if (!move_uploaded_file($file['tmp_name'], $full_path)) {
             die('ไม่สามารถอัปโหลดไฟล์ได้');
         }
 
-        // อัปเดตไฟล์ในตาราง jobs
-        $update_job_query = "UPDATE jobs SET jobs_file = ? WHERE job_id = ?";
-        $stmt = $conn->prepare($update_job_query);
-
+        $stmt = $conn->prepare("UPDATE jobs SET jobs_file = ? WHERE job_id = ?");
         if (!$stmt) {
             die('Prepare failed for updating jobs: ' . $conn->error);
         }
 
         $stmt->bind_param("si", $file_name, $job_id);
-
         if (!$stmt->execute()) {
             die('Error updating job: ' . $stmt->error);
         }
     }
 
-    // เพิ่ม assignments สำหรับพนักงาน
     $user_ids = json_decode($_POST['user_ids']);
     foreach ($user_ids as $assigned_user_id) {
         $insert_assignment_query = "INSERT INTO assignments (job_id, user_id, status, file_path) 
@@ -112,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // หลังจากบันทึกข้อมูลเสร็จสิ้น
     header("Location: ./admin_view_assignments.php");
     exit();
 

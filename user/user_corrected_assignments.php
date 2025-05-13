@@ -217,9 +217,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
 
                             echo '<td>';
                             if (!empty($row['jobs_file'])) {
-                                $filePath = htmlspecialchars($row['jobs_file']);
-                                echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                $fileName = htmlspecialchars($row['jobs_file']);
+                                $jobId = (int)$row['job_id'];
+                                $downloadPath = "../upload/$jobId/$fileName"; // แสดง path ใหม่ให้ตรงกับที่อัปโหลดจริง
+                                echo '<a href="' . $downloadPath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
@@ -251,21 +252,22 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<div class="grid-container">';
 
                             // ดึงพนักงานที่มีสถานะแก้ไข และเหตุผลจาก revisions
-                            $subQuery = $conn->prepare("SELECT 
-    m.firstname, 
-    m.lastname, 
-    m.user_id, 
-    a.status,
-    r.reason,
-    DATE_FORMAT(r.revision_at, '%d-%m-%Y %H:%i') as revision_at
-FROM 
-    assignments a 
-LEFT JOIN 
-    mable m ON a.user_id = m.id 
-LEFT JOIN
-    revisions r ON a.assign_id = r.assign_id
-WHERE 
-    a.job_id = ? AND a.status = 'แก้ไข' LIMIT 1");
+                            $subQuery = $conn->prepare("
+    SELECT 
+        m.firstname, 
+        m.lastname, 
+        m.user_id, 
+        a.status,
+        r.reason,
+        DATE_FORMAT(r.revision_at, '%d-%m-%Y %H:%i') as revision_at
+    FROM assignments a 
+    LEFT JOIN mable m ON a.user_id = m.id 
+    LEFT JOIN revisions r ON a.assign_id = r.assign_id
+    WHERE a.job_id = ? AND a.status = 'แก้ไข'
+    ORDER BY r.revision_at DESC
+    LIMIT 1
+");
+
                             $subQuery->bind_param("i", $row['job_id']);
                             $subQuery->execute();
                             $subResult = $subQuery->get_result();
@@ -279,12 +281,17 @@ WHERE
                                 echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
 
                                 echo '<strong>วันที่สั่งให้แก้ไข: </strong>' . htmlspecialchars($empRow['revision_at']) . '<br>';
-                                echo '<strong>เหตุผลในการให้แก้ไข: </strong>' . nl2br(htmlspecialchars($empRow['reason'])) . '<br>';
+
+                                $reason_preview = htmlspecialchars($empRow['reason']);
+                                $short_reason = mb_substr($reason_preview, 0, 20);
+
+                                echo '<p class="mb-1"><strong>เหตุผลในการให้แก้ไข:</strong> <span class="text-muted">' . $short_reason . '...</span>';
+                                echo ' <button class="btn btn-sm btn-link p-0" onclick="showTextDescription(\'' . addslashes($empRow['reason']) . '\')">เพิ่มเติม</button></p>';
 
                                 $job_description_preview = htmlspecialchars($row['job_description']);
-                                $short_description = substr($job_description_preview, 0, 10);
-                                echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span>';
-                                echo '<button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                $short_job_description = mb_substr($job_description_preview, 0, 20);
+                                echo '<p class="mb-1"><strong>รายละเอียดงาน:</strong> <span class="text-muted">' . $short_job_description . '...</span>';
+                                echo ' <button class="btn btn-sm btn-link p-0" onclick="showTextDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button></p>';
 
                                 echo '<div class="mt-3">';
                                 echo '<div class="mt-3">';
@@ -333,6 +340,14 @@ WHERE
             </nav>
         </div>
     </div>
+    <!-- Popup สำหรับแสดงเพิ่มเติม -->
+    <div id="descriptionText" class="popup" style="display: none;">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closeDescription()">&times;</span>
+            <h3>รายละเอียดเพิ่มเติม</h3>
+            <p id="textDescription"></p>
+        </div>
+    </div>
 
 
 
@@ -340,10 +355,8 @@ WHERE
         function resubmitJob(jobId, userId) {
             Swal.fire({
                 title: 'แนบไฟล์งานใหม่',
-                html: `
-            <input type="file" id="resubmitFile" class="swal2-file" accept=".pdf,.doc,.docx,.ppt,.pptx">
-            <textarea id="resubmitDesc" class="swal2-textarea" placeholder="รายละเอียดเพิ่มเติม"></textarea>
-        `,
+                html: '<input type="file" id="resubmitFile" class="swal2-file" accept=".pdf,.doc,.docx,.ppt,.pptx">' +
+                    '<textarea id="resubmitDesc" class="swal2-textarea" placeholder="รายละเอียดเพิ่มเติม"></textarea>',
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonText: 'ส่งงานใหม่',
@@ -357,16 +370,15 @@ WHERE
                     }
 
                     const formData = new FormData();
-                    formData.append('assign_id', jobId); // เปลี่ยนจาก job_id → assign_id ให้ตรงกับ PHP
+                    formData.append('job_id', jobId);
                     formData.append('user_id', userId);
                     formData.append('reply_description', textArea.value);
                     formData.append('fileUpload', fileInput.files[0]);
 
-                    return fetch('request_revision.php', {
+                    return fetch('reply_upload.php', {
                             method: 'POST',
                             body: formData
                         })
-                        .then(res => res.text())
                         .then(msg => {
                             Swal.fire('ส่งงานใหม่สำเร็จ', msg, 'success').then(() => location.reload());
                         })
@@ -396,8 +408,31 @@ WHERE
         function closePopup() {
             document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
         }
-    </script>
-    <script>
+
+        // ฟังก์ชันเพื่อแสดงรายละเอียดเพิ่มเติม
+        function showTextDescription(textDescription) {
+            // แบ่งคำในรายละเอียดงาน
+            var words = textDescription.split(' ');
+            var formattedDescription = '';
+
+            // กำหนดให้แต่ละบรรทัดมี 10 คำ
+            for (var i = 0; i < words.length; i += 10) {
+                formattedDescription += words.slice(i, i + 10).join(' ') + '\n'; // ใช้ \n เพื่อเว้นบรรทัด
+            }
+
+            // แสดงรายละเอียดทั้งหมดใน popup
+            document.getElementById('textDescription').textContent = textDescription;
+            document.getElementById('descriptionText').style.display = 'block'; // เปิด popup
+        }
+
+        function closePopup() {
+            document.getElementById('descriptionPopup').style.display = 'none'; // ปิด popup
+        }
+
+        function closeDescription() {
+            document.getElementById('descriptionText').style.display = 'none'; // ปิด popup
+        }
+
         // ฟังก์ชันเปิด/ปิดการแสดงรายละเอียดงาน
         function toggleDetails(button) {
             var row = button.closest('tr'); // ค้นหาแถวที่มีปุ่มนั้น

@@ -214,9 +214,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td>' . htmlspecialchars($row['job_title']) . '</td>';
                             echo '<td>';
                             if (!empty($row['jobs_file'])) {
-                                $filePath = htmlspecialchars($row['jobs_file']); // ป้องกัน XSS
-                                echo '<span>' . $filePath . '</span>';
-                                echo '<a href="path/to/uploads/' . $filePath . '" class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
+                                $fileName = htmlspecialchars($row['jobs_file']);
+                                $jobId = (int)$row['job_id'];
+                                $downloadPath = "../upload/$jobId/$fileName"; // แสดง path ใหม่ให้ตรงกับที่อัปโหลดจริง
+                                echo '<a href="' . $downloadPath . '"  class="btn load btn-sm ms-2" download>ดาวน์โหลด</a>';
                             } else {
                                 echo '<span class="text-muted">ไม่มีไฟล์</span>';
                             }
@@ -321,11 +322,10 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                                     echo '<strong>รหัสพนักงาน: </strong>' . htmlspecialchars($empRow['user_id']) . '<br>';
                                     echo '<strong>ชื่อ-นามสกุล: </strong>' . htmlspecialchars($empRow['firstname'] . ' ' . $empRow['lastname']) . '<br>';
                                     echo '<strong>สถานะ: </strong><span class="' . $status_class . '">' . htmlspecialchars($empRow['status']) . '</span><br>';
-                                    // แสดงคำอธิบายงาน (แค่ 10 ตัวอักษรแรก)
                                     $job_description_preview = htmlspecialchars($row['job_description']);
-                                    $short_description = substr($job_description_preview, 0, 10); // ตัดให้เหลือแค่ 10 ตัวอักษรแรก
-                                    // เพิ่มการแสดงผลในแบบย่อ
-                                    echo '<strong>รายละเอียดงาน: </strong><span class="job-description-preview">' . $short_description . '... </span><button class="btn btn-link" onclick="showFullDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button><br>';
+                                    $short_job_description = mb_substr($job_description_preview, 0, 20);
+                                    echo '<p class="mb-1"><strong>รายละเอียดงาน:</strong> <span class="text-muted">' . $short_job_description . '...</span>';
+                                    echo ' <button class="btn btn-sm btn-link p-0" onclick="showTextDescription(\'' . addslashes($row['job_description']) . '\')">เพิ่มเติม</button></p>';
                                     echo '</div>';
                                 }
                                 // สร้าง container สำหรับ "พนักงานคนอื่นที่ได้รับงานนี้"

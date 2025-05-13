@@ -7,9 +7,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['job_id'], $_POST['use
     $mable_user_id = (int)$_POST['user_id']; // คือ mable.user_id ที่ส่งมาจาก JS
     $approver_id = $_SESSION['user_id'] ?? 0;
 
-    // ดึง assign_id โดย join หา mable.id จาก mable.user_id
+    // ดึง assign_id และสถานะปัจจุบันของงาน
     $stmt = $conn->prepare("
-        SELECT a.assign_id, a.user_id
+        SELECT a.assign_id, a.user_id, a.status
         FROM assignments a
         JOIN mable m ON a.user_id = m.id
         WHERE a.job_id = ? AND m.user_id = ?
@@ -17,14 +17,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['job_id'], $_POST['use
     ");
     $stmt->bind_param("ii", $job_id, $mable_user_id);
     $stmt->execute();
-    $stmt->bind_result($assign_id, $assignee_id);
+    $stmt->bind_result($assign_id, $assignee_id, $status);
 
     if ($stmt->fetch()) {
         $stmt->close();
 
+        // ตรวจสอบสถานะงาน ถ้าเป็น 'ล่าช้า' ให้เปลี่ยนเป็น 'เสร็จล่าช้า'
+        if ($status === 'ล่าช้า') {
+            $status = 'เสร็จล่าช้า';
+        } else {
+            $status = 'เสร็จสิ้น'; // ถ้าไม่ใช่ 'ช้า' ก็เป็น 'เสร็จสิ้น'
+        }
+
         // เปลี่ยนสถานะงาน
-        $update = $conn->prepare("UPDATE assignments SET status = 'เสร็จสิ้น' WHERE assign_id = ?");
-        $update->bind_param("i", $assign_id);
+        $update = $conn->prepare("UPDATE assignments SET status = ? WHERE assign_id = ?");
+        $update->bind_param("si", $status, $assign_id);
         $update->execute();
         $update->close();
 
