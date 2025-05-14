@@ -19,7 +19,7 @@ if (isset($_GET['delete'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_level'])) {
     $id = (int)$_POST['id'];
     $new_level = $_POST['new_level'];
-    if (in_array($new_level, ['m', 'u', 'a'])) {
+    if (in_array($new_level, ['s', 'u', 'a'])) {
         $stmt = $conn->prepare("UPDATE mable SET userlevel = ? WHERE id = ?");
         $stmt->bind_param("si", $new_level, $id);
         $stmt->execute();
@@ -105,13 +105,13 @@ $result = $conn->query("SELECT id, firstname, lastname, email, userlevel FROM ma
                         <td><?= htmlspecialchars($row['firstname'] . ' ' . $row['lastname']) ?></td>
                         <td><?= htmlspecialchars($row['email']) ?></td>
                         <td>
-                            <?= $row['userlevel'] === 'a' ? 'ผู้ดูแล' : ($row['userlevel'] === 'm' ? 'หัวหน้า' : 'พนักงาน') ?>
+                            <?= $row['userlevel'] === 'a' ? 'ผู้ดูแล' : ($row['userlevel'] === 's' ? 'หัวหน้า' : 'พนักงาน') ?>
                         </td>
                         <td>
                             <form method="POST" class="d-flex justify-content-center">
                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                 <select name="new_level" class="form-select me-2 w-auto">
-                                    <option value="m" <?= $row['userlevel'] === 'm' ? 'selected' : '' ?>>หัวหน้า</option>
+                                    <option value="s" <?= $row['userlevel'] === 's' ? 'selected' : '' ?>>หัวหน้า</option>
                                     <option value="u" <?= $row['userlevel'] === 'u' ? 'selected' : '' ?>>พนักงาน</option>
                                     <option value="a" <?= $row['userlevel'] === 'a' ? 'selected' : '' ?>>ผู้ดูแล</option>
                                 </select>
