@@ -7,17 +7,18 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=TH+Sarabun&display=swap" rel="stylesheet">
+
     <script>
         function validateNumber(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
     </script> 
     <style>
-        @import url(https://fonts.googleapis.com/css?family=Inter:300);
         body {
             padding: 0;
             margin: 0;
-            font-family: 'Inter';
+            font-family: 'TH Sarabun', sans-serif;
             background: linear-gradient(135deg,rgb(40, 175, 83),rgb(14, 79, 35));
         }
         .success, .error {

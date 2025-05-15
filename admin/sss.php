@@ -148,12 +148,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="../css/sidebar.css" rel="stylesheet">
     <link href="../css/navbar.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=TH+Sarabun&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'TH Sarabun', sans-serif;
             background-color: rgb(246, 246, 246);
             overflow: hidden;
             /* ห้ามเลื่อนทั้งแนวตั้งและแนวนอน */

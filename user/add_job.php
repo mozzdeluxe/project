@@ -33,7 +33,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
     <style>
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'TH Sarabun', sans-serif;
         }
         .container {
             margin-top: 20px;

@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <style>
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'TH Sarabun', sans-serif;
         }
 
         .table-container {
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'TH Sarabun', sans-serif;
         }
 
         .container {

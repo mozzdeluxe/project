@@ -33,7 +33,7 @@ $job = $result->fetch_assoc();
     <style>
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'TH Sarabun', sans-serif;
         }
        .table-container {
             overflow-x: auto;

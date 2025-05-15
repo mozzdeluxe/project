@@ -42,7 +42,7 @@ $imgPath = !empty($employee['img_path']) && file_exists('../imgs/' . $employee['
         
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'TH Sarabun', sans-serif;
         }
         .employee-popup {
             width: 150px;

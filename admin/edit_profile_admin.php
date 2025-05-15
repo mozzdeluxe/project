@@ -21,6 +21,7 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://www.ppkhosp.go.th/images/logoppk.png" rel="icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=TH+Sarabun&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.16/dist/sweetalert2.all.min.js"></script>
@@ -101,9 +102,9 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
                     <div class="circle-images">
                         <img src="<?php echo $uploadedImage; ?>" alt="Uploaded Image">
                     </div>
-                    <form action="../upload_image.php" method="POST" enctype="multipart/form-data" onsubmit="validateFile(event);">
-                        <input type="file" class="form-control" id="img_file" name="img_file">
-                        <font color="red">*อัพโหลดได้เฉพาะ .jpeg , .jpg , .png ไม่เกิน 2MB</font><br>
+                    <form action="../upload_image.php" method="POST" enctype="multipart/form-data" onsubmit="return validateFile(event);">
+                        <input type="file" class="form-control" id="img_file" name="img_file" accept=".jpg,.jpeg,.png" required>
+                        <font color="red">*อัปโหลดได้เฉพาะ .jpeg , .jpg , .png ไม่เกิน 2MB</font><br>
                         <button type="submit" class="btn">อัปโหลดรูปภาพ</button>
                     </form>
                 </div>
@@ -139,10 +140,6 @@ $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user
             </div>
         </div>
     </div>
-
-    <script src="../js/sidebar.js"></script>
-    <script src="../js/check.js"></script>
-    <script src="../path/to/auto_logout.js"></script>
 </body>
 
 </html>

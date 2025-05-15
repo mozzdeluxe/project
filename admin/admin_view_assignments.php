@@ -106,6 +106,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=TH+Sarabun&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -266,7 +267,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                 LEFT JOIN 
                     mable m ON a.user_id = m.id 
                 WHERE 
-                    a.job_id = ?
+                    a.job_id = ? and a.status != 'เสร็จสิ้น'
             ");
                             $subQuery->bind_param("i", $row['job_id']);
                             $subQuery->execute();
