@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id']; // ย้ายบรรทัดนี้ขึ้นมาด้านบนก่อนใช้ทุก Query
 
 $userlevel = $_SESSION['userlevel'];
-if ($userlevel != 'm') {
+if ($userlevel != 'u') {
     header("Location: ../logout.php");
     exit();
 }

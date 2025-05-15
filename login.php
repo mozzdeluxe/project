@@ -9,7 +9,7 @@ session_start();
                   WHERE  user_id ='".$user_id."'  AND  password ='".$password."' ";
 
                   $result = mysqli_query($conn,$sql);
-				
+
                   if(mysqli_num_rows($result)==1){
 
                       $row = mysqli_fetch_array($result);
@@ -18,12 +18,16 @@ session_start();
                       $_SESSION['firstname'] = $row['firstname'];
                       $_SESSION["userlevel"] = $row["userlevel"];
 
-                      if($_SESSION["userlevel"]=="a"){ 
+                      if($_SESSION["userlevel"]=="s"){ 
                         Header("Location: admin/admin_page.php");
                       }
-                      if($_SESSION["userlevel"]=="m"){
-                        
+                      if($_SESSION["userlevel"]=="u"){
+
                         Header("Location: user/user_page.php");
+                      }
+                       if($_SESSION["userlevel"]=="a"){
+
+                        Header("Location: manager/admin_manage.php");
                       }
                     }else{
                       echo "<script>";
@@ -31,6 +35,7 @@ session_start();
                           echo "window.history.back()";
                       echo "</script>";
   
+
                     }
             }else{
              Header("Location: index.php"); //user & m_password incorrect back to login again

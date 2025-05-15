@@ -3,7 +3,7 @@ session_start();
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
 $user_id = $_SESSION['user_id'];
-if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
+if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 's') {
     header("Location: ../logout.php");
     exit();
 }

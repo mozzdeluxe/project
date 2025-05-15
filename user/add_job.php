@@ -5,7 +5,7 @@ include('../connection.php');
 // ตรวจสอบว่าผู้ใช้เข้าสู่ระบบและมีสิทธิ์หรือไม่
 $user_id = $_SESSION['user_id'];
 $userlevel = $_SESSION['userlevel'];
-if ($userlevel != 'm') {
+if ($userlevel != 'u') {
     header("Location: ../logout.php");
     exit();
 }

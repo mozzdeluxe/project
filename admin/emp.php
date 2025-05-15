@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userlevel = $_SESSION['userlevel'];
-if ($userlevel != 'a') {
+if ($userlevel != 's') {
     header("Location: ../logout.php");
     exit();
 }
@@ -31,7 +31,7 @@ $user = mysqli_fetch_assoc($result);
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
 
-$query = "SELECT * FROM mable WHERE userlevel != 'a'";
+$query = "SELECT * FROM mable WHERE userlevel = 'u'";
 $result = mysqli_query($conn, $query);
 ?>
 

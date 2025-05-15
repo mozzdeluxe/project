@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userlevel = $_SESSION['userlevel'];
-if ($userlevel != 'a') {
+if ($userlevel != 's') {
     header("Location: ../logout.php");
     exit();
 }

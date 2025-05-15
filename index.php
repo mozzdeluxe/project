@@ -106,7 +106,7 @@
                     </div>
                     <div class="form-group d-flex justify-content-center">
                         <button class="btn btn-success w-45 me-3" type="submit" name="submit">เข้าสู่ระบบ</button>
-                        <button class="btn btn-light w-45 ms-3" type="button" onclick="window.location.href='register.php';">ลงทะเบียน</button>
+                        
                     </div>
                 </form>
             </div>

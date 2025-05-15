@@ -3,7 +3,7 @@ session_start();
 include('../connection.php');
 
 // ตรวจสอบการเข้าสู่ระบบและระดับผู้ใช้
-if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 'a') {
+if (!isset($_SESSION['user_id']) || $_SESSION['userlevel'] != 's') {
     header("Location: logout.php");
     exit();
 }
@@ -20,7 +20,7 @@ $user = $result->fetch_assoc();
 $uploadedImage = !empty($user['img_path']) ? '../imgs/' . htmlspecialchars($user['img_path']) : '../imgs/default.jpg';
 
 // ดึงข้อมูลผู้ใช้งาน
-$user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'm'";
+$user_query = "SELECT id, firstname, lastname FROM mable WHERE userlevel = 'u'";
 $user_result = mysqli_query($conn, $user_query);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
