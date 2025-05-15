@@ -244,7 +244,7 @@ $totalPages = ceil($totalJobs / $limit); // คำนวณจำนวนหน
                             echo '<td><div class="job-level-container ' . $levelClass . '">' . $jobLevel . '</div></td>'; // เพิ่ม container และคลาสตามระดับงาน
 
                             echo '<td><button class="btn btn-details btn-lg view-details" onclick="toggleDetails(this)">รายละเอียดเพิ่มเติม</button></td>';
-                            echo '<td><a href="edit_job.php?job_id=' . htmlspecialchars($row['job_id']) . '" class="btn btn-danger btn-lg">แก้ไข</a></td>';
+                            echo '<td><a href="edit_jobs.php?job_id=' . htmlspecialchars($row['job_id']) . '" class="btn btn-danger btn-lg">แก้ไข</a></td>';
                             echo '</tr>';
 
 

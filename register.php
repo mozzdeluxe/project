@@ -100,11 +100,9 @@ if (isset($_POST['submit'])) {
             background: linear-gradient(135deg, rgb(40, 175, 83), rgb(14, 79, 35));
             min-height: 100vh;
             margin: 0;
-
             display: flex;
             justify-content: center;
             align-items: center;
-
         }
 
         .success,
@@ -240,7 +238,7 @@ if (isset($_POST['submit'])) {
                 <div class="col-lg-6 col-md-8 col-sm-12">
                     <div class="form-container">
                         <div class="form-box">
-                            <h1>ลงทะเบียน</h1>
+                            <h1>เพิ่มผู้ใช้งานใหม่</h1>
                             <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" enctype="multipart/form-data">
                                 <div class="row">
                                     <!-- ซีกซ้าย -->
@@ -286,7 +284,7 @@ if (isset($_POST['submit'])) {
                                             <input type="email" id="email" name="email" placeholder="โปรดกรอกอีเมลล์ของคุณ" required>
                                         </div>
                                         <div class="form-group d-flex justify-content-center mb-4 ">
-                                            <button class="btn btn-success me-2" type="submit" name="submit" value="Submit">ลงทะเบียน</button>
+                                            <button class="btn btn-success me-2" type="submit" name="submit" value="Submit">เพิ่มผู้ใช้</button>
                                             <button class="btn btn-light ms-2" type="button" onclick="window.location.href='./manager/admin_manage.php';">ย้อนกลับ</button>
                                         </div>
                                     </div>
